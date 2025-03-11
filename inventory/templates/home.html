@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مخازن موهبة - MWHEBA Stock</title>
+    
+    <!-- Bootstrap RTL CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+       
+        body {
+            font-family: 'Cairo', sans-serif !important;
+            background-color: #f8f9fa;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Cairo', sans-serif !important;
+        }
+        
+        button, input, textarea {
+            font-family: 'Cairo', sans-serif !important;
+        }
+
+        .btn-primary {
+            --bs-btn-bg: #01578a;
+            --bs-btn-border-color: #01578a;
+            --bs-btn-hover-bg: #017bbd;
+            --bs-btn-hover-border-color: #017bbd;
+
+        }
+        
+        .hero {
+            background: linear-gradient(135deg, #017bbd, #01578a);
+            color: white;
+            padding: 5rem 0;
+            text-align: center;
+        }
+        
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+        
+        .hero p {
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+        
+        .features {
+            padding: 5rem 0;
+        }
+        
+        .feature-card {
+            text-align: center;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            background-color: white;
+            height: 100%;
+            transition: transform 0.3s;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-10px);
+        }
+        
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+            color: #017bbd;
+        }
+        
+        .cta {
+            background-color: #f0f4f8;
+            padding: 5rem 0;
+            text-align: center;
+        }
+        
+        .footer {
+            background-color: #343a40;
+            color: white;
+            padding: 3rem 0;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h1>مخازن موهبة</h1>
+            <p class="lead">نظام متكامل لإدارة المخزون والحسابات المالية</p>
+            <a href="{% url 'login' %}" class="btn btn-light btn-lg">تسجيل الدخول</a>
+        </div>
+    </section>
+    
+    <!-- Features Section -->
+    <section class="features">
+        <div class="container">
+            <h2 class="text-center mb-5">المميزات الرئيسية</h2>
+            
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-box"></i>
+                        </div>
+                        <h3>إدارة المخزون</h3>
+                        <p>تتبع الكميات المتاحة من المنتجات، إدارة مواقع التخزين المختلفة، وتنبيهات عند انخفاض المخزون.</p>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                        </div>
+                        <h3>إدارة المبيعات والمشتريات</h3>
+                        <p>إنشاء فواتير للعملاء، تسجيل فواتير الموردين، ومتابعة عمليات الدفع.</p>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3>التقارير المالية</h3>
+                        <p>تقارير مبيعات ومشتريات مفصلة، تقارير الأرباح والخسائر مع الرسوم البيانية التوضيحية.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Call to Action Section -->
+    <section class="cta">
+        <div class="container">
+            <h2 class="mb-4">ابدأ استخدام النظام الآن</h2>
+            <p class="lead mb-4">قم بتسجيل الدخول للوصول إلى لوحة التحكم وإدارة مخزونك بكفاءة</p>
+            <a href="{% url 'login' %}" class="btn btn-primary btn-lg">تسجيل الدخول</a>
+        </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>© 2025 مخازن موهبة. جميع الحقوق محفوظة.</p>
+        </div>
+    </footer>
+    
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

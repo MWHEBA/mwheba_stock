@@ -1,0 +1,1075 @@
+{% extends "core/base.html" %}
+
+{% block title %}قائمة المبيعات - مخازن موهبة{% endblock %}
+
+{% block extra_css %}
+<style>
+    body, h1, h2, h3, h4, h5, h6, p, span, a, button, input, textarea, select, option {
+        font-family: 'Cairo', sans-serif !important;
+    }
+    .card-header .fw-bold,
+    .dropdown-menu,
+    .modal-title,
+    .modal-footer button,
+    .table th,
+    .table td,
+    .btn,
+    .badge,
+    .dropdown-item {
+        font-family: 'Cairo', sans-serif !important;
+    }
+    .pagination,
+    .form-label,
+    .form-control,
+    .form-select {
+        font-family: 'Cairo', sans-serif !important;
+    }
+</style>
+{% endblock %}
+
+{% block page_title %}قائمة المبيعات{% endblock %}
+
+{% block page_actions %}
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addOrderModal">
+    <i class="fas fa-plus me-1"></i> إضافة مبيعات جديدة
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold"><i class="fas fa-shopping-cart me-2 text-primary"></i>قائمة المبيعات</h5>
+        <div class="d-flex">
+            <div class="input-group me-2" style="width: 300px;">
+                <input type="text" id="searchInput" class="form-control" placeholder="بحث عن فاتورة...">
+                <button class="btn btn-outline-secondary" type="button">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-filter"></i> تصفية
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="filterDropdown">
+                    <li><a class="dropdown-item" href="#" data-filter="all">جميع المبيعات</a></li>
+                    <li><a class="dropdown-item" href="#" data-filter="completed">المبيعات المكتملة</a></li>
+                    <li><a class="dropdown-item" href="#" data-filter="pending">المبيعات قيد الانتظار</a></li>
+                    <li><a class="dropdown-item" href="#" data-filter="cancelled">المبيعات الملغاة</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" id="ordersTable">
+                <thead>
+                    <tr>
+                        <th width="5%">#</th>
+                        <th width="15%">رقم الفاتورة</th>
+                        <th width="20%">العميل</th>
+                        <th width="15%">التاريخ</th>
+                        <th width="15%">المبلغ</th>
+                        <th width="15%">الحالة</th>
+                        <th width="15%">الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>
+                            <div class="fw-bold">{{ order.id }}</div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="client-icon me-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background-color: rgba(67, 97, 238, 0.1); border-radius: 8px;">
+                                    <i class="fas fa-user text-primary"></i>
+                                </div>
+                                <div class="fw-bold">{{ order.customer }}</div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="text-muted">{{ order.date|default:"--" }}</span>
+                        </td>
+                        <td class="fw-bold">
+                            {{ order.total|default:"0.00" }} ج.م
+                        </td>
+                        <td>
+                            {% if order.status == 'completed' %}
+                                <span class="badge bg-success">مكتمل</span>
+                            {% elif order.status == 'pending' %}
+                                <span class="badge bg-warning text-dark">قيد الانتظار</span>
+                            {% elif order.status == 'cancelled' %}
+                                <span class="badge bg-danger">ملغي</span>
+                            {% else %}
+                                <span class="badge bg-secondary">مسودة</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="d-flex gap-1 justify-content-center">
+                                <button class="btn btn-sm btn-outline-primary view-order" data-id="{{ order.id }}" title="عرض التفاصيل">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-success edit-order" data-id="{{ order.id }}" title="تعديل">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-info print-order" data-id="{{ order.id }}" title="طباعة الفاتورة">
+                                    <i class="fas fa-print"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger delete-order" data-id="{{ order.id }}" title="حذف">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <i class="fas fa-shopping-cart text-muted mb-3" style="font-size: 3rem;"></i>
+                            <p class="text-muted mb-0">لا توجد مبيعات متاحة</p>
+                            <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addOrderModal">
+                                <i class="fas fa-plus me-1"></i> إضافة مبيعات جديدة
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+        <div>
+            <span class="text-muted">إجمالي المبيعات: <span class="fw-bold">{{ orders|length }}</span></span>
+        </div>
+        <nav aria-label="Page navigation">
+            <ul class="pagination mb-0">
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                <li class="page-item">
+                    <a class="page-link" href="#" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<!-- Order Details Modal -->
+<div class="modal fade" id="orderDetailsModal" tabindex="-1" aria-labelledby="orderDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="orderDetailsModalLabel">تفاصيل الفاتورة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h5 class="mb-3">معلومات الفاتورة</h5>
+                        <div class="mb-2">
+                            <label class="text-muted">رقم الفاتورة:</label>
+                            <div class="fw-bold order-invoice-number">--</div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="text-muted">تاريخ الفاتورة:</label>
+                            <div class="fw-bold order-date">--</div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="text-muted">الحالة:</label>
+                            <div class="order-status">
+                                <span class="badge bg-success">مكتمل</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h5 class="mb-3">معلومات العميل</h5>
+                        <div class="mb-2">
+                            <label class="text-muted">اسم العميل:</label>
+                            <div class="fw-bold order-customer-name">--</div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="text-muted">رقم الهاتف:</label>
+                            <div class="fw-bold order-customer-phone">--</div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="text-muted">العنوان:</label>
+                            <div class="fw-bold order-customer-address">--</div>
+                        </div>
+                    </div>
+                </div>
+                <h5 class="mb-3">تفاصيل المنتجات</h5>
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="5%">#</th>
+                                <th width="40%">المنتج</th>
+                                <th width="15%">الكمية</th>
+                                <th width="20%">السعر</th>
+                                <th width="20%">الإجمالي</th>
+                            </tr>
+                        </thead>
+                        <tbody class="order-items">
+                            <tr>
+                                <td colspan="5" class="text-center py-4">
+                                    <span class="text-muted">لا توجد منتجات متاحة</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="4" class="text-end fw-bold">المجموع:</td>
+                                <td class="fw-bold order-subtotal">0.00 ج.م</td>
+                            </tr>
+                            <tr>
+                                <td colspan="4" class="text-end fw-bold">الضريبة (14%):</td>
+                                <td class="fw-bold order-tax">0.00 ج.م</td>
+                            </tr>
+                            <tr>
+                                <td colspan="4" class="text-end fw-bold">الخصم:</td>
+                                <td class="fw-bold order-discount">0.00 ج.م</td>
+                            </tr>
+                            <tr>
+                                <td colspan="4" class="text-end fw-bold">الإجمالي:</td>
+                                <td class="fw-bold order-total">0.00 ج.م</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <div class="mb-3">
+                    <label class="text-muted">ملاحظات:</label>
+                    <div class="order-notes">لا توجد ملاحظات متاحة</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                <button type="button" class="btn btn-primary edit-order-btn">تعديل الفاتورة</button>
+                <button type="button" class="btn btn-info print-order-btn">
+                    <i class="fas fa-print me-1"></i> طباعة الفاتورة
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Order Modal -->
+<div class="modal fade" id="addOrderModal" tabindex="-1" aria-labelledby="addOrderModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addOrderModalLabel">إضافة مبيعات جديدة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addOrderForm">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="orderDate" class="form-label">تاريخ الفاتورة</label>
+                                <input type="date" class="form-control datepicker" id="orderDate" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="customerSelect" class="form-label">العميل</label>
+                                <div class="input-group">
+                                    <select class="form-select" id="customerSelect" required>
+                                        <option value="">اختر العميل</option>
+                                        {% for client in clients %}
+                                            <option value="{{ client.id }}">{{ client.name }}</option>
+                                        {% endfor %}
+                                        <option value="new" class="text-primary">+ إضافة عميل جديد</option>
+                                    </select>
+                                    <button class="btn btn-outline-primary" type="button" id="addNewClientBtn">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <h5 class="mb-3">المنتجات</h5>
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="orderItemsTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="40%">المنتج</th>
+                                    <th width="15%">الكمية</th>
+                                    <th width="20%">السعر</th>
+                                    <th width="20%">الإجمالي</th>
+                                    <th width="5%"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <div class="input-group">
+                                            <select class="form-select product-select" required>
+                                                <option value="">اختر المنتج</option>
+                                                {% for product in products %}
+                                                    <option value="{{ product.id }}" data-price="{{ product.price }}" data-stock="{{ product.quantity }}">{{ product.name }}</option>
+                                                {% endfor %}
+                                                <option value="new" class="text-primary">+ إضافة منتج جديد</option>
+                                            </select>
+                                            <button class="btn btn-outline-primary add-new-product-btn" type="button">
+                                                <i class="fas fa-plus"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control item-quantity" min="1" value="1" required>
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control item-price" min="0" step="0.01" value="0.00" required>
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control item-total" min="0" step="0.01" value="0.00" readonly>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-danger remove-item">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="5">
+                                        <button type="button" class="btn btn-sm btn-success" id="addItemBtn">
+                                            <i class="fas fa-plus me-1"></i> إضافة منتج
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3" class="text-end fw-bold">المجموع:</td>
+                                    <td>
+                                        <input type="number" class="form-control" id="orderSubtotal" min="0" step="0.01" value="0.00" readonly>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3" class="text-end fw-bold">الضريبة (14%):</td>
+                                    <td>
+                                        <input type="number" class="form-control" id="orderTax" min="0" step="0.01" value="0.00" readonly>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3" class="text-end fw-bold">الخصم:</td>
+                                    <td>
+                                        <input type="number" class="form-control" id="orderDiscount" min="0" step="0.01" value="0.00">
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3" class="text-end fw-bold">الإجمالي:</td>
+                                    <td>
+                                        <input type="number" class="form-control" id="orderTotal" min="0" step="0.01" value="0.00" readonly>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    <div class="mb-3">
+                        <label for="orderNotes" class="form-label">ملاحظات</label>
+                        <textarea class="form-control" id="orderNotes" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" id="saveOrderBtn">حفظ الفاتورة</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmationModal" tabindex="-1" aria-labelledby="deleteConfirmationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteConfirmationModalLabel">تأكيد الحذف</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>هل أنت متأكد من حذف هذه الفاتورة؟</p>
+                <p class="text-danger"><small>لا يمكن التراجع عن هذا الإجراء.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">حذف</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set default date to today
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('orderDate').value = today;
+        
+        // Initialize datepicker with better styling
+        try {
+            $('.datepicker').datepicker({
+                format: 'yyyy-mm-dd',
+                autoclose: true,
+                todayHighlight: true,
+                language: 'ar',
+                rtl: true
+            });
+        } catch (e) {
+            console.log('Datepicker initialization failed, using native date input');
+        }
+        
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('keyup', function() {
+            const searchValue = this.value.toLowerCase();
+            const table = document.getElementById('ordersTable');
+            const rows = table.getElementsByTagName('tr');
+            
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                const cells = row.getElementsByTagName('td');
+                if (cells.length > 0) {
+                    const invoiceCell = cells[1].textContent.toLowerCase();
+                    const customerCell = cells[2].textContent.toLowerCase();
+                    const dateCell = cells[3].textContent.toLowerCase();
+                    
+                    if (invoiceCell.includes(searchValue) || 
+                        customerCell.includes(searchValue) || 
+                        dateCell.includes(searchValue)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                }
+            }
+        });
+        
+        // Filter functionality
+        const filterLinks = document.querySelectorAll('[data-filter]');
+        filterLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const filter = this.getAttribute('data-filter');
+                // In a real implementation, you would filter based on order status
+                // For demo purposes, we'll just show an alert
+                alert('تم اختيار تصفية: ' + filter);
+            });
+        });
+        
+        // View order details
+        const viewOrderButtons = document.querySelectorAll('.view-order');
+        viewOrderButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const orderId = this.getAttribute('data-id');
+                // Here you would normally fetch order details via AJAX
+                // For demo purposes, we'll just show the modal with placeholder data
+                const modal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
+                modal.show();
+                
+                // In a real implementation, you would update the modal with actual order data
+                // Example: document.querySelector('.order-invoice-number').textContent = orderData.invoiceNumber;
+            });
+        });
+        
+        // Edit order
+        const editOrderButtons = document.querySelectorAll('.edit-order');
+        editOrderButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const orderId = this.getAttribute('data-id');
+                // Here you would normally fetch order details via AJAX and populate the form
+                const modal = new bootstrap.Modal(document.getElementById('addOrderModal'));
+                document.getElementById('addOrderModalLabel').textContent = 'تعديل الفاتورة';
+                modal.show();
+            });
+        });
+        
+        // Print order
+        const printOrderButtons = document.querySelectorAll('.print-order');
+        printOrderButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const orderId = this.getAttribute('data-id');
+                alert('جاري طباعة الفاتورة رقم ' + orderId + '...');
+            });
+        });
+        
+        // Delete order
+        const deleteOrderButtons = document.querySelectorAll('.delete-order');
+        deleteOrderButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const orderId = this.getAttribute('data-id');
+                const modal = new bootstrap.Modal(document.getElementById('deleteConfirmationModal'));
+                modal.show();
+                
+                // Set up the confirm delete button
+                document.getElementById('confirmDeleteBtn').setAttribute('data-id', orderId);
+            });
+        });
+        
+        // Confirm delete
+        document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+            const orderId = this.getAttribute('data-id');
+            // Here you would normally send a delete request via AJAX
+            // For demo purposes, we'll just close the modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('deleteConfirmationModal'));
+            modal.hide();
+            
+            // Show a success message
+            alert('تم حذف الفاتورة بنجاح');
+        });
+        
+        // Save order
+        document.getElementById('saveOrderBtn').addEventListener('click', function() {
+            const form = document.getElementById('addOrderForm');
+            if (form.checkValidity()) {
+                // Show loading state
+                this.disabled = true;
+                this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> جاري الحفظ...';
+                
+                // Get form data
+                const orderDate = document.getElementById('orderDate').value;
+                const customerId = document.getElementById('customerSelect').value;
+                const notes = document.getElementById('orderNotes').value;
+                const subtotal = parseFloat(document.getElementById('orderSubtotal').value);
+                const tax = parseFloat(document.getElementById('orderTax').value);
+                const discount = parseFloat(document.getElementById('orderDiscount').value);
+                const total = parseFloat(document.getElementById('orderTotal').value);
+                
+                // Get order items
+                const items = [];
+                const rows = document.querySelectorAll('#orderItemsTable tbody tr');
+                
+                let isValid = true;
+                rows.forEach((row, index) => {
+                    const productSelect = row.querySelector('.product-select');
+                    const productId = productSelect.value;
+                    
+                    if (!productId || productId === 'new') {
+                        alert('يرجى اختيار منتج للصف رقم ' + (index + 1));
+                        isValid = false;
+                        return;
+                    }
+                    
+                    const productName = productSelect.options[productSelect.selectedIndex].text;
+                    const quantity = parseFloat(row.querySelector('.item-quantity').value);
+                    const price = parseFloat(row.querySelector('.item-price').value);
+                    const itemTotal = parseFloat(row.querySelector('.item-total').value);
+                    
+                    items.push({
+                        product_id: productId,
+                        product_name: productName,
+                        quantity: quantity,
+                        price: price,
+                        total: itemTotal
+                    });
+                });
+                
+                // Check if customer is selected and not "new"
+                if (!customerId || customerId === 'new') {
+                    alert('يرجى اختيار عميل');
+                    this.disabled = false;
+                    this.innerHTML = 'حفظ الفاتورة';
+                    return;
+                }
+                
+                if (!isValid) {
+                    this.disabled = false;
+                    this.innerHTML = 'حفظ الفاتورة';
+                    return;
+                }
+                
+                if (items.length === 0) {
+                    alert('يرجى إضافة منتج واحد على الأقل');
+                    this.disabled = false;
+                    this.innerHTML = 'حفظ الفاتورة';
+                    return;
+                }
+                
+                // Create order data object
+                const orderData = {
+                    client_id: customerId,
+                    order_date: orderDate,
+                    notes: notes,
+                    status: 'completed',
+                    tax_percentage: 14, // Fixed at 14%
+                    discount_amount: discount,
+                    items: items.map(item => ({
+                        product_id: item.product_id,
+                        quantity: item.quantity,
+                        price: item.price
+                    }))
+                };
+
+                // Check if user is authenticated
+                const isAuthenticated = document.querySelector('meta[name="user-is-authenticated"]');
+                if (isAuthenticated && isAuthenticated.content === 'true') {
+                    // Add user ID if authenticated
+                    const userId = document.querySelector('meta[name="user-id"]');
+                    if (userId) {
+                        orderData.created_by_id = userId.content;
+                    }
+                }
+                
+                // Log the data being sent for debugging
+                console.log('Sending order data:', orderData);
+                
+                // Send AJAX request to save order
+                fetch('/api/orders/create/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify(orderData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Close the modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('addOrderModal'));
+                    modal.hide();
+                    
+                    // Show success message
+                    alert('تم حفظ الفاتورة بنجاح');
+                    
+                    // Reload the page to show the updated order list
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    
+                    // Show more detailed error message
+                    let errorMessage = 'حدث خطأ أثناء الاتصال بالخادم';
+                    if (error.message) {
+                        errorMessage += ': ' + error.message;
+                    }
+                    
+                    alert(errorMessage);
+                })
+                .finally(() => {
+                    // Reset button state
+                    this.disabled = false;
+                    this.innerHTML = 'حفظ الفاتورة';
+                });
+            } else {
+                form.reportValidity();
+            }
+        });
+        
+        // Edit order button in details modal
+        document.querySelector('.edit-order-btn').addEventListener('click', function() {
+            // Close the details modal
+            const detailsModal = bootstrap.Modal.getInstance(document.getElementById('orderDetailsModal'));
+            detailsModal.hide();
+            
+            // Open the edit modal
+            const editModal = new bootstrap.Modal(document.getElementById('addOrderModal'));
+            document.getElementById('addOrderModalLabel').textContent = 'تعديل الفاتورة';
+            editModal.show();
+        });
+        
+        // Print order button
+        document.querySelector('.print-order-btn').addEventListener('click', function() {
+            alert('جاري طباعة الفاتورة...');
+        });
+        
+        // Add New Client Button
+        document.getElementById('addNewClientBtn').addEventListener('click', function() {
+            // Create a modal for adding a new client
+            const modalHtml = `
+                <div class="modal fade" id="addNewClientModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">إضافة عميل جديد</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="newClientForm">
+                                    <div class="mb-3">
+                                        <label for="newClientName" class="form-label">اسم العميل <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="newClientName" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="newClientPhone" class="form-label">رقم الهاتف</label>
+                                        <input type="text" class="form-control" id="newClientPhone">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="newClientEmail" class="form-label">البريد الإلكتروني</label>
+                                        <input type="email" class="form-control" id="newClientEmail">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="newClientAddress" class="form-label">العنوان</label>
+                                        <textarea class="form-control" id="newClientAddress" rows="2"></textarea>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                                <button type="button" class="btn btn-primary" id="saveNewClientBtn">حفظ</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add modal to the document
+            const modalContainer = document.createElement('div');
+            modalContainer.innerHTML = modalHtml;
+            document.body.appendChild(modalContainer);
+            
+            // Show the modal
+            const modal = new bootstrap.Modal(document.getElementById('addNewClientModal'));
+            modal.show();
+            
+            // Handle save button click
+            document.getElementById('saveNewClientBtn').addEventListener('click', function() {
+                const form = document.getElementById('newClientForm');
+                if (form.checkValidity()) {
+                    // Show loading state
+                    this.disabled = true;
+                    this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> جاري الحفظ...';
+                    
+                    // Get form data
+                    const clientData = {
+                        name: document.getElementById('newClientName').value,
+                        phone: document.getElementById('newClientPhone').value,
+                        email: document.getElementById('newClientEmail').value,
+                        address: document.getElementById('newClientAddress').value,
+                        type: 'regular'
+                    };
+                    
+                    // Send AJAX request to create new client
+                    fetch('/inventory/client/create/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken'),
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify(clientData)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        // Add new option to select
+                        const select = document.getElementById('customerSelect');
+                        const option = document.createElement('option');
+                        option.value = data.client_id || Date.now(); // Use timestamp as fallback ID
+                        option.textContent = clientData.name;
+                        
+                        // Insert before the "Add New" option
+                        select.insertBefore(option, select.lastElementChild);
+                        
+                        // Select the new option
+                        select.value = option.value;
+                        
+                        // Close the modal
+                        modal.hide();
+                        
+                        // Remove the modal from the DOM after it's hidden
+                        document.getElementById('addNewClientModal').addEventListener('hidden.bs.modal', function() {
+                            this.remove();
+                        });
+                        
+                        alert('تم إضافة العميل بنجاح');
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('حدث خطأ أثناء الاتصال بالخادم');
+                    })
+                    .finally(() => {
+                        // Reset button state
+                        this.disabled = false;
+                        this.innerHTML = 'حفظ';
+                    });
+                } else {
+                    form.reportValidity();
+                }
+            });
+        });
+        
+        // Add New Product Button
+        document.querySelectorAll('.add-new-product-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                // Create a modal for adding a new product
+                const modalHtml = `
+                    <div class="modal fade" id="addNewProductModal" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">إضافة منتج جديد</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <form id="newProductForm">
+                                        <div class="mb-3">
+                                            <label for="newProductName" class="form-label">اسم المنتج <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="newProductName" required>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="newProductPrice" class="form-label">سعر البيع <span class="text-danger">*</span></label>
+                                                    <input type="number" class="form-control" id="newProductPrice" step="0.01" min="0" required>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="newProductCostPrice" class="form-label">سعر التكلفة <span class="text-danger">*</span></label>
+                                                    <input type="number" class="form-control" id="newProductCostPrice" step="0.01" min="0" required>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="newProductQuantity" class="form-label">الكمية المتوفرة <span class="text-danger">*</span></label>
+                                            <input type="number" class="form-control" id="newProductQuantity" min="0" value="0" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="newProductDescription" class="form-label">الوصف</label>
+                                            <textarea class="form-control" id="newProductDescription" rows="2"></textarea>
+                                        </div>
+                                    </form>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                                    <button type="button" class="btn btn-primary" id="saveNewProductBtn">حفظ</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Add modal to the document
+                const modalContainer = document.createElement('div');
+                modalContainer.innerHTML = modalHtml;
+                document.body.appendChild(modalContainer);
+                
+                // Show the modal
+                const modal = new bootstrap.Modal(document.getElementById('addNewProductModal'));
+                modal.show();
+                
+                // Get the current row
+                const currentRow = this.closest('tr');
+                
+                // Handle save button click
+                document.getElementById('saveNewProductBtn').addEventListener('click', function() {
+                    const form = document.getElementById('newProductForm');
+                    if (form.checkValidity()) {
+                        // Show loading state
+                        this.disabled = true;
+                        this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> جاري الحفظ...';
+                        
+                        // Get form data
+                        const productData = {
+                            name: document.getElementById('newProductName').value,
+                            price: parseFloat(document.getElementById('newProductPrice').value),
+                            cost_price: parseFloat(document.getElementById('newProductCostPrice').value),
+                            quantity: parseInt(document.getElementById('newProductQuantity').value),
+                            description: document.getElementById('newProductDescription').value,
+                            sku: 'SKU-' + Date.now(), // Generate a temporary SKU
+                            reorder_level: 10 // Default reorder level
+                        };
+                        
+                        // Send AJAX request to create new product
+                        fetch('/inventory/product/create/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': getCookie('csrftoken'),
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            body: JSON.stringify(productData)
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Add new option to all product selects
+                                const productSelects = document.querySelectorAll('.product-select');
+                                productSelects.forEach(select => {
+                                    const option = document.createElement('option');
+                                    option.value = data.product_id;
+                                    option.textContent = productData.name;
+                                    option.setAttribute('data-price', productData.price);
+                                    option.setAttribute('data-stock', productData.quantity);
+                                    
+                                    // Insert before the "Add New" option
+                                    select.insertBefore(option, select.lastElementChild);
+                                });
+                                
+                                // Select the new option in the current row
+                                if (currentRow) {
+                                    const select = currentRow.querySelector('.product-select');
+                                    select.value = data.product_id;
+                                    
+                                    // Update price
+                                    const priceInput = currentRow.querySelector('.item-price');
+                                    priceInput.value = productData.price.toFixed(2);
+                                    
+                                    // Update item total
+                                    updateItemTotal(currentRow);
+                                    updateOrderTotals();
+                                }
+                                
+                                // Close the modal
+                                modal.hide();
+                                
+                                // Remove the modal from the DOM after it's hidden
+                                document.getElementById('addNewProductModal').addEventListener('hidden.bs.modal', function() {
+                                    this.remove();
+                                });
+                                
+                                alert('تم إضافة المنتج بنجاح');
+                            } else {
+                                alert(data.message || 'حدث خطأ أثناء إضافة المنتج');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('حدث خطأ أثناء الاتصال بالخادم');
+                        })
+                        .finally(() => {
+                            // Reset button state
+                            this.disabled = false;
+                            this.innerHTML = 'حفظ';
+                        });
+                    } else {
+                        form.reportValidity();
+                    }
+                });
+            });
+        });
+        
+        // Add item button
+        document.getElementById('addItemBtn').addEventListener('click', function() {
+            const tbody = document.querySelector('#orderItemsTable tbody');
+            const newRow = document.createElement('tr');
+            newRow.innerHTML = `
+                <td>
+                    <div class="input-group">
+                        <select class="form-select product-select" required>
+                            <option value="">اختر المنتج</option>
+                            {% for product in products %}
+                                <option value="{{ product.id }}" data-price="{{ product.price }}" data-stock="{{ product.quantity }}">{{ product.name }}</option>
+                            {% endfor %}
+                            <option value="new" class="text-primary">+ إضافة منتج جديد</option>
+                        </select>
+                        <button class="btn btn-outline-primary add-new-product-btn" type="button">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </td>
+                <td>
+                    <input type="number" class="form-control item-quantity" min="1" value="1" required>
+                </td>
+                <td>
+                    <input type="number" class="form-control item-price" min="0" step="0.01" value="0.00" required>
+                </td>
+                <td>
+                    <input type="number" class="form-control item-total" min="0" step="0.01" value="0.00" readonly>
+                </td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-danger remove-item">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(newRow);
+            
+            // Set up event listeners for the new row
+            setupItemEventListeners(newRow);
+            
+            // Update totals
+            updateOrderTotals();
+        });
+        
+        // Setup item event listeners
+        function setupItemEventListeners(row) {
+            const productSelect = row.querySelector('.product-select');
+            const quantityInput = row.querySelector('.item-quantity');
+            const priceInput = row.querySelector('.item-price');
+            const totalInput = row.querySelector('.item-total');
+            const removeButton = row.querySelector('.remove-item');
+            
+            // Product select change
+            productSelect.addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                const price = selectedOption.getAttribute('data-price') || 0;
+                priceInput.value = parseFloat(price).toFixed(2);
+                updateItemTotal(row);
+                updateOrderTotals();
+            });
+            
+            // Quantity change
+            quantityInput.addEventListener('input', function() {
+                updateItemTotal(row);
+                updateOrderTotals();
+            });
+            
+            // Price change
+            priceInput.addEventListener('input', function() {
+                updateItemTotal(row);
+                updateOrderTotals();
+            });
+            
+            // Remove item
+            removeButton.addEventListener('click', function() {
+                row.remove();
+                updateOrderTotals();
+            });
+        }
+        
+        // Update item total
+        function updateItemTotal(row) {
+            const quantity = parseFloat(row.querySelector('.item-quantity').value) || 0;
+            const price = parseFloat(row.querySelector('.item-price').value) || 0;
+            const total = quantity * price;
+            row.querySelector('.item-total').value = total.toFixed(2);
+        }
+        
+        // Update order totals
+        function updateOrderTotals() {
+            const itemTotals = document.querySelectorAll('.item-total');
+            let subtotal = 0;
+            
+            itemTotals.forEach(item => {
+                subtotal += parseFloat(item.value) || 0;
+            });
+            
+            const tax = subtotal * 0.14;
+            const discount = parseFloat(document.getElementById('orderDiscount').value) || 0;
+            const total = subtotal + tax - discount;
+            
+            document.getElementById('orderSubtotal').value = subtotal.toFixed(2);
+            document.getElementById('orderTax').value = tax.toFixed(2);
+            document.getElementById('orderTotal').value = total.toFixed(2);
+        }
+        
+        // Discount change
+        document.getElementById('orderDiscount').addEventListener('input', updateOrderTotals);
+        
+        // Setup initial event listeners for the first row
+        const firstRow = document.querySelector('#orderItemsTable tbody tr');
+        if (firstRow) {
+            setupItemEventListeners(firstRow);
+        }
+    });
+</script>
+{% endblock %}

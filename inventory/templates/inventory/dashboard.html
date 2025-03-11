@@ -1,0 +1,2219 @@
+{% extends 'core/base.html' %}
+
+{% block title %}لوحة التحكم - مخازن موهبة{% endblock %}
+
+{% block extra_css %}
+<style>
+    body, h1, h2, h3, h4, h5, h6, p, span, a, button, input, textarea, select, option {
+        font-family: 'Cairo', sans-serif !important;
+    }
+    .card-header .fw-bold,
+    .dropdown-menu,
+    .modal-title,
+    .modal-footer button,
+    .table th,
+    .table td,
+    .btn,
+    .badge,
+    .dropdown-item {
+        font-family: 'Cairo', sans-serif !important;
+    }
+    .pagination,
+    .form-label,
+    .form-control,
+    .form-select {
+        font-family: 'Cairo', sans-serif !important;
+    }
+    .dashboard-card {
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+    }
+    .dashboard-icon {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+    .table-hover tbody tr:hover {
+        background-color: rgba(67, 97, 238, 0.05);
+    }
+</style>
+{% endblock %}
+
+{% block page_title %}لوحة التحكم{% endblock %}
+
+{% block content %}
+<!-- Summary Cards -->
+<div class="row">
+    <!-- Sales Card -->
+    <div class="col-md-3">
+        <div class="card dashboard-card bg-gradient text-white" style="background-color: #E67E22;">
+            <div class="card-body text-center p-4">
+                <div class="dashboard-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <h5 class="card-title fw-bold">المبيعات (الشهر الحالي)</h5>
+                <h3 class="mb-0 fw-bold">{{ total_sales_current_month|floatformat:2 }} ج.م</h3>
+                <p class="mt-3 mb-0">
+                    {% if sales_growth > 0 %}
+                        <span class="badge bg-light text-primary"><i class="fas fa-arrow-up"></i> {{ sales_growth|floatformat:1 }}%</span>
+                    {% elif sales_growth < 0 %}
+                        <span class="badge bg-light text-danger"><i class="fas fa-arrow-down"></i> {{ sales_growth|floatformat:1 }}%</span>
+                    {% else %}
+                        <span class="badge bg-light text-secondary"><i class="fas fa-equals"></i> 0%</span>
+                    {% endif %}
+                    <span class="ms-1">مقارنة بالشهر السابق</span>
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Purchases Card -->
+    <div class="col-md-3">
+        <div class="card dashboard-card bg-gradient text-white" style="background-color: #01578A;">
+            <div class="card-body text-center p-4">
+                <div class="dashboard-icon">
+                    <i class="fas fa-truck"></i>
+                </div>
+                <h5 class="card-title fw-bold">المشتريات (الشهر الحالي)</h5>
+                <h3 class="mb-0 fw-bold">{{ total_purchases_current_month|floatformat:2 }} ج.م</h3>
+                <p class="mt-3 mb-0">
+                    <span class="badge bg-light text-primary">
+                        <i class="fas fa-info-circle"></i> إجمالي المشتريات
+                    </span>
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Profit Card -->
+    <div class="col-md-3">
+        <div class="card dashboard-card bg-gradient text-white" style="background-color: #27AE60;">
+            <div class="card-body text-center p-4">
+                <div class="dashboard-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h5 class="card-title fw-bold">الأرباح (الشهر الحالي)</h5>
+                <h3 class="mb-0 fw-bold">{{ total_profit_current_month|floatformat:2 }} ج.م</h3>
+                <p class="mt-3 mb-0">
+                    <span class="badge bg-light text-primary">
+                        <i class="fas fa-chart-pie"></i> صافي الأرباح
+                    </span>
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Low Stock Card -->
+    <div class="col-md-3">
+        <div class="card dashboard-card bg-gradient text-white" style="background-color: #C0392B;">
+            <div class="card-body text-center p-4">
+                <div class="dashboard-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h5 class="card-title fw-bold">منتجات منخفضة المخزون</h5>
+                <h3 class="mb-0 fw-bold">{{ low_stock_products.count }}</h3>
+                <p class="mt-3 mb-0">
+                    <button type="button" class="btn btn-light btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#productsModal" data-filter="low-stock">
+                        عرض التفاصيل
+                    </button>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mt-4">
+    <!-- Sales Chart -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold"><i class="fas fa-chart-line me-2 text-primary"></i>المبيعات خلال الستة أشهر الماضية</h5>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="salesChartOptions" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-cog"></i> خيارات
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="salesChartOptions">
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-download me-2"></i>تصدير البيانات</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-print me-2"></i>طباعة الرسم البياني</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body p-4">
+                <canvas id="salesChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Expenses Chart -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold"><i class="fas fa-chart-pie me-2 text-primary"></i>المصروفات حسب الفئة</h5>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="expensesChartOptions" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-cog"></i> خيارات
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="expensesChartOptions">
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-download me-2"></i>تصدير البيانات</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-print me-2"></i>طباعة الرسم البياني</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body p-4">
+                <canvas id="expensesChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity Row -->
+<div class="row mt-4">
+    <!-- Recent Orders -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold"><i class="fas fa-shopping-cart me-2 text-primary"></i>أحدث المبيعات</h5>
+                <a href="{% url 'order_list' %}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-list me-1"></i> عرض الكل
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>رقم الفاتورة</th>
+                                <th>العميل</th>
+                                <th>التاريخ</th>
+                                <th>المبلغ</th>
+                                <th>الحالة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in recent_orders %}
+                                <tr>
+                                    <td><a href="{% url 'order_detail' order.id %}" class="fw-bold text-primary">{{ order.invoice_number }}</a></td>
+                                    <td>{{ order.client.name }}</td>
+                                    <td><span class="text-muted">{{ order.order_date }}</span></td>
+                                    <td class="fw-bold">{{ order.total_amount|floatformat:2 }} ج.م</td>
+                                    <td>
+                                        {% if order.status == 'completed' %}
+                                            <span class="badge bg-success">مكتمل</span>
+                                        {% elif order.status == 'pending' %}
+                                            <span class="badge bg-warning text-dark">قيد الانتظار</span>
+                                        {% elif order.status == 'cancelled' %}
+                                            <span class="badge bg-danger">ملغي</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">مسودة</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-4">
+                                        <i class="fas fa-info-circle text-muted me-2"></i>
+                                        <span class="text-muted">لا توجد مبيعات حديثة</span>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Purchases -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold"><i class="fas fa-truck me-2 text-primary"></i>أحدث المشتريات</h5>
+                <a href="{% url 'purchase_order_list' %}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-list me-1"></i> عرض الكل
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>رقم الطلب</th>
+                                <th>المورد</th>
+                                <th>التاريخ</th>
+                                <th>المبلغ</th>
+                                <th>الحالة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for purchase in recent_purchases %}
+                                <tr>
+                                    <td><a href="{% url 'purchase_order_detail' purchase.id %}" class="fw-bold text-primary">{{ purchase.reference_number }}</a></td>
+                                    <td>{{ purchase.supplier.name }}</td>
+                                    <td><span class="text-muted">{{ purchase.date }}</span></td>
+                                    <td class="fw-bold">{{ purchase.get_total|floatformat:2 }} ج.م</td>
+                                    <td>
+                                        {% if purchase.status == 'received' %}
+                                            <span class="badge bg-success">مستلم</span>
+                                        {% elif purchase.status == 'pending' %}
+                                            <span class="badge bg-warning text-dark">قيد الانتظار</span>
+                                        {% elif purchase.status == 'cancelled' %}
+                                            <span class="badge bg-danger">ملغي</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">مسودة</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-4">
+                                        <i class="fas fa-info-circle text-muted me-2"></i>
+                                        <span class="text-muted">لا توجد مشتريات حديثة</span>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top Products Row -->
+<div class="row mt-4 mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold"><i class="fas fa-medal me-2 text-primary"></i>أكثر المنتجات مبيعاً</h5>
+                <div>
+                    <button type="button" class="btn btn-sm btn-outline-primary me-2" data-bs-toggle="modal" data-bs-target="#productsModal" data-filter="all">
+                        <i class="fas fa-box me-1"></i> عرض كل المنتجات
+                    </button>
+                    <a href="{% url 'sales_report' %}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-file-alt me-1"></i> عرض التقرير الكامل
+                    </a>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th width="5%">#</th>
+                                <th width="65%">المنتج</th>
+                                <th width="30%">الكمية المباعة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in top_selling_products %}
+                                <tr>
+                                    <td class="text-center">
+                                        {% if forloop.counter == 1 %}
+                                            <span class="badge rounded-pill bg-warning text-dark">
+                                                <i class="fas fa-trophy"></i>
+                                            </span>
+                                        {% else %}
+                                            {{ forloop.counter }}
+                                        {% endif %}
+                                    </td>
+                                    <td class="fw-bold">{{ product.product__name }}</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="progress flex-grow-1 me-2" style="height: 8px;">
+                                                <div class="progress-bar bg-primary" role="progressbar"
+                                                    style="width: {% widthratio product.total_sold top_selling_products.0.total_sold 100 %}%;"
+                                                    aria-valuenow="{{ product.total_sold }}" aria-valuemin="0"
+                                                    aria-valuemax="{{ top_selling_products.0.total_sold }}"></div>
+                                            </div>
+                                            <span class="fw-bold">{{ product.total_sold }}</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center py-4">
+                                        <i class="fas fa-info-circle text-muted me-2"></i>
+                                        <span class="text-muted">لا توجد بيانات متاحة</span>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Access Buttons -->
+<div class="position-fixed" style="bottom: 20px; left: 20px; z-index: 1000;">
+    <div class="d-flex flex-column align-items-center gap-2">
+        <button type="button" class="btn btn-primary rounded-circle shadow" style="width: 60px; height: 60px;" data-bs-toggle="modal" data-bs-target="#clientsModal" data-filter="all" title="عرض العملاء">
+            <i class="fas fa-users" style="font-size: 1.5rem;"></i>
+        </button>
+        <button type="button" class="btn btn-primary rounded-circle shadow" style="width: 60px; height: 60px;" data-bs-toggle="modal" data-bs-target="#suppliersModal" data-filter="all" title="عرض الموردين">
+            <i class="fas fa-truck" style="font-size: 1.5rem;"></i>
+        </button>
+    </div>
+</div>
+
+<!-- Products Modal -->
+<div class="modal fade" id="productsModal" tabindex="-1" aria-labelledby="productsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="productsModalLabel">قائمة المنتجات</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center py-5" id="productsLoading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">جاري التحميل...</span>
+                    </div>
+                    <p class="mt-2">جاري تحميل المنتجات...</p>
+                </div>
+                <div id="productsContent" style="display: none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                <button type="button" class="btn btn-primary" id="addNewProductBtn">
+                    <i class="fas fa-plus me-1"></i> إضافة منتج جديد
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Suppliers Modal -->
+<div class="modal fade" id="suppliersModal" tabindex="-1" aria-labelledby="suppliersModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="suppliersModalLabel">قائمة الموردين</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center py-5" id="suppliersLoading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">جاري التحميل...</span>
+                    </div>
+                    <p class="mt-2">جاري تحميل الموردين...</p>
+                </div>
+                <div id="suppliersContent" style="display: none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                <button type="button" class="btn btn-primary" id="addNewSupplierBtn">
+                    <i class="fas fa-plus me-1"></i> إضافة مورد جديد
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Clients Modal -->
+<div class="modal fade" id="clientsModal" tabindex="-1" aria-labelledby="clientsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="clientsModalLabel">قائمة العملاء</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center py-5" id="clientsLoading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">جاري التحميل...</span>
+                    </div>
+                    <p class="mt-2">جاري تحميل العملاء...</p>
+                </div>
+                <div id="clientsContent" style="display: none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                <button type="button" class="btn btn-primary" id="addNewClientBtn">
+                    <i class="fas fa-plus me-1"></i> إضافة عميل جديد
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Products and Suppliers Modal Functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const productsModal = document.getElementById('productsModal');
+        const productsContent = document.getElementById('productsContent');
+        const productsLoading = document.getElementById('productsLoading');
+        const addNewProductBtn = document.getElementById('addNewProductBtn');
+        
+        // Function to load products
+        function loadProducts(filter = 'all') {
+            productsContent.style.display = 'none';
+            productsLoading.style.display = 'block';
+            
+            // In a real implementation, this would be an AJAX call to fetch products
+            // For demo purposes, we'll simulate a delay and then show content
+            setTimeout(function() {
+                // This is where you would normally make an AJAX request
+                // For demo, we'll just create some HTML content based on the filter
+                let content = `
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 fw-bold"><i class="fas fa-box me-2 text-primary"></i>قائمة المنتجات</h5>
+                        <div class="d-flex">
+                            <div class="input-group me-2" style="width: 300px;">
+                                <input type="text" id="modalSearchInput" class="form-control" placeholder="بحث عن منتج...">
+                                <button class="btn btn-outline-secondary" type="button">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                            <div class="dropdown">
+                                <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="modalFilterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-filter"></i> تصفية
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="modalFilterDropdown">
+                                    <li><a class="dropdown-item modal-filter" href="#" data-filter="all">جميع المنتجات</a></li>
+                                    <li><a class="dropdown-item modal-filter" href="#" data-filter="low-stock">المنتجات منخفضة المخزون</a></li>
+                                    <li><a class="dropdown-item modal-filter" href="#" data-filter="out-of-stock">المنتجات غير المتوفرة</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0" id="modalProductsTable">
+                                <thead>
+                                    <tr>
+                                        <th width="5%">#</th>
+                                        <th width="30%">اسم المنتج</th>
+                                        <th width="15%">الكود</th>
+                                        <th width="15%">السعر</th>
+                                        <th width="15%">المخزون</th>
+                                        <th width="10%">الحالة</th>
+                                        <th width="10%">الإجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>`;
+                
+                // Generate different content based on filter
+                const products = [
+                    { id: 1, name: 'منتج 1', category: 'إلكترونيات', code: 'P001', price: 1500, stock: 25 },
+                    { id: 2, name: 'منتج 2', category: 'أدوات منزلية', code: 'P002', price: 750, stock: 12 },
+                    { id: 3, name: 'منتج 3', category: 'إلكترونيات', code: 'P003', price: 2200, stock: 5 },
+                    { id: 4, name: 'منتج 4', category: 'ملابس', code: 'P004', price: 350, stock: 0 },
+                    { id: 5, name: 'منتج 5', category: 'أدوات منزلية', code: 'P005', price: 890, stock: 8 }
+                ];
+                
+                let filteredProducts = products;
+                if (filter === 'low-stock') {
+                    filteredProducts = products.filter(p => p.stock > 0 && p.stock <= 5);
+                    document.getElementById('productsModalLabel').textContent = 'المنتجات منخفضة المخزون';
+                } else if (filter === 'out-of-stock') {
+                    filteredProducts = products.filter(p => p.stock <= 0);
+                    document.getElementById('productsModalLabel').textContent = 'المنتجات غير المتوفرة';
+                } else {
+                    document.getElementById('productsModalLabel').textContent = 'قائمة المنتجات';
+                }
+                
+                if (filteredProducts.length === 0) {
+                    content += `
+                        <tr>
+                            <td colspan="7" class="text-center py-4">
+                                <i class="fas fa-box-open text-muted mb-3" style="font-size: 3rem;"></i>
+                                <p class="text-muted mb-0">لا توجد منتجات متاحة</p>
+                            </td>
+                        </tr>`;
+                } else {
+                    filteredProducts.forEach((product, index) => {
+                        let statusBadge = '';
+                        let progressBarClass = '';
+                        
+                        if (product.stock <= 0) {
+                            statusBadge = '<span class="badge bg-danger">غير متوفر</span>';
+                            progressBarClass = 'bg-danger';
+                        } else if (product.stock <= 5) {
+                            statusBadge = '<span class="badge bg-warning text-dark">منخفض</span>';
+                            progressBarClass = 'bg-warning';
+                        } else {
+                            statusBadge = '<span class="badge bg-success">متوفر</span>';
+                            progressBarClass = 'bg-success';
+                        }
+                        
+                        content += `
+                            <tr>
+                                <td>${index + 1}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="product-icon me-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background-color: rgba(67, 97, 238, 0.1); border-radius: 8px;">
+                                            <i class="fas fa-box text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold">${product.name}</div>
+                                            <div class="text-muted small">${product.category}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>${product.code}</td>
+                                <td>${product.price.toLocaleString()} ج.م</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress flex-grow-1 me-2" style="height: 6px;">
+                                            <div class="progress-bar ${progressBarClass}" role="progressbar" style="width: ${Math.min(product.stock * 2, 100)}%;" aria-valuenow="${product.stock}" aria-valuemin="0" aria-valuemax="50"></div>
+                                        </div>
+                                        <span class="fw-bold">${product.stock}</span>
+                                    </div>
+                                </td>
+                                <td>${statusBadge}</td>
+                                <td>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="actionDropdown${index}" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </button>
+                                        <ul class="dropdown-menu" aria-labelledby="actionDropdown${index}">
+                                            <li><a class="dropdown-item modal-view-product" href="#" data-id="${product.id}"><i class="fas fa-eye me-2"></i>عرض التفاصيل</a></li>
+                                            <li><a class="dropdown-item modal-edit-product" href="#" data-id="${product.id}"><i class="fas fa-edit me-2"></i>تعديل</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item text-danger modal-delete-product" href="#" data-id="${product.id}"><i class="fas fa-trash-alt me-2"></i>حذف</a></li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>`;
+                    });
+                }
+                
+                content += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>`;
+                
+                productsContent.innerHTML = content;
+                productsLoading.style.display = 'none';
+                productsContent.style.display = 'block';
+                
+                // Set up event listeners for the modal content
+                setupModalEventListeners();
+            }, 1000); // Simulate network delay
+        }
+        
+        // Set up event listeners for modal content
+        function setupModalEventListeners() {
+            // Filter buttons
+            document.querySelectorAll('.modal-filter').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const filter = this.getAttribute('data-filter');
+                    loadProducts(filter);
+                });
+            });
+            
+            // Search functionality
+            const searchInput = document.getElementById('modalSearchInput');
+            if (searchInput) {
+                searchInput.addEventListener('keyup', function() {
+                    const searchValue = this.value.toLowerCase();
+                    const table = document.getElementById('modalProductsTable');
+                    const rows = table.getElementsByTagName('tr');
+                    
+                    for (let i = 1; i < rows.length; i++) {
+                        const row = rows[i];
+                        const cells = row.getElementsByTagName('td');
+                        if (cells.length > 0) {
+                            const nameCell = cells[1].textContent.toLowerCase();
+                            const codeCell = cells[2].textContent.toLowerCase();
+                            
+                            if (nameCell.includes(searchValue) || codeCell.includes(searchValue)) {
+                                row.style.display = '';
+                            } else {
+                                row.style.display = 'none';
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // View product details
+            document.querySelectorAll('.modal-view-product').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const productId = this.getAttribute('data-id');
+                    alert('عرض تفاصيل المنتج رقم: ' + productId);
+                });
+            });
+            
+            // Edit product
+            document.querySelectorAll('.modal-edit-product').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const productId = this.getAttribute('data-id');
+                    
+                    // Show loading state
+                    const originalText = this.innerHTML;
+                    this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> جاري التحميل...';
+                    this.disabled = true;
+                    
+                    // Fetch product details
+                    fetch(`/inventory/product/${productId}/edit/`, {
+                        method: 'GET',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // Create edit modal with product data
+                        const modalHtml = `
+                            <div class="modal fade" id="editProductModal" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">تعديل المنتج</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <form id="editProductForm">
+                                                <input type="hidden" id="editProductId" value="${data.id}">
+                                                <div class="mb-3">
+                                                    <label for="editProductName" class="form-label">اسم المنتج <span class="text-danger">*</span></label>
+                                                    <input type="text" class="form-control" id="editProductName" value="${data.name}" required>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            <label for="editProductPrice" class="form-label">سعر البيع <span class="text-danger">*</span></label>
+                                                            <input type="number" class="form-control" id="editProductPrice" step="0.01" min="0" value="${data.price}" required>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            <label for="editProductCostPrice" class="form-label">سعر التكلفة <span class="text-danger">*</span></label>
+                                                            <input type="number" class="form-control" id="editProductCostPrice" step="0.01" min="0" value="${data.cost_price}" required>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="editProductQuantity" class="form-label">الكمية المتوفرة <span class="text-danger">*</span></label>
+                                                    <input type="number" class="form-control" id="editProductQuantity" min="0" value="${data.quantity}" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="editProductDescription" class="form-label">الوصف</label>
+                                                    <textarea class="form-control" id="editProductDescription" rows="2">${data.description || ''}</textarea>
+                                                </div>
+                                            </form>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                                            <button type="button" class="btn btn-primary" id="saveEditProductBtn">حفظ التغييرات</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Add modal to the document
+                        const modalContainer = document.createElement('div');
+                        modalContainer.innerHTML = modalHtml;
+                        document.body.appendChild(modalContainer);
+                        
+                        // Show the modal
+                        const modal = new bootstrap.Modal(document.getElementById('editProductModal'));
+                        modal.show();
+                        
+                        // Handle save button click
+                        document.getElementById('saveEditProductBtn').addEventListener('click', function() {
+                            const form = document.getElementById('editProductForm');
+                            if (form.checkValidity()) {
+                                // Show loading state
+                                this.disabled = true;
+                                this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> جاري الحفظ...';
+                                
+                                // Get form data
+                                const productData = {
+                                    id: document.getElementById('editProductId').value,
+                                    name: document.getElementById('editProductName').value,
+                                    price: parseFloat(document.getElementById('editProductPrice').value),
+                                    cost_price: parseFloat(document.getElementById('editProductCostPrice').value),
+                                    quantity: parseInt(document.getElementById('editProductQuantity').value),
+                                    description: document.getElementById('editProductDescription').value
+                                };
+                                
+                                // Send AJAX request to update product
+                                fetch(`/inventory/product/${productData.id}/update/`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRFToken': getCookie('csrftoken'),
+                                        'X-Requested-With': 'XMLHttpRequest'
+                                    },
+                                    body: JSON.stringify(productData)
+                                })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        // Close the modal
+                                        modal.hide();
+                                        
+                                        // Remove the modal from the DOM after it's hidden
+                                        document.getElementById('editProductModal').addEventListener('hidden.bs.modal', function() {
+                                            this.remove();
+                                        });
+                                        
+                                        // Show success message
+                                        alert('تم تحديث المنتج بنجاح');
+                                        
+                                        // Reload products content
+                                        loadProducts();
+                                    } else {
+                                        alert(data.message || 'حدث خطأ أثناء تحديث المنتج');
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Error:', error);
+                                    alert('حدث خطأ أثناء الاتصال بالخادم');
+                                })
+                                .finally(() => {
+                                    // Reset button state
+                                    this.disabled = false;
+                                    this.innerHTML = 'حفظ التغييرات';
+                                });
+                            } else {
+                                form.reportValidity();
+                            }
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('حدث خطأ أثناء تحميل بيانات المنتج');
+                    })
+                    .finally(() => {
+                        // Reset button state
+                        this.innerHTML = originalText;
+                        this.disabled = false;
+                    });
+                });
+            });
+            
+            // Delete product
+            document.querySelectorAll('.modal-delete-product').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const productId = this.getAttribute('data-id');
+                    if (confirm('هل أنت متأكد من حذف هذا المنتج؟')) {
+                        // Show loading state
+                        const originalText = this.innerHTML;
+                        this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> جاري الحذف...';
+                        this.disabled = true;
+                        
+                        // Send AJAX request to delete product
+                        fetch(`/inventory/product/${productId}/delete/`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': getCookie('csrftoken'),
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Show success message
+                                alert('تم حذف المنتج بنجاح');
+                                
+                                // Reload products content
+                                loadProducts();
+                            } else {
+                                alert(data.message || 'حدث خطأ أثناء حذف المنتج');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('حدث خطأ أثناء الاتصال بالخادم');
+                        })
+                        .finally(() => {
+                            // Reset button state
+                            this.innerHTML = originalText;
+                            this.disabled = false;
+                        });
+                    }
+                });
+            });
+        }
+        
+        // Modal events
+        productsModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const filter = button.getAttribute('data-filter') || 'all';
+            loadProducts(filter);
+        });
+        
+        // Add new product button
+        addNewProductBtn.addEventListener('click', function() {
+            // Create a modal for adding a new product
+            const modalHtml = `
+                <div class="modal fade" id="addNewProductModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">إضافة منتج جديد</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="newProductForm">
+                                    <div class="mb-3">
+                                        <label for="newProductName" class="form-label">اسم المنتج <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="newProductName" required>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="newProductPrice" class="form-label">سعر البيع <span class="text-danger">*</span></label>
+                                                <input type="number" class="form-control" id="newProductPrice" step="0.01" min="0" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="newProductCostPrice" class="form-label">سعر التكلفة <span class="text-danger">*</span></label>
+                                                <input type="number" class="form-control" id="newProductCostPrice" step="0.01" min="0" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="newProductQuantity" class="form-label">الكمية المتوفرة <span class="text-danger">*</span></label>
+                                        <input type="number" class="form-control" id="newProductQuantity" min="0" value="0" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="newProductDescription" class="form-label">الوصف</label>
+                                        <textarea class="form-control" id="newProductDescription" rows="2"></textarea>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                                <button type="button" class="btn btn-primary" id="saveNewProductBtn">حفظ</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add modal to the document
+            const modalContainer = document.createElement('div');
+            modalContainer.innerHTML = modalHtml;
+            document.body.appendChild(modalContainer);
+            
+            // Show the modal
+            const modal = new bootstrap.Modal(document.getElementById('addNewProductModal'));
+            modal.show();
+            
+            // Handle save button click
+            document.getElementById('saveNewProductBtn').addEventListener('click', function() {
+                const form = document.getElementById('newProductForm');
+                if (form.checkValidity()) {
+                    // Show loading state
+                    this.disabled = true;
+                    this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> جاري الحفظ...';
+                    
+                    // Get form data
+                    const productData = {
+                        name: document.getElementById('newProductName').value,
+                        price: parseFloat(document.getElementById('newProductPrice').value),
+                        cost_price: parseFloat(document.getElementById('newProductCostPrice').value),
+                        quantity: parseInt(document.getElementById('newProductQuantity').value),
+                        description: document.getElementById('newProductDescription').value,
+                        sku: 'SKU-' + Date.now(), // Generate a temporary SKU
+                        reorder_level: 10 // Default reorder level
+                    };
+                    
+                    // Get CSRF token
+                    function getCookie(name) {
+                        let cookieValue = null;
+                        if (document.cookie && document.cookie !== '') {
+                            const cookies = document.cookie.split(';');
+                            for (let i = 0; i < cookies.length; i++) {
+                                const cookie = cookies[i].trim();
+                                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                                    break;
+                                }
+                            }
+                        }
+                        return cookieValue;
+                    }
+                    
+                    // Send AJAX request to create new product
+                    fetch('/inventory/product/create/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken'),
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify(productData)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Close the modal
+                            modal.hide();
+                            
+                            // Remove the modal from the DOM after it's hidden
+                            document.getElementById('addNewProductModal').addEventListener('hidden.bs.modal', function() {
+                                this.remove();
+                            });
+                            
+                            // Show success message
+                            alert('تم إضافة المنتج بنجاح');
+                            
+                            // Reload products content
+                            loadProducts();
+                        } else {
+                            alert(data.message || 'حدث خطأ أثناء إضافة المنتج');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('حدث خطأ أثناء الاتصال بالخادم');
+                    })
+                    .finally(() => {
+                        // Reset button state
+                        this.disabled = false;
+                        this.innerHTML = 'حفظ';
+                    });
+                } else {
+                    form.reportValidity();
+                }
+            });
+        });
+        
+        // Suppliers Modal Functionality
+        const suppliersModal = document.getElementById('suppliersModal');
+        const suppliersContent = document.getElementById('suppliersContent');
+        const suppliersLoading = document.getElementById('suppliersLoading');
+        const addNewSupplierBtn = document.getElementById('addNewSupplierBtn');
+        
+        // Function to load suppliers
+        function loadSuppliers(filter = 'all') {
+            suppliersContent.style.display = 'none';
+            suppliersLoading.style.display = 'block';
+            
+            // In a real implementation, this would be an AJAX call to fetch suppliers
+            // For demo purposes, we'll simulate a delay and then show content
+            setTimeout(function() {
+                // This is where you would normally make an AJAX request
+                // For demo, we'll just create some HTML content based on the filter
+                let content = `
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 fw-bold"><i class="fas fa-truck me-2 text-primary"></i>قائمة الموردين</h5>
+                        <div class="d-flex">
+                            <div class="input-group me-2" style="width: 300px;">
+                                <input type="text" id="modalSupplierSearchInput" class="form-control" placeholder="بحث عن مورد...">
+                                <button class="btn btn-outline-secondary" type="button">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                            <div class="dropdown">
+                                <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="modalSupplierFilterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-filter"></i> تصفية
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="modalSupplierFilterDropdown">
+                                    <li><a class="dropdown-item modal-supplier-filter" href="#" data-filter="all">جميع الموردين</a></li>
+                                    <li><a class="dropdown-item modal-supplier-filter" href="#" data-filter="active">الموردين النشطين</a></li>
+                                    <li><a class="dropdown-item modal-supplier-filter" href="#" data-filter="inactive">الموردين غير النشطين</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0" id="modalSuppliersTable">
+                                <thead>
+                                    <tr>
+                                        <th width="5%">#</th>
+                                        <th width="20%">اسم المورد</th>
+                                        <th width="15%">الشخص المسؤول</th>
+                                        <th width="15%">رقم الهاتف</th>
+                                        <th width="15%">البريد الإلكتروني</th>
+                                        <th width="20%">العنوان</th>
+                                        <th width="10%">الإجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>`;
+                
+                // Generate different content based on filter
+                const suppliers = [
+                    { id: 1, name: 'شركة الأمل للتوريدات', contact: 'أحمد محمد', phone: '01012345678', email: 'ahmed@example.com', address: 'القاهرة، مصر', status: 'active' },
+                    { id: 2, name: 'مؤسسة النور', contact: 'محمد علي', phone: '01123456789', email: 'mohamed@example.com', address: 'الإسكندرية، مصر', status: 'active' },
+                    { id: 3, name: 'شركة المستقبل', contact: 'سارة أحمد', phone: '01234567890', email: 'sara@example.com', address: 'الجيزة، مصر', status: 'inactive' },
+                    { id: 4, name: 'مؤسسة الرواد', contact: 'خالد محمود', phone: '01198765432', email: 'khaled@example.com', address: 'المنصورة، مصر', status: 'active' },
+                    { id: 5, name: 'شركة التقدم', contact: 'هدى علي', phone: '01187654321', email: 'hoda@example.com', address: 'أسيوط، مصر', status: 'inactive' }
+                ];
+                
+                let filteredSuppliers = suppliers;
+                if (filter === 'active') {
+                    filteredSuppliers = suppliers.filter(s => s.status === 'active');
+                    document.getElementById('suppliersModalLabel').textContent = 'الموردين النشطين';
+                } else if (filter === 'inactive') {
+                    filteredSuppliers = suppliers.filter(s => s.status === 'inactive');
+                    document.getElementById('suppliersModalLabel').textContent = 'الموردين غير النشطين';
+                } else {
+                    document.getElementById('suppliersModalLabel').textContent = 'قائمة الموردين';
+                }
+                
+                if (filteredSuppliers.length === 0) {
+                    content += `
+                        <tr>
+                            <td colspan="7" class="text-center py-4">
+                                <i class="fas fa-truck text-muted mb-3" style="font-size: 3rem;"></i>
+                                <p class="text-muted mb-0">لا يوجد موردين متاحين</p>
+                            </td>
+                        </tr>`;
+                } else {
+                    filteredSuppliers.forEach((supplier, index) => {
+                        const statusBadge = supplier.status === 'active'
+                            ? '<span class="badge bg-success">نشط</span>'
+                            : '<span class="badge bg-secondary">غير نشط</span>';
+                        
+                        content += `
+                            <tr>
+                                <td>${index + 1}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="supplier-icon me-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background-color: rgba(67, 97, 238, 0.1); border-radius: 8px;">
+                                            <i class="fas fa-building text-primary"></i>
+                                        </div>
+                                        <div class="fw-bold">${supplier.name}</div>
+                                    </div>
+                                </td>
+                                <td>${supplier.contact}</td>
+                                <td><a href="tel:${supplier.phone}" class="text-decoration-none">${supplier.phone}</a></td>
+                                <td><a href="mailto:${supplier.email}" class="text-decoration-none">${supplier.email}</a></td>
+                                <td>
+                                    <div class="text-truncate" style="max-width: 200px;" title="${supplier.address}">
+                                        ${supplier.address}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="supplierActionDropdown${index}" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </button>
+                                        <ul class="dropdown-menu" aria-labelledby="supplierActionDropdown${index}">
+                                            <li><a class="dropdown-item modal-view-supplier" href="#" data-id="${supplier.id}"><i class="fas fa-eye me-2"></i>عرض التفاصيل</a></li>
+                                            <li><a class="dropdown-item modal-edit-supplier" href="#" data-id="${supplier.id}"><i class="fas fa-edit me-2"></i>تعديل</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item text-danger modal-delete-supplier" href="#" data-id="${supplier.id}"><i class="fas fa-trash-alt me-2"></i>حذف</a></li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>`;
+                    });
+                }
+                
+                content += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>`;
+                
+                suppliersContent.innerHTML = content;
+                suppliersLoading.style.display = 'none';
+                suppliersContent.style.display = 'block';
+                
+                // Set up event listeners for the modal content
+                setupSupplierModalEventListeners();
+            }, 1000); // Simulate network delay
+        }
+        
+        // Set up event listeners for supplier modal content
+        function setupSupplierModalEventListeners() {
+            // Filter buttons
+            document.querySelectorAll('.modal-supplier-filter').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const filter = this.getAttribute('data-filter');
+                    loadSuppliers(filter);
+                });
+            });
+            
+            // Search functionality
+            const searchInput = document.getElementById('modalSupplierSearchInput');
+            if (searchInput) {
+                searchInput.addEventListener('keyup', function() {
+                    const searchValue = this.value.toLowerCase();
+                    const table = document.getElementById('modalSuppliersTable');
+                    const rows = table.getElementsByTagName('tr');
+                    
+                    for (let i = 1; i < rows.length; i++) {
+                        const row = rows[i];
+                        const cells = row.getElementsByTagName('td');
+                        if (cells.length > 0) {
+                            const nameCell = cells[1].textContent.toLowerCase();
+                            const contactCell = cells[2].textContent.toLowerCase();
+                            const phoneCell = cells[3].textContent.toLowerCase();
+                            const emailCell = cells[4].textContent.toLowerCase();
+                            
+                            if (nameCell.includes(searchValue) ||
+                                contactCell.includes(searchValue) ||
+                                phoneCell.includes(searchValue) ||
+                                emailCell.includes(searchValue)) {
+                                row.style.display = '';
+                            } else {
+                                row.style.display = 'none';
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // View supplier details
+            document.querySelectorAll('.modal-view-supplier').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const supplierId = this.getAttribute('data-id');
+                    alert('عرض تفاصيل المورد رقم: ' + supplierId);
+                });
+            });
+            
+            // Edit supplier
+            document.querySelectorAll('.modal-edit-supplier').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const supplierId = this.getAttribute('data-id');
+                    
+                    // Show loading state
+                    const originalText = this.innerHTML;
+                    this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> جاري التحميل...';
+                    this.disabled = true;
+                    
+                    // Fetch supplier details
+                    fetch(`/inventory/supplier/${supplierId}/edit/`, {
+                        method: 'GET',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // Create edit modal with supplier data
+                        const modalHtml = `
+                            <div class="modal fade" id="editSupplierModal" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">تعديل المورد</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <form id="editSupplierForm">
+                                                <input type="hidden" id="editSupplierId" value="${data.id}">
+                                                <div class="mb-3">
+                                                    <label for="editSupplierName" class="form-label">اسم المورد <span class="text-danger">*</span></label>
+                                                    <input type="text" class="form-control" id="editSupplierName" value="${data.name}" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="editSupplierContactPerson" class="form-label">الشخص المسؤول</label>
+                                                    <input type="text" class="form-control" id="editSupplierContactPerson" value="${data.contact_person || ''}">
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="editSupplierPhone" class="form-label">رقم الهاتف</label>
+                                                    <input type="text" class="form-control" id="editSupplierPhone" value="${data.phone || ''}">
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="editSupplierEmail" class="form-label">البريد الإلكتروني</label>
+                                                    <input type="email" class="form-control" id="editSupplierEmail" value="${data.email || ''}">
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="editSupplierAddress" class="form-label">العنوان</label>
+                                                    <textarea class="form-control" id="editSupplierAddress" rows="2">${data.address || ''}</textarea>
+                                                </div>
+                                            </form>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                                            <button type="button" class="btn btn-primary" id="saveEditSupplierBtn">حفظ التغييرات</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Add modal to the document
+                        const modalContainer = document.createElement('div');
+                        modalContainer.innerHTML = modalHtml;
+                        document.body.appendChild(modalContainer);
+                        
+                        // Show the modal
+                        const modal = new bootstrap.Modal(document.getElementById('editSupplierModal'));
+                        modal.show();
+                        
+                        // Handle save button click
+                        document.getElementById('saveEditSupplierBtn').addEventListener('click', function() {
+                            const form = document.getElementById('editSupplierForm');
+                            if (form.checkValidity()) {
+                                // Show loading state
+                                this.disabled = true;
+                                this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> جاري الحفظ...';
+                                
+                                // Get form data
+                                const supplierData = {
+                                    id: document.getElementById('editSupplierId').value,
+                                    name: document.getElementById('editSupplierName').value,
+                                    contact_person: document.getElementById('editSupplierContactPerson').value,
+                                    phone: document.getElementById('editSupplierPhone').value,
+                                    email: document.getElementById('editSupplierEmail').value,
+                                    address: document.getElementById('editSupplierAddress').value
+                                };
+                                
+                                // Send AJAX request to update supplier
+                                fetch(`/inventory/supplier/${supplierData.id}/update/`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRFToken': getCookie('csrftoken'),
+                                        'X-Requested-With': 'XMLHttpRequest'
+                                    },
+                                    body: JSON.stringify(supplierData)
+                                })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        // Close the modal
+                                        modal.hide();
+                                        
+                                        // Remove the modal from the DOM after it's hidden
+                                        document.getElementById('editSupplierModal').addEventListener('hidden.bs.modal', function() {
+                                            this.remove();
+                                        });
+                                        
+                                        // Show success message
+                                        alert('تم تحديث المورد بنجاح');
+                                        
+                                        // Reload suppliers content
+                                        loadSuppliers();
+                                    } else {
+                                        alert(data.message || 'حدث خطأ أثناء تحديث المورد');
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Error:', error);
+                                    alert('حدث خطأ أثناء الاتصال بالخادم');
+                                })
+                                .finally(() => {
+                                    // Reset button state
+                                    this.disabled = false;
+                                    this.innerHTML = 'حفظ التغييرات';
+                                });
+                            } else {
+                                form.reportValidity();
+                            }
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('حدث خطأ أثناء تحميل بيانات المورد');
+                    })
+                    .finally(() => {
+                        // Reset button state
+                        this.innerHTML = originalText;
+                        this.disabled = false;
+                    });
+                });
+            });
+            
+            // Delete supplier
+            document.querySelectorAll('.modal-delete-supplier').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const supplierId = this.getAttribute('data-id');
+                    if (confirm('هل أنت متأكد من حذف هذا المورد؟')) {
+                        // Show loading state
+                        const originalText = this.innerHTML;
+                        this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> جاري الحذف...';
+                        this.disabled = true;
+                        
+                        // Send AJAX request to delete supplier
+                        fetch(`/inventory/supplier/${supplierId}/delete/`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': getCookie('csrftoken'),
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Show success message
+                                alert('تم حذف المورد بنجاح');
+                                
+                                // Reload suppliers content
+                                loadSuppliers();
+                            } else {
+                                alert(data.message || 'حدث خطأ أثناء حذف المورد');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('حدث خطأ أثناء الاتصال بالخادم');
+                        })
+                        .finally(() => {
+                            // Reset button state
+                            this.innerHTML = originalText;
+                            this.disabled = false;
+                        });
+                    }
+                });
+            });
+        }
+        
+        // Suppliers Modal events
+        suppliersModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const filter = button.getAttribute('data-filter') || 'all';
+            loadSuppliers(filter);
+        });
+        
+        // Add new supplier button
+        addNewSupplierBtn.addEventListener('click', function() {
+            // Create a modal for adding a new supplier
+            const modalHtml = `
+                <div class="modal fade" id="addNewSupplierModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">إضافة مورد جديد</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="newSupplierForm">
+                                    <div class="mb-3">
+                                        <label for="newSupplierName" class="form-label">اسم المورد <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="newSupplierName" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="newSupplierContactPerson" class="form-label">الشخص المسؤول</label>
+                                        <input type="text" class="form-control" id="newSupplierContactPerson">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="newSupplierPhone" class="form-label">رقم الهاتف</label>
+                                        <input type="text" class="form-control" id="newSupplierPhone">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="newSupplierEmail" class="form-label">البريد الإلكتروني</label>
+                                        <input type="email" class="form-control" id="newSupplierEmail">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="newSupplierAddress" class="form-label">العنوان</label>
+                                        <textarea class="form-control" id="newSupplierAddress" rows="2"></textarea>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                                <button type="button" class="btn btn-primary" id="saveNewSupplierBtn">حفظ</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add modal to the document
+            const modalContainer = document.createElement('div');
+            modalContainer.innerHTML = modalHtml;
+            document.body.appendChild(modalContainer);
+            
+            // Show the modal
+            const modal = new bootstrap.Modal(document.getElementById('addNewSupplierModal'));
+            modal.show();
+            
+            // Handle save button click
+            document.getElementById('saveNewSupplierBtn').addEventListener('click', function() {
+                const form = document.getElementById('newSupplierForm');
+                if (form.checkValidity()) {
+                    // Show loading state
+                    this.disabled = true;
+                    this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> جاري الحفظ...';
+                    
+                    // Get form data
+                    const supplierData = {
+                        name: document.getElementById('newSupplierName').value,
+                        contact_person: document.getElementById('newSupplierContactPerson').value,
+                        phone: document.getElementById('newSupplierPhone').value,
+                        email: document.getElementById('newSupplierEmail').value,
+                        address: document.getElementById('newSupplierAddress').value
+                    };
+                    
+                    // Get CSRF token
+                    function getCookie(name) {
+                        let cookieValue = null;
+                        if (document.cookie && document.cookie !== '') {
+                            const cookies = document.cookie.split(';');
+                            for (let i = 0; i < cookies.length; i++) {
+                                const cookie = cookies[i].trim();
+                                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                                    break;
+                                }
+                            }
+                        }
+                        return cookieValue;
+                    }
+                    
+                    // Send AJAX request to create new supplier
+                    fetch('/inventory/supplier/create/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken'),
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify(supplierData)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Close the modal
+                            modal.hide();
+                            
+                            // Remove the modal from the DOM after it's hidden
+                            document.getElementById('addNewSupplierModal').addEventListener('hidden.bs.modal', function() {
+                                this.remove();
+                            });
+                            
+                            // Show success message
+                            alert('تم إضافة المورد بنجاح');
+                            
+                            // Reload suppliers content
+                            loadSuppliers();
+                        } else {
+                            alert(data.message || 'حدث خطأ أثناء إضافة المورد');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('حدث خطأ أثناء الاتصال بالخادم');
+                    })
+                    .finally(() => {
+                        // Reset button state
+                        this.disabled = false;
+                        this.innerHTML = 'حفظ';
+                    });
+                } else {
+                    form.reportValidity();
+                }
+            });
+        });
+        
+        // Clients Modal Functionality
+        const clientsModal = document.getElementById('clientsModal');
+        const clientsContent = document.getElementById('clientsContent');
+        const clientsLoading = document.getElementById('clientsLoading');
+        const addNewClientBtn = document.getElementById('addNewClientBtn');
+        
+        // Function to load clients
+        function loadClients(filter = 'all') {
+            clientsContent.style.display = 'none';
+            clientsLoading.style.display = 'block';
+            
+            // In a real implementation, this would be an AJAX call to fetch clients
+            // For demo purposes, we'll simulate a delay and then show content
+            setTimeout(function() {
+                // This is where you would normally make an AJAX request
+                // For demo, we'll just create some HTML content based on the filter
+                let content = `
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 fw-bold"><i class="fas fa-users me-2 text-primary"></i>قائمة العملاء</h5>
+                        <div class="d-flex">
+                            <div class="input-group me-2" style="width: 300px;">
+                                <input type="text" id="modalClientSearchInput" class="form-control" placeholder="بحث عن عميل...">
+                                <button class="btn btn-outline-secondary" type="button">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                            <div class="dropdown">
+                                <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="modalClientFilterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-filter"></i> تصفية
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="modalClientFilterDropdown">
+                                    <li><a class="dropdown-item modal-client-filter" href="#" data-filter="all">جميع العملاء</a></li>
+                                    <li><a class="dropdown-item modal-client-filter" href="#" data-filter="active">العملاء النشطين</a></li>
+                                    <li><a class="dropdown-item modal-client-filter" href="#" data-filter="vip">العملاء المميزين</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0" id="modalClientsTable">
+                                <thead>
+                                    <tr>
+                                        <th width="5%">#</th>
+                                        <th width="25%">اسم العميل</th>
+                                        <th width="15%">رقم الهاتف</th>
+                                        <th width="20%">البريد الإلكتروني</th>
+                                        <th width="20%">العنوان</th>
+                                        <th width="15%">الإجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>`;
+                
+                // Generate different content based on filter
+                const clients = [
+                    { id: 1, name: 'أحمد محمد', phone: '01012345678', email: 'ahmed@example.com', address: 'القاهرة، مصر', type: 'regular' },
+                    { id: 2, name: 'محمد علي', phone: '01123456789', email: 'mohamed@example.com', address: 'الإسكندرية، مصر', type: 'vip' },
+                    { id: 3, name: 'سارة أحمد', phone: '01234567890', email: 'sara@example.com', address: 'الجيزة، مصر', type: 'regular' },
+                    { id: 4, name: 'خالد محمود', phone: '01198765432', email: 'khaled@example.com', address: 'المنصورة، مصر', type: 'wholesale' },
+                    { id: 5, name: 'هدى علي', phone: '01187654321', email: 'hoda@example.com', address: 'أسيوط، مصر', type: 'vip' }
+                ];
+                
+                let filteredClients = clients;
+                if (filter === 'vip') {
+                    filteredClients = clients.filter(c => c.type === 'vip');
+                    document.getElementById('clientsModalLabel').textContent = 'العملاء المميزين';
+                } else if (filter === 'active') {
+                    // For demo, we'll just show all clients as active
+                    document.getElementById('clientsModalLabel').textContent = 'العملاء النشطين';
+                } else {
+                    document.getElementById('clientsModalLabel').textContent = 'قائمة العملاء';
+                }
+                
+                if (filteredClients.length === 0) {
+                    content += `
+                        <tr>
+                            <td colspan="6" class="text-center py-4">
+                                <i class="fas fa-users text-muted mb-3" style="font-size: 3rem;"></i>
+                                <p class="text-muted mb-0">لا يوجد عملاء متاحين</p>
+                            </td>
+                        </tr>`;
+                } else {
+                    filteredClients.forEach((client, index) => {
+                        const clientTypeIcon = client.type === 'vip'
+                            ? '<span class="badge bg-warning text-dark ms-2"><i class="fas fa-star"></i> مميز</span>'
+                            : (client.type === 'wholesale' ? '<span class="badge bg-info ms-2"><i class="fas fa-boxes"></i> جملة</span>' : '');
+                        
+                        content += `
+                            <tr>
+                                <td>${index + 1}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="client-icon me-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background-color: rgba(67, 97, 238, 0.1); border-radius: 8px;">
+                                            <i class="fas fa-user text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold">${client.name} ${clientTypeIcon}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><a href="tel:${client.phone}" class="text-decoration-none">${client.phone}</a></td>
+                                <td><a href="mailto:${client.email}" class="text-decoration-none">${client.email}</a></td>
+                                <td>
+                                    <div class="text-truncate" style="max-width: 200px;" title="${client.address}">
+                                        ${client.address}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="clientActionDropdown${index}" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </button>
+                                        <ul class="dropdown-menu" aria-labelledby="clientActionDropdown${index}">
+                                            <li><a class="dropdown-item modal-view-client" href="#" data-id="${client.id}"><i class="fas fa-eye me-2"></i>عرض التفاصيل</a></li>
+                                            <li><a class="dropdown-item modal-edit-client" href="#" data-id="${client.id}"><i class="fas fa-edit me-2"></i>تعديل</a></li>
+                                            <li><a class="dropdown-item" href="#" data-id="${client.id}"><i class="fas fa-shopping-cart me-2"></i>عرض المشتريات</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item text-danger modal-delete-client" href="#" data-id="${client.id}"><i class="fas fa-trash-alt me-2"></i>حذف</a></li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>`;
+                    });
+                }
+                
+                content += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>`;
+                
+                clientsContent.innerHTML = content;
+                clientsLoading.style.display = 'none';
+                clientsContent.style.display = 'block';
+                
+                // Set up event listeners for the modal content
+                setupClientModalEventListeners();
+            }, 1000); // Simulate network delay
+        }
+        
+        // Set up event listeners for client modal content
+        function setupClientModalEventListeners() {
+            // Filter buttons
+            document.querySelectorAll('.modal-client-filter').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const filter = this.getAttribute('data-filter');
+                    loadClients(filter);
+                });
+            });
+            
+            // Search functionality
+            const searchInput = document.getElementById('modalClientSearchInput');
+            if (searchInput) {
+                searchInput.addEventListener('keyup', function() {
+                    const searchValue = this.value.toLowerCase();
+                    const table = document.getElementById('modalClientsTable');
+                    const rows = table.getElementsByTagName('tr');
+                    
+                    for (let i = 1; i < rows.length; i++) {
+                        const row = rows[i];
+                        const cells = row.getElementsByTagName('td');
+                        if (cells.length > 0) {
+                            const nameCell = cells[1].textContent.toLowerCase();
+                            const phoneCell = cells[2].textContent.toLowerCase();
+                            const emailCell = cells[3].textContent.toLowerCase();
+                            const addressCell = cells[4].textContent.toLowerCase();
+                            
+                            if (nameCell.includes(searchValue) ||
+                                phoneCell.includes(searchValue) ||
+                                emailCell.includes(searchValue) ||
+                                addressCell.includes(searchValue)) {
+                                row.style.display = '';
+                            } else {
+                                row.style.display = 'none';
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // View client details
+            document.querySelectorAll('.modal-view-client').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const clientId = this.getAttribute('data-id');
+                    alert('عرض تفاصيل العميل رقم: ' + clientId);
+                });
+            });
+            
+            // Edit client
+            document.querySelectorAll('.modal-edit-client').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const clientId = this.getAttribute('data-id');
+                    
+                    // Show loading state
+                    const originalText = this.innerHTML;
+                    this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> جاري التحميل...';
+                    this.disabled = true;
+                    
+                    // Fetch client details
+                    fetch(`/inventory/client/${clientId}/edit/`, {
+                        method: 'GET',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // Create edit modal with client data
+                        const modalHtml = `
+                            <div class="modal fade" id="editClientModal" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">تعديل العميل</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <form id="editClientForm">
+                                                <input type="hidden" id="editClientId" value="${data.id}">
+                                                <div class="mb-3">
+                                                    <label for="editClientName" class="form-label">اسم العميل <span class="text-danger">*</span></label>
+                                                    <input type="text" class="form-control" id="editClientName" value="${data.name}" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="editClientPhone" class="form-label">رقم الهاتف</label>
+                                                    <input type="text" class="form-control" id="editClientPhone" value="${data.phone || ''}">
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="editClientEmail" class="form-label">البريد الإلكتروني</label>
+                                                    <input type="email" class="form-control" id="editClientEmail" value="${data.email || ''}">
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="editClientAddress" class="form-label">العنوان</label>
+                                                    <textarea class="form-control" id="editClientAddress" rows="2">${data.address || ''}</textarea>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="editClientType" class="form-label">نوع العميل</label>
+                                                    <select class="form-select" id="editClientType">
+                                                        <option value="regular" ${data.type === 'regular' ? 'selected' : ''}>عادي</option>
+                                                        <option value="vip" ${data.type === 'vip' ? 'selected' : ''}>مميز</option>
+                                                        <option value="wholesale" ${data.type === 'wholesale' ? 'selected' : ''}>جملة</option>
+                                                    </select>
+                                                </div>
+                                            </form>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                                            <button type="button" class="btn btn-primary" id="saveEditClientBtn">حفظ التغييرات</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Add modal to the document
+                        const modalContainer = document.createElement('div');
+                        modalContainer.innerHTML = modalHtml;
+                        document.body.appendChild(modalContainer);
+                        
+                        // Show the modal
+                        const modal = new bootstrap.Modal(document.getElementById('editClientModal'));
+                        modal.show();
+                        
+                        // Handle save button click
+                        document.getElementById('saveEditClientBtn').addEventListener('click', function() {
+                            const form = document.getElementById('editClientForm');
+                            if (form.checkValidity()) {
+                                // Show loading state
+                                this.disabled = true;
+                                this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> جاري الحفظ...';
+                                
+                                // Get form data
+                                const clientData = {
+                                    id: document.getElementById('editClientId').value,
+                                    name: document.getElementById('editClientName').value,
+                                    phone: document.getElementById('editClientPhone').value,
+                                    email: document.getElementById('editClientEmail').value,
+                                    address: document.getElementById('editClientAddress').value,
+                                    type: document.getElementById('editClientType').value
+                                };
+                                
+                                // Send AJAX request to update client
+                                fetch(`/inventory/client/${clientData.id}/update/`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRFToken': getCookie('csrftoken'),
+                                        'X-Requested-With': 'XMLHttpRequest'
+                                    },
+                                    body: JSON.stringify(clientData)
+                                })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        // Close the modal
+                                        modal.hide();
+                                        
+                                        // Remove the modal from the DOM after it's hidden
+                                        document.getElementById('editClientModal').addEventListener('hidden.bs.modal', function() {
+                                            this.remove();
+                                        });
+                                        
+                                        // Show success message
+                                        alert('تم تحديث العميل بنجاح');
+                                        
+                                        // Reload clients content
+                                        loadClients();
+                                    } else {
+                                        alert(data.message || 'حدث خطأ أثناء تحديث العميل');
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Error:', error);
+                                    alert('حدث خطأ أثناء الاتصال بالخادم');
+                                })
+                                .finally(() => {
+                                    // Reset button state
+                                    this.disabled = false;
+                                    this.innerHTML = 'حفظ التغييرات';
+                                });
+                            } else {
+                                form.reportValidity();
+                            }
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('حدث خطأ أثناء تحميل بيانات العميل');
+                    })
+                    .finally(() => {
+                        // Reset button state
+                        this.innerHTML = originalText;
+                        this.disabled = false;
+                    });
+                });
+            });
+            
+            // Delete client
+            document.querySelectorAll('.modal-delete-client').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const clientId = this.getAttribute('data-id');
+                    if (confirm('هل أنت متأكد من حذف هذا العميل؟')) {
+                        // Show loading state
+                        const originalText = this.innerHTML;
+                        this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> جاري الحذف...';
+                        this.disabled = true;
+                        
+                        // Send AJAX request to delete client
+                        fetch(`/inventory/client/${clientId}/delete/`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': getCookie('csrftoken'),
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Show success message
+                                alert('تم حذف العميل بنجاح');
+                                
+                                // Reload clients content
+                                loadClients();
+                            } else {
+                                alert(data.message || 'حدث خطأ أثناء حذف العميل');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('حدث خطأ أثناء الاتصال بالخادم');
+                        })
+                        .finally(() => {
+                            // Reset button state
+                            this.innerHTML = originalText;
+                            this.disabled = false;
+                        });
+                    }
+                });
+            });
+        }
+        
+        // Clients Modal events
+        clientsModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const filter = button.getAttribute('data-filter') || 'all';
+            loadClients(filter);
+        });
+        
+        // Add new client button
+        addNewClientBtn.addEventListener('click', function() {
+            // Create a modal for adding a new client
+            const modalHtml = `
+                <div class="modal fade" id="addNewClientModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">إضافة عميل جديد</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="newClientForm">
+                                    <div class="mb-3">
+                                        <label for="newClientName" class="form-label">اسم العميل <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="newClientName" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="newClientPhone" class="form-label">رقم الهاتف</label>
+                                        <input type="text" class="form-control" id="newClientPhone">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="newClientEmail" class="form-label">البريد الإلكتروني</label>
+                                        <input type="email" class="form-control" id="newClientEmail">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="newClientAddress" class="form-label">العنوان</label>
+                                        <textarea class="form-control" id="newClientAddress" rows="2"></textarea>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="newClientType" class="form-label">نوع العميل</label>
+                                        <select class="form-select" id="newClientType">
+                                            <option value="regular">عادي</option>
+                                            <option value="vip">مميز</option>
+                                            <option value="wholesale">جملة</option>
+                                        </select>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                                <button type="button" class="btn btn-primary" id="saveNewClientBtn">حفظ</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add modal to the document
+            const modalContainer = document.createElement('div');
+            modalContainer.innerHTML = modalHtml;
+            document.body.appendChild(modalContainer);
+            
+            // Show the modal
+            const modal = new bootstrap.Modal(document.getElementById('addNewClientModal'));
+            modal.show();
+            
+            // Handle save button click
+            document.getElementById('saveNewClientBtn').addEventListener('click', function() {
+                const form = document.getElementById('newClientForm');
+                if (form.checkValidity()) {
+                    // Show loading state
+                    this.disabled = true;
+                    this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> جاري الحفظ...';
+                    
+                    // Get form data
+                    const clientData = {
+                        name: document.getElementById('newClientName').value,
+                        phone: document.getElementById('newClientPhone').value,
+                        email: document.getElementById('newClientEmail').value,
+                        address: document.getElementById('newClientAddress').value,
+                        type: document.getElementById('newClientType').value
+                    };
+                    
+                    // Get CSRF token
+                    function getCookie(name) {
+                        let cookieValue = null;
+                        if (document.cookie && document.cookie !== '') {
+                            const cookies = document.cookie.split(';');
+                            for (let i = 0; i < cookies.length; i++) {
+                                const cookie = cookies[i].trim();
+                                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                                    break;
+                                }
+                            }
+                        }
+                        return cookieValue;
+                    }
+                    
+                    // Send AJAX request to create new client
+                    fetch('/inventory/client/create/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken'),
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify(clientData)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Close the modal
+                            modal.hide();
+                            
+                            // Remove the modal from the DOM after it's hidden
+                            document.getElementById('addNewClientModal').addEventListener('hidden.bs.modal', function() {
+                                this.remove();
+                            });
+                            
+                            // Show success message
+                            alert('تم إضافة العميل بنجاح');
+                            
+                            // Reload clients content
+                            loadClients();
+                        } else {
+                            alert(data.message || 'حدث خطأ أثناء إضافة العميل');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('حدث خطأ أثناء الاتصال بالخادم');
+                    })
+                    .finally(() => {
+                        // Reset button state
+                        this.disabled = false;
+                        this.innerHTML = 'حفظ';
+                    });
+                } else {
+                    form.reportValidity();
+                }
+            });
+        });
+    });
+
+    // Sales Chart
+    var salesCtx = document.getElementById('salesChart').getContext('2d');
+    var salesChart = new Chart(salesCtx, {
+        type: 'line',
+        data: {
+            labels: {{ months|safe }},
+            datasets: [{
+                label: 'المبيعات',
+                data: {{ sales_data|safe }},
+                backgroundColor: 'rgba(67, 97, 238, 0.2)',
+                borderColor: 'rgba(67, 97, 238, 1)',
+                borderWidth: 3,
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: 'white',
+                pointBorderColor: 'rgba(67, 97, 238, 1)',
+                pointBorderWidth: 2,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                pointHoverBackgroundColor: 'white',
+                pointHoverBorderColor: 'rgba(67, 97, 238, 1)',
+                pointHoverBorderWidth: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        font: {
+                            family: 'Cairo',
+                            size: 12
+                        },
+                        padding: 10,
+                        callback: function(value) {
+                            return value.toLocaleString() + ' ج.م';
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false,
+                        drawBorder: false
+                    },
+                    ticks: {
+                        font: {
+                            family: 'Cairo',
+                            size: 12
+                        },
+                        padding: 10
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    labels: {
+                        font: {
+                            family: 'Cairo',
+                            size: 14,
+                            weight: 'bold'
+                        },
+                        padding: 20
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleFont: {
+                        family: 'Cairo',
+                        size: 14,
+                        weight: 'bold'
+                    },
+                    bodyFont: {
+                        family: 'Cairo',
+                        size: 13
+                    },
+                    padding: 12,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.parsed.y.toLocaleString() + ' ج.م';
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Expenses Chart
+    var expensesCtx = document.getElementById('expensesChart').getContext('2d');
+    var expensesChart = new Chart(expensesCtx, {
+        type: 'doughnut',
+        data: {
+            labels: {{ expense_categories|safe }},
+            datasets: [{
+                data: {{ expense_data|safe }},
+                backgroundColor: [
+                    'rgba(247, 37, 133, 0.8)',
+                    'rgba(67, 97, 238, 0.8)',
+                    'rgba(58, 12, 163, 0.8)',
+                    'rgba(76, 201, 240, 0.8)',
+                    'rgba(114, 9, 183, 0.8)',
+                    'rgba(255, 159, 64, 0.8)',
+                    'rgba(45, 49, 66, 0.8)'
+                ],
+                borderWidth: 2,
+                borderColor: 'white'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '65%',
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        font: {
+                            family: 'Cairo',
+                            size: 12
+                        },
+                        padding: 15,
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleFont: {
+                        family: 'Cairo',
+                        size: 14,
+                        weight: 'bold'
+                    },
+
+                    bodyFont: {
+                        family: 'Cairo',
+                        size: 13
+                    },
+                    padding: 12,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: function(context) {
+                            var label = context.label || '';
+                            var value = context.parsed || 0;
+                            var total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            var percentage = Math.round((value / total) * 100);
+                            return label + ': ' + value.toLocaleString() + ' ج.م (' + percentage + '%)';
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

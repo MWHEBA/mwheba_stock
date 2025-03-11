@@ -1,0 +1,7 @@
+<!-- create_supplier.html -->
+<h1>Create New Supplier</h1>
+<form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Save Supplier</button>
+</form>

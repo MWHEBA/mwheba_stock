@@ -1,0 +1,353 @@
+{% extends "core/base.html" %}
+
+{% block title %}تقرير المخزون - مخازن موهبة{% endblock %}
+
+{% block extra_css %}
+<style>
+    body, h1, h2, h3, h4, h5, h6, p, span, a, button, input, textarea, select, option {
+        font-family: 'Cairo', sans-serif !important;
+    }
+    .card-header .fw-bold,
+    .dropdown-menu,
+    .modal-title,
+    .modal-footer button,
+    .table th,
+    .table td,
+    .btn,
+    .badge,
+    .dropdown-item {
+        font-family: 'Cairo', sans-serif !important;
+    }
+    .pagination,
+    .form-label,
+    .form-control,
+    .form-select {
+        font-family: 'Cairo', sans-serif !important;
+    }
+</style>
+{% endblock %}
+
+{% block page_title %}تقرير المخزون{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'export_stock_report' %}?start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}" class="btn btn-success">
+    <i class="fas fa-file-csv me-1"></i> تصدير CSV
+</a>
+<button type="button" class="btn btn-info ms-2" id="printReportBtn">
+    <i class="fas fa-print me-1"></i> طباعة التقرير
+</button>
+{% endblock %}
+
+{% block content %}
+<!-- Date Range Filter -->
+<div class="card mb-4">
+    <div class="card-header bg-white">
+        <h5 class="mb-0 fw-bold"><i class="fas fa-filter me-2 text-primary"></i>تصفية البيانات</h5>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label for="start_date" class="form-label">من تاريخ</label>
+                <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date|date:'Y-m-d' }}">
+            </div>
+            <div class="col-md-4">
+                <label for="end_date" class="form-label">إلى تاريخ</label>
+                <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date|date:'Y-m-d' }}">
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search me-1"></i> تطبيق
+                </button>
+                <button type="button" class="btn btn-outline-secondary ms-2" id="resetFilterBtn">
+                    <i class="fas fa-redo me-1"></i> إعادة تعيين
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-body text-center p-4">
+                <div class="dashboard-icon text-primary">
+                    <i class="fas fa-boxes"></i>
+                </div>
+                <h5 class="card-title fw-bold text-secondary">إجمالي المخزون المستلم</h5>
+                <h3 class="mb-0 fw-bold">{{ total_received }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-body text-center p-4">
+                <div class="dashboard-icon text-danger">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <h5 class="card-title fw-bold text-secondary">إجمالي المخزون المباع</h5>
+                <h3 class="mb-0 fw-bold">{{ total_sold }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-body text-center p-4">
+                <div class="dashboard-icon text-success">
+                    <i class="fas fa-warehouse"></i>
+                </div>
+                <h5 class="card-title fw-bold text-secondary">المخزون الحالي</h5>
+                <h3 class="mb-0 fw-bold">{{ current_stock }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stock Movement Chart -->
+<div class="card mb-4 shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold"><i class="fas fa-chart-bar me-2 text-primary"></i>حركة المخزون</h5>
+        <div class="btn-group" role="group">
+            <button type="button" class="btn btn-outline-secondary btn-sm active" data-view="bar">رسم بياني شريطي</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-view="line">رسم بياني خطي</button>
+        </div>
+    </div>
+    <div class="card-body">
+        <canvas id="stockChart" height="300"></canvas>
+    </div>
+</div>
+
+<!-- Stock Entries Table -->
+<div class="card shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold"><i class="fas fa-list me-2 text-primary"></i>سجلات المخزون</h5>
+        <div class="input-group" style="width: 300px;">
+            <input type="text" id="searchInput" class="form-control" placeholder="بحث عن منتج...">
+            <button class="btn btn-outline-secondary" type="button">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" id="stockTable">
+                <thead>
+                    <tr>
+                        <th width="5%">#</th>
+                        <th width="25%">المنتج</th>
+                        <th width="15%">الكمية المستلمة</th>
+                        <th width="15%">الكمية المباعة</th>
+                        <th width="20%">تاريخ الاستلام</th>
+                        <th width="20%">نوع المخزون</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in stock_entries %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="product-icon me-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background-color: rgba(67, 97, 238, 0.1); border-radius: 8px;">
+                                    <i class="fas fa-box text-primary"></i>
+                                </div>
+                                <div class="fw-bold">{{ entry.product.name }}</div>
+                            </div>
+                        </td>
+                        <td class="fw-bold">{{ entry.quantity_received }}</td>
+                        <td class="fw-bold">{{ entry.quantity_sold }}</td>
+                        <td>{{ entry.date_received }}</td>
+                        <td>
+                            {% if entry.stock_type == 'received' %}
+                                <span class="badge bg-success">استلام</span>
+                            {% elif entry.stock_type == 'sold' %}
+                                <span class="badge bg-danger">بيع</span>
+                            {% elif entry.stock_type == 'returned' %}
+                                <span class="badge bg-warning text-dark">مرتجع</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ entry.stock_type }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4">
+                            <i class="fas fa-box-open text-muted mb-3" style="font-size: 3rem;"></i>
+                            <p class="text-muted mb-0">لا توجد بيانات متاحة</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+        <div>
+            <span class="text-muted">إجمالي السجلات: <span class="fw-bold">{{ stock_entries|length }}</span></span>
+        </div>
+        <nav aria-label="Page navigation">
+            <ul class="pagination mb-0">
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                <li class="page-item">
+                    <a class="page-link" href="#" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Stock Chart
+        var stockCtx = document.getElementById('stockChart').getContext('2d');
+        var stockChart = new Chart(stockCtx, {
+            type: 'bar',
+            data: {
+                labels: [
+                    {% for entry in stock_entries %}
+                        '{{ entry.product.name }}',
+                    {% endfor %}
+                ],
+                datasets: [{
+                    label: 'الكمية المستلمة',
+                    data: [
+                        {% for entry in stock_entries %}
+                            {{ entry.quantity_received }},
+                        {% endfor %}
+                    ],
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'الكمية المباعة',
+                    data: [
+                        {% for entry in stock_entries %}
+                            {{ entry.quantity_sold }},
+                        {% endfor %}
+                    ],
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            font: {
+                                family: 'Cairo',
+                                size: 12
+                            },
+                            padding: 10
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false,
+                            drawBorder: false
+                        },
+                        ticks: {
+                            font: {
+                                family: 'Cairo',
+                                size: 12
+                            },
+                            padding: 10
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            font: {
+                                family: 'Cairo',
+                                size: 14,
+                                weight: 'bold'
+                            },
+                            padding: 20
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleFont: {
+                            family: 'Cairo',
+                            size: 14,
+                            weight: 'bold'
+                        },
+                        bodyFont: {
+                            family: 'Cairo',
+                            size: 13
+                        },
+                        padding: 12,
+                        cornerRadius: 8
+                    }
+                }
+            }
+        });
+        
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('keyup', function() {
+            const searchValue = this.value.toLowerCase();
+            const table = document.getElementById('stockTable');
+            const rows = table.getElementsByTagName('tr');
+            
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                const cells = row.getElementsByTagName('td');
+                if (cells.length > 0) {
+                    const productCell = cells[1].textContent.toLowerCase();
+                    const typeCell = cells[5].textContent.toLowerCase();
+                    
+                    if (productCell.includes(searchValue) || typeCell.includes(searchValue)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                }
+            }
+        });
+        
+        // Chart view buttons
+        const viewButtons = document.querySelectorAll('[data-view]');
+        viewButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                viewButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                
+                const chartType = this.getAttribute('data-view');
+                stockChart.config.type = chartType;
+                stockChart.update();
+            });
+        });
+        
+        // Print report button
+        document.getElementById('printReportBtn').addEventListener('click', function() {
+            window.print();
+        });
+        
+        // Reset filter button
+        document.getElementById('resetFilterBtn').addEventListener('click', function() {
+            document.getElementById('start_date').value = '';
+            document.getElementById('end_date').value = '';
+            // In a real implementation, you would submit the form or redirect to the page without filters
+        });
+    });
+</script>
+{% endblock %}

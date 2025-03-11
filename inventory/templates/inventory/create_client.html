@@ -1,0 +1,7 @@
+<!-- create_client.html -->
+<h1>Create New Client</h1>
+<form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Save Client</button>
+</form>

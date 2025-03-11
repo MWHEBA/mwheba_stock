@@ -1,0 +1,171 @@
+{% extends 'core/base.html' %}
+
+{% block title %}تسجيل الدخول - مخازن موهبة{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* 🔹 Full Page Styling */
+    body {
+        background: url('/static/images/login-bg.jpg') no-repeat center center;
+        background-size: cover;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    }
+
+    .sidebar {
+        display: none;
+    }
+
+    .main-content {
+        margin-right: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+    }
+
+    .footer {
+        display: none;
+    }
+
+    body {
+        font-family: 'Cairo', sans-serif !important;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Cairo', sans-serif !important;
+    }
+    
+    button, input, textarea {
+        font-family: 'Cairo', sans-serif !important;
+    }
+
+    .mb-4 {
+        margin-bottom: 3.5rem !important;
+    }
+    
+    .d-grid.gap-2 {
+        margin-top: 60px !important;
+    }
+
+    /* 🔹 Glass Effect for Login Box */
+    .login-card {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(12px);
+        border-radius: 1rem;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.3);
+        transition: transform 0.3s ease-in-out;
+    }
+
+    input {
+        border: solid 1px #8d8d8d !important;
+        background: #e1e1e1 !important;
+    }
+
+
+    @media only screen and (min-width: 600px) {
+        body {
+            .login-card {
+                min-width: 500px !important;
+            }
+        }
+      }
+
+
+
+    /* 🔹 Header Styling */
+    .login-header {
+        background: linear-gradient(135deg, #01578a, #017bbd);
+        color: white;
+        border-radius: 1rem 1rem 0 0;
+        padding: 1.5rem;
+        text-align: center;
+    }
+
+    .login-body {
+        padding: 2rem;
+    }
+
+    .login-footer {
+        background: rgba(0, 0, 0, 0.05);
+        border-radius: 0 0 1rem 1rem;
+        padding: 1rem;
+        text-align: center;
+    }
+
+    /* 🔹 Form Inputs */
+    .form-control {
+        border-radius: 6px;
+        padding: 12px;
+        border: none;
+        transition: all 0.3s ease-in-out;
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .form-control:focus {
+        background: rgba(255, 255, 255, 0.3);
+        outline: none;
+    }
+
+    /* 🔹 Login Button */
+    .btn-primary {
+        background: linear-gradient(135deg, #01578a, #017bbd);
+        color: white;
+        font-weight: bold;
+        padding: 12px;
+        border-radius: 6px;
+        transition: all 0.3s ease-in-out;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #017bbd, #01578a);
+        transform: scale(1.05);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-card">
+    <div class="login-header">
+        <h2 class="mb-0">مخازن موهبة</h2>
+        <p class="mb-0">MWHEBA Stock</p>
+    </div>
+    
+    <div class="login-body">
+        <h4 class="text-center mb-4">تسجيل الدخول</h4>
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            {% if form.errors %}
+                <div class="alert alert-danger">
+                    <strong>خطأ:</strong> اسم المستخدم أو كلمة المرور غير صحيحة.
+                </div>
+            {% endif %}
+            
+            <div class="mb-3">
+                <label for="id_username" class="form-label">اسم المستخدم</label>
+                <input type="text" name="username" id="id_username" class="form-control" required>
+            </div>
+            
+            <div class="mb-3">
+                <label for="id_password" class="form-label">كلمة المرور</label>
+                <input type="password" name="password" id="id_password" class="form-control" required>
+            </div>
+            
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary">تسجيل الدخول</button>
+            </div>
+        </form>
+    </div>
+    
+    <div class="login-footer">
+        <p class="mb-0">© 2025 مخازن موهبة. جميع الحقوق محفوظة.</p>
+    </div>
+</div>
+{% endblock %}

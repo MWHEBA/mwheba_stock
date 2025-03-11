@@ -1,0 +1,349 @@
+{% extends 'core/base.html' %}
+
+{% block title %}تقرير الأرباح والخسائر - مخازن موهبة{% endblock %}
+
+{% block extra_css %}
+<style>
+    body, h1, h2, h3, h4, h5, h6, p, span, a, button, input, textarea, select, option {
+        font-family: 'Cairo', sans-serif !important;
+    }
+    .card-header .fw-bold,
+    .dropdown-menu,
+    .modal-title,
+    .modal-footer button,
+    .table th,
+    .table td,
+    .btn,
+    .badge,
+    .dropdown-item {
+        font-family: 'Cairo', sans-serif !important;
+    }
+    .pagination,
+    .form-label,
+    .form-control,
+    .form-select {
+        font-family: 'Cairo', sans-serif !important;
+    }
+</style>
+{% endblock %}
+
+{% block page_title %}تقرير الأرباح والخسائر{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'export_profit_loss_report' %}?start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}" class="btn btn-success">
+    <i class="fas fa-file-csv me-1"></i> تصدير CSV
+</a>
+<button type="button" class="btn btn-info ms-2" id="printReportBtn">
+    <i class="fas fa-print me-1"></i> طباعة التقرير
+</button>
+{% endblock %}
+
+{% block content %}
+<!-- Date Range Filter -->
+<div class="card mb-4">
+    <div class="card-header bg-white">
+        <h5 class="mb-0 fw-bold"><i class="fas fa-filter me-2 text-primary"></i>تصفية البيانات</h5>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label for="start_date" class="form-label">من تاريخ</label>
+                <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date|date:'Y-m-d' }}">
+            </div>
+            <div class="col-md-4">
+                <label for="end_date" class="form-label">إلى تاريخ</label>
+                <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date|date:'Y-m-d' }}">
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search me-1"></i> تطبيق
+                </button>
+                <button type="button" class="btn btn-outline-secondary ms-2" id="resetFilterBtn">
+                    <i class="fas fa-redo me-1"></i> إعادة تعيين
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row">
+    <!-- Revenue Card -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">الإيرادات</h5>
+            </div>
+            <div class="card-body">
+                <h3 class="text-center">{{ total_sales|floatformat:2 }} ج.م</h3>
+            </div>
+        </div>
+    </div>
+    
+    <!-- COGS Card -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">تكلفة البضاعة المباعة</h5>
+            </div>
+            <div class="card-body">
+                <h3 class="text-center">{{ cogs|floatformat:2 }} ج.م</h3>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Gross Profit Card -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">إجمالي الربح</h5>
+            </div>
+            <div class="card-body">
+                <h3 class="text-center">{{ gross_profit|floatformat:2 }} ج.م</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Expenses Card -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">المصروفات</h5>
+            </div>
+            <div class="card-body">
+                <h3 class="text-center">{{ total_expenses|floatformat:2 }} ج.م</h3>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Net Profit Card -->
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header {% if net_profit >= 0 %}bg-success{% else %}bg-danger{% endif %} text-white">
+                <h5 class="mb-0">صافي الربح</h5>
+            </div>
+            <div class="card-body">
+                <h2 class="text-center">{{ net_profit|floatformat:2 }} ج.م</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Profit Chart -->
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">صافي الربح الشهري</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="profitChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Expenses Breakdown -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">تفاصيل المصروفات</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>الفئة</th>
+                                <th>المبلغ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for expense in expenses_by_category %}
+                                <tr>
+                                    <td>{{ expense.category__name }}</td>
+                                    <td>{{ expense.total|floatformat:2 }} ج.م</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="2" class="text-center">لا توجد مصروفات</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-secondary">
+                                <th>الإجمالي</th>
+                                <th>{{ total_expenses|floatformat:2 }} ج.م</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Profit and Loss Statement -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">قائمة الدخل</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <tbody>
+                    <tr>
+                        <th colspan="2">الإيرادات</th>
+                    </tr>
+                    <tr>
+                        <td>المبيعات</td>
+                        <td class="text-end">{{ total_sales|floatformat:2 }} ج.م</td>
+                    </tr>
+                    <tr class="table-light">
+                        <th>إجمالي الإيرادات</th>
+                        <th class="text-end">{{ total_sales|floatformat:2 }} ج.م</th>
+                    </tr>
+                    
+                    <tr>
+                        <th colspan="2">تكلفة المبيعات</th>
+                    </tr>
+                    <tr>
+                        <td>تكلفة البضاعة المباعة</td>
+                        <td class="text-end">{{ cogs|floatformat:2 }} ج.م</td>
+                    </tr>
+                    <tr class="table-light">
+                        <th>إجمالي تكلفة المبيعات</th>
+                        <th class="text-end">{{ cogs|floatformat:2 }} ج.م</th>
+                    </tr>
+                    
+                    <tr class="table-info">
+                        <th>إجمالي الربح</th>
+                        <th class="text-end">{{ gross_profit|floatformat:2 }} ج.م</th>
+                    </tr>
+                    
+                    <tr>
+                        <th colspan="2">المصروفات</th>
+                    </tr>
+                    {% for expense in expenses_by_category %}
+                        <tr>
+                            <td>{{ expense.category__name }}</td>
+                            <td class="text-end">{{ expense.total|floatformat:2 }} ج.م</td>
+                        </tr>
+                    {% endfor %}
+                    <tr class="table-light">
+                        <th>إجمالي المصروفات</th>
+                        <th class="text-end">{{ total_expenses|floatformat:2 }} ج.م</th>
+                    </tr>
+                    
+                    <tr class="{% if net_profit >= 0 %}table-success{% else %}table-danger{% endif %}">
+                        <th>صافي الربح</th>
+                        <th class="text-end">{{ net_profit|floatformat:2 }} ج.م</th>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Print report button
+        document.getElementById('printReportBtn').addEventListener('click', function() {
+            window.print();
+        });
+        
+        // Reset filter button
+        document.getElementById('resetFilterBtn').addEventListener('click', function() {
+            document.getElementById('start_date').value = '';
+            document.getElementById('end_date').value = '';
+            // In a real implementation, you would submit the form or redirect to the page without filters
+        });
+        
+        // Profit Chart
+        var profitCtx = document.getElementById('profitChart').getContext('2d');
+        var profitChart = new Chart(profitCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ profit_months|safe }},
+            datasets: [{
+                label: 'صافي الربح',
+                data: {{ profit_data|safe }},
+                backgroundColor: {{ profit_data|safe }}.map(value => value >= 0 ? 'rgba(40, 167, 69, 0.7)' : 'rgba(220, 53, 69, 0.7)'),
+                borderColor: {{ profit_data|safe }}.map(value => value >= 0 ? 'rgba(40, 167, 69, 1)' : 'rgba(220, 53, 69, 1)'),
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        font: {
+                            family: 'Cairo',
+                            size: 12
+                        },
+                        padding: 10,
+                        callback: function(value) {
+                            return value.toLocaleString() + ' ج.م';
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false,
+                        drawBorder: false
+                    },
+                    ticks: {
+                        font: {
+                            family: 'Cairo',
+                            size: 12
+                        },
+                        padding: 10
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    labels: {
+                        font: {
+                            family: 'Cairo',
+                            size: 14,
+                            weight: 'bold'
+                        },
+                        padding: 20
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleFont: {
+                        family: 'Cairo',
+                        size: 14,
+                        weight: 'bold'
+                    },
+                    bodyFont: {
+                        family: 'Cairo',
+                        size: 13
+                    },
+                    padding: 12,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.parsed.y.toLocaleString() + ' ج.م';
+                        }
+                    }
+                }
+            }
+        }
+    });
+    });
+</script>
+{% endblock %}

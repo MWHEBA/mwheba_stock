@@ -1,0 +1,752 @@
+{% extends "core/base.html" %}
+
+{% block title %}قائمة الموردين - مخازن موهبة{% endblock %}
+
+{% block page_title %}قائمة الموردين{% endblock %}
+
+{% block page_actions %}
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSupplierModal">
+    <i class="fas fa-plus me-1"></i> إضافة مورد جديد
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold"><i class="fas fa-truck me-2 text-primary"></i>قائمة الموردين</h5>
+        <div class="d-flex">
+            <div class="input-group me-2" style="width: 300px;">
+                <input type="text" id="searchInput" class="form-control" placeholder="بحث عن مورد...">
+                <button class="btn btn-outline-secondary" type="button">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-filter"></i> تصفية
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="filterDropdown">
+                    <li><a class="dropdown-item" href="#" data-filter="all">جميع الموردين</a></li>
+                    <li><a class="dropdown-item" href="#" data-filter="active">الموردين النشطين</a></li>
+                    <li><a class="dropdown-item" href="#" data-filter="inactive">الموردين غير النشطين</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" id="suppliersTable">
+                <thead>
+                    <tr>
+                        <th width="5%">#</th>
+                        <th width="20%">اسم المورد</th>
+                        <th width="15%">الشخص المسؤول</th>
+                        <th width="15%">رقم الهاتف</th>
+                        <th width="15%">البريد الإلكتروني</th>
+                        <th width="20%">العنوان</th>
+                        <th width="10%">الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for supplier in suppliers %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="supplier-icon me-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background-color: rgba(67, 97, 238, 0.1); border-radius: 8px;">
+                                    <i class="fas fa-building text-primary"></i>
+                                </div>
+                                <div class="fw-bold">{{ supplier.name }}</div>
+                            </div>
+                        </td>
+                        <td>{{ supplier.contact_person|default:"--" }}</td>
+                        <td>
+                            {% if supplier.phone %}
+                                <a href="tel:{{ supplier.phone }}" class="text-decoration-none">{{ supplier.phone }}</a>
+                            {% else %}
+                                <span class="text-muted">--</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if supplier.email %}
+                                <a href="mailto:{{ supplier.email }}" class="text-decoration-none">{{ supplier.email }}</a>
+                            {% else %}
+                                <span class="text-muted">--</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="text-truncate" style="max-width: 200px;" title="{{ supplier.address }}">
+                                {{ supplier.address|default:"--" }}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex gap-1 justify-content-center">
+                                <button class="btn btn-sm btn-outline-primary view-supplier" data-id="{{ supplier.id }}" title="عرض التفاصيل">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-success edit-supplier" data-id="{{ supplier.id }}" title="تعديل">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger delete-supplier" data-id="{{ supplier.id }}" title="حذف">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <i class="fas fa-truck text-muted mb-3" style="font-size: 3rem;"></i>
+                            <p class="text-muted mb-0">لا يوجد موردين متاحين</p>
+                            <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addSupplierModal">
+                                <i class="fas fa-plus me-1"></i> إضافة مورد جديد
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+        <div>
+            <span class="text-muted">إجمالي الموردين: <span class="fw-bold">{{ suppliers|length }}</span></span>
+        </div>
+        <nav aria-label="Page navigation">
+            <ul class="pagination mb-0">
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                <li class="page-item">
+                    <a class="page-link" href="#" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<!-- Supplier Details Modal -->
+<div class="modal fade" id="supplierDetailsModal" tabindex="-1" aria-labelledby="supplierDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="supplierDetailsModalLabel">تفاصيل المورد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-4 text-center">
+                        <div class="supplier-image-placeholder mb-3 d-flex align-items-center justify-content-center" style="height: 200px; background-color: rgba(67, 97, 238, 0.1); border-radius: 12px;">
+                            <i class="fas fa-building text-primary" style="font-size: 3rem;"></i>
+                        </div>
+                        <div class="supplier-status mb-3">
+                            <span class="badge bg-success supplier-status-badge">نشط</span>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <h4 class="supplier-name mb-3">اسم المورد</h4>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="text-muted">الشخص المسؤول:</label>
+                                    <div class="fw-bold supplier-contact-person">--</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="text-muted">رقم الهاتف:</label>
+                                    <div class="fw-bold supplier-phone">--</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="text-muted">البريد الإلكتروني:</label>
+                                    <div class="fw-bold supplier-email">--</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="text-muted">العنوان:</label>
+                                    <div class="fw-bold supplier-address">--</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="text-muted">ملاحظات:</label>
+                            <div class="supplier-notes">لا توجد ملاحظات متاحة</div>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5 class="mb-3">أحدث المشتريات</h5>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>التاريخ</th>
+                                        <th>رقم الطلب</th>
+                                        <th>المبلغ</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="supplier-recent-purchases">
+                                    <tr>
+                                        <td colspan="3" class="text-center">لا توجد مشتريات حديثة</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h5 class="mb-3">المنتجات المتوفرة</h5>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>المنتج</th>
+                                        <th>السعر</th>
+                                        <th>الحالة</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="supplier-products">
+                                    <tr>
+                                        <td colspan="3" class="text-center">لا توجد منتجات متاحة</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                <button type="button" class="btn btn-primary edit-supplier-btn">تعديل المورد</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Supplier Modal -->
+<div class="modal fade" id="addSupplierModal" tabindex="-1" aria-labelledby="addSupplierModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addSupplierModalLabel">إضافة مورد جديد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addSupplierForm">
+                    <div class="mb-3">
+                        <label for="supplierName" class="form-label">اسم المورد</label>
+                        <input type="text" class="form-control" id="supplierName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="contactPerson" class="form-label">الشخص المسؤول</label>
+                        <input type="text" class="form-control" id="contactPerson">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="supplierPhone" class="form-label">رقم الهاتف</label>
+                                <input type="tel" class="form-control" id="supplierPhone">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="supplierEmail" class="form-label">البريد الإلكتروني</label>
+                                <input type="email" class="form-control" id="supplierEmail">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="supplierAddress" class="form-label">العنوان</label>
+                        <textarea class="form-control" id="supplierAddress" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="supplierNotes" class="form-label">ملاحظات</label>
+                        <textarea class="form-control" id="supplierNotes" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" id="saveSupplierBtn">حفظ المورد</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmationModal" tabindex="-1" aria-labelledby="deleteConfirmationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteConfirmationModalLabel">تأكيد الحذف</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>هل أنت متأكد من حذف هذا المورد؟</p>
+                <p class="text-danger"><small>لا يمكن التراجع عن هذا الإجراء.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">حذف</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Function to show alerts
+    function showAlert(type, message) {
+        const alertContainer = document.createElement('div');
+        alertContainer.className = `alert alert-${type} alert-dismissible fade show`;
+        alertContainer.setAttribute('role', 'alert');
+        alertContainer.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        // Add to the top of the page
+        document.querySelector('.card').before(alertContainer);
+        
+        // Auto dismiss after 5 seconds
+        setTimeout(() => {
+            const alert = bootstrap.Alert.getOrCreateInstance(alertContainer);
+            alert.close();
+        }, 5000);
+    }
+    
+    // Function to get CSRF token from cookies
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add supplier modal show event - ensure form is always empty
+        document.getElementById('addSupplierModal').addEventListener('show.bs.modal', function(event) {
+            // Reset form completely
+            document.getElementById('addSupplierForm').reset();
+            
+            // Only set title to "Add Supplier" if not triggered by edit button
+            if (!event.relatedTarget || !event.relatedTarget.classList.contains('edit-supplier')) {
+                document.getElementById('addSupplierModalLabel').textContent = 'إضافة مورد جديد';
+            }
+        });
+        
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('keyup', function() {
+            const searchValue = this.value.toLowerCase();
+            const table = document.getElementById('suppliersTable');
+            const rows = table.getElementsByTagName('tr');
+            
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                const cells = row.getElementsByTagName('td');
+                if (cells.length > 0) {
+                    const nameCell = cells[1].textContent.toLowerCase();
+                    const contactCell = cells[2].textContent.toLowerCase();
+                    const phoneCell = cells[3].textContent.toLowerCase();
+                    const emailCell = cells[4].textContent.toLowerCase();
+                    
+                    if (nameCell.includes(searchValue) || 
+                        contactCell.includes(searchValue) || 
+                        phoneCell.includes(searchValue) || 
+                        emailCell.includes(searchValue)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                }
+            }
+        });
+        
+        // Filter functionality
+        const filterLinks = document.querySelectorAll('[data-filter]');
+        filterLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const filter = this.getAttribute('data-filter');
+                // In a real implementation, you would filter based on supplier status
+                // For demo purposes, we'll just show an alert
+                alert('تم اختيار تصفية: ' + filter);
+            });
+        });
+        
+        // View supplier details
+        const viewSupplierButtons = document.querySelectorAll('.view-supplier');
+        viewSupplierButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const supplierId = this.getAttribute('data-id');
+                
+                // Show loading state
+                const modal = new bootstrap.Modal(document.getElementById('supplierDetailsModal'));
+                modal.show();
+                
+                // Set loading state
+                document.querySelector('.supplier-name').textContent = 'جاري التحميل...';
+                document.querySelector('.supplier-recent-purchases').innerHTML = '<tr><td colspan="3" class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">جاري التحميل...</span></div></td></tr>';
+                document.querySelector('.supplier-products').innerHTML = '<tr><td colspan="3" class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">جاري التحميل...</span></div></td></tr>';
+                
+                // Fetch supplier details
+                fetch(`/api/suppliers/${supplierId}/details/`, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        const supplier = data.supplier;
+                        
+                        // Update supplier details
+                        document.querySelector('.supplier-name').textContent = supplier.name;
+                        document.querySelector('.supplier-contact-person').textContent = supplier.contact_person || '--';
+                        document.querySelector('.supplier-phone').textContent = supplier.phone || '--';
+                        document.querySelector('.supplier-email').textContent = supplier.email || '--';
+                        document.querySelector('.supplier-address').textContent = supplier.address || '--';
+                        document.querySelector('.supplier-notes').textContent = supplier.notes || 'لا توجد ملاحظات متاحة';
+                        
+                        // Update recent purchases
+                        let purchasesHtml = '';
+                        if (supplier.recent_purchases && supplier.recent_purchases.length > 0) {
+                            supplier.recent_purchases.forEach(purchase => {
+                                purchasesHtml += `
+                                    <tr>
+                                        <td>${purchase.date}</td>
+                                        <td>${purchase.reference_number}</td>
+                                        <td>${purchase.amount.toLocaleString()} ج.م</td>
+                                    </tr>
+                                `;
+                            });
+                        } else {
+                            purchasesHtml = '<tr><td colspan="3" class="text-center">لا توجد مشتريات حديثة</td></tr>';
+                        }
+                        document.querySelector('.supplier-recent-purchases').innerHTML = purchasesHtml;
+                        
+                        // Update products
+                        let productsHtml = '';
+                        if (supplier.products && supplier.products.length > 0) {
+                            supplier.products.forEach(product => {
+                                let statusBadge = '';
+                                if (product.quantity <= 0) {
+                                    statusBadge = '<span class="badge bg-danger">غير متوفر</span>';
+                                } else if (product.quantity <= product.reorder_level) {
+                                    statusBadge = '<span class="badge bg-warning text-dark">منخفض</span>';
+                                } else {
+                                    statusBadge = '<span class="badge bg-success">متوفر</span>';
+                                }
+                                
+                                productsHtml += `
+                                    <tr>
+                                        <td>${product.name}</td>
+                                        <td>${product.price.toLocaleString()} ج.م</td>
+                                        <td>${statusBadge}</td>
+                                    </tr>
+                                `;
+                            });
+                        } else {
+                            productsHtml = '<tr><td colspan="3" class="text-center">لا توجد منتجات متاحة</td></tr>';
+                        }
+                        document.querySelector('.supplier-products').innerHTML = productsHtml;
+                        
+                        // Set up edit button
+                        document.querySelector('.edit-supplier-btn').setAttribute('data-id', supplier.id);
+                    } else {
+                        showAlert('danger', data.message || 'حدث خطأ أثناء تحميل بيانات المورد');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('danger', 'حدث خطأ أثناء الاتصال بالخادم');
+                    
+                    // Close the modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('supplierDetailsModal'));
+                    modal.hide();
+                });
+            });
+        });
+        
+        // Edit supplier
+        const editSupplierButtons = document.querySelectorAll('.edit-supplier');
+        editSupplierButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const supplierId = this.getAttribute('data-id');
+                
+                // Show loading state
+                document.getElementById('addSupplierModalLabel').textContent = 'تعديل المورد';
+                const modal = new bootstrap.Modal(document.getElementById('addSupplierModal'));
+                modal.show();
+                
+                // Disable form fields while loading
+                const formFields = document.getElementById('addSupplierForm').elements;
+                for (let i = 0; i < formFields.length; i++) {
+                    formFields[i].disabled = true;
+                }
+                
+                // Show loading message
+                document.getElementById('supplierName').value = 'جاري التحميل...';
+                
+                // Add hidden field for supplier ID if it doesn't exist
+                if (!document.getElementById('supplierId')) {
+                    const idField = document.createElement('input');
+                    idField.type = 'hidden';
+                    idField.id = 'supplierId';
+                    idField.name = 'supplierId';
+                    document.getElementById('addSupplierForm').appendChild(idField);
+                }
+                
+                // Fetch supplier details
+                fetch(`/api/suppliers/${supplierId}/details/`, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        const supplier = data.supplier;
+                        
+                        // Set supplier ID for form submission
+                        document.getElementById('supplierId').value = supplier.id;
+                        
+                        // Populate form fields
+                        document.getElementById('supplierName').value = supplier.name;
+                        document.getElementById('contactPerson').value = supplier.contact_person || '';
+                        document.getElementById('supplierPhone').value = supplier.phone || '';
+                        document.getElementById('supplierEmail').value = supplier.email || '';
+                        document.getElementById('supplierAddress').value = supplier.address || '';
+                        document.getElementById('supplierNotes').value = supplier.notes || '';
+                    } else {
+                        showAlert('danger', data.message || 'حدث خطأ أثناء تحميل بيانات المورد');
+                        
+                        // Close the modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('addSupplierModal'));
+                        modal.hide();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('danger', 'حدث خطأ أثناء الاتصال بالخادم');
+                    
+                    // Close the modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('addSupplierModal'));
+                    modal.hide();
+                })
+                .finally(() => {
+                    // Re-enable form fields
+                    for (let i = 0; i < formFields.length; i++) {
+                        formFields[i].disabled = false;
+                    }
+                });
+            });
+        });
+        
+        // Delete supplier
+        const deleteSupplierButtons = document.querySelectorAll('.delete-supplier');
+        deleteSupplierButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const supplierId = this.getAttribute('data-id');
+                const modal = new bootstrap.Modal(document.getElementById('deleteConfirmationModal'));
+                modal.show();
+                
+                // Set up the confirm delete button
+                document.getElementById('confirmDeleteBtn').setAttribute('data-id', supplierId);
+            });
+        });
+        
+        // Confirm delete
+        document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+            const supplierId = this.getAttribute('data-id');
+            
+            // Show loading state
+            const deleteBtn = document.getElementById('confirmDeleteBtn');
+            const originalText = deleteBtn.innerHTML;
+            deleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> جاري الحذف...';
+            deleteBtn.disabled = true;
+            
+            // Send delete request
+            fetch(`/api/suppliers/${supplierId}/delete/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Close the modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('deleteConfirmationModal'));
+                modal.hide();
+                
+                if (data.success) {
+                    // Show success message
+                    showAlert('success', data.message || 'تم حذف المورد بنجاح');
+                    
+                    // Remove the supplier row from the table
+                    const supplierRow = document.querySelector(`.delete-supplier[data-id="${supplierId}"]`).closest('tr');
+                    if (supplierRow) {
+                        supplierRow.remove();
+                    }
+                    
+                    // Update supplier count
+                    const supplierCount = document.querySelector('.card-footer .text-muted .fw-bold');
+                    if (supplierCount) {
+                        const count = parseInt(supplierCount.textContent) - 1;
+                        supplierCount.textContent = count;
+                    }
+                    
+                    // If no suppliers left, show empty message
+                    const tbody = document.querySelector('#suppliersTable tbody');
+                    if (tbody.children.length === 0) {
+                        const emptyRow = document.createElement('tr');
+                        emptyRow.innerHTML = `
+                            <td colspan="7" class="text-center py-4">
+                                <i class="fas fa-truck text-muted mb-3" style="font-size: 3rem;"></i>
+                                <p class="text-muted mb-0">لا يوجد موردين متاحين</p>
+                                <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addSupplierModal">
+                                    <i class="fas fa-plus me-1"></i> إضافة مورد جديد
+                                </button>
+                            </td>
+                        `;
+                        tbody.appendChild(emptyRow);
+                    }
+                } else {
+                    // Show error message
+                    showAlert('danger', data.message || 'حدث خطأ أثناء حذف المورد');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('danger', 'حدث خطأ أثناء الاتصال بالخادم');
+                
+                // Close the modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('deleteConfirmationModal'));
+                modal.hide();
+            })
+            .finally(() => {
+                // Reset button state
+                deleteBtn.innerHTML = originalText;
+                deleteBtn.disabled = false;
+            });
+        });
+        
+        // Save supplier
+        document.getElementById('saveSupplierBtn').addEventListener('click', function() {
+            const form = document.getElementById('addSupplierForm');
+            if (form.checkValidity()) {
+                // Show loading state
+                const saveBtn = document.getElementById('saveSupplierBtn');
+                const originalText = saveBtn.innerHTML;
+                saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> جاري الحفظ...';
+                saveBtn.disabled = true;
+                
+                // Get form data
+                const supplierId = document.getElementById('supplierId') ? document.getElementById('supplierId').value : '';
+                const supplierData = {
+                    name: document.getElementById('supplierName').value,
+                    contact_person: document.getElementById('contactPerson').value,
+                    phone: document.getElementById('supplierPhone').value,
+                    email: document.getElementById('supplierEmail').value,
+                    address: document.getElementById('supplierAddress').value,
+                    notes: document.getElementById('supplierNotes').value
+                };
+                
+                // Determine if this is an update or create
+                const isUpdate = supplierId !== '';
+                const url = isUpdate ? `/api/suppliers/${supplierId}/update/` : '/api/suppliers/create/';
+                
+                // Send AJAX request - always use POST method since our Django views use @require_POST
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify(supplierData)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        // Close the modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('addSupplierModal'));
+                        modal.hide();
+                        
+                        // Show success message
+                        showAlert('success', data.message || 'تم حفظ المورد بنجاح');
+                        
+                        // Reload the page to show the updated supplier list
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    } else {
+                        showAlert('danger', data.message || 'حدث خطأ أثناء حفظ المورد');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('danger', 'حدث خطأ أثناء الاتصال بالخادم');
+                })
+                .finally(() => {
+                    // Reset button state
+                    saveBtn.innerHTML = originalText;
+                    saveBtn.disabled = false;
+                });
+            } else {
+                form.reportValidity();
+            }
+        });
+        
+        // Edit supplier button in details modal
+        document.querySelector('.edit-supplier-btn').addEventListener('click', function() {
+            // Close the details modal
+            const detailsModal = bootstrap.Modal.getInstance(document.getElementById('supplierDetailsModal'));
+            detailsModal.hide();
+            
+            // Open the edit modal
+            const editModal = new bootstrap.Modal(document.getElementById('addSupplierModal'));
+            document.getElementById('addSupplierModalLabel').textContent = 'تعديل المورد';
+            editModal.show();
+        });
+    });
+</script>
+{% endblock %}

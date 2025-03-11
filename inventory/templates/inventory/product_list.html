@@ -1,0 +1,1116 @@
+{% extends "core/base.html" %}
+
+{% block title %}قائمة المنتجات - مخازن موهبة{% endblock %}
+
+{% block page_title %}قائمة المنتجات{% endblock %}
+
+{% block page_actions %}
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
+    <i class="fas fa-plus me-1"></i> إضافة منتج جديد
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold"><i class="fas fa-box me-2 text-primary"></i>قائمة المنتجات</h5>
+        <div class="d-flex">
+            <div class="input-group me-2" style="width: 300px;">
+                <input type="text" id="searchInput" class="form-control" placeholder="بحث عن منتج...">
+                <button class="btn btn-outline-secondary" type="button">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-filter"></i> تصفية
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="filterDropdown">
+                    <li><a class="dropdown-item" href="#" data-filter="all">جميع المنتجات</a></li>
+                    <li><a class="dropdown-item" href="#" data-filter="low-stock">المنتجات منخفضة المخزون</a></li>
+                    <li><a class="dropdown-item" href="#" data-filter="out-of-stock">المنتجات غير المتوفرة</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" id="productsTable">
+                <thead>
+                    <tr>
+                        <th width="5%">#</th>
+                        <th width="30%">اسم المنتج</th>
+                        <th width="15%">الكود</th>
+                        <th width="15%">السعر</th>
+                        <th width="15%">المخزون</th>
+                        <th width="10%">الحالة</th>
+                        <th width="10%">الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="product-icon me-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background-color: rgba(67, 97, 238, 0.1); border-radius: 8px;">
+                                    <i class="fas fa-box text-primary"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold">{{ product.name }}</div>
+                                    <div class="text-muted small">{{ product.category|default:"بدون تصنيف" }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ product.code|default:"--" }}</td>
+                        <td>{{ product.price|floatformat:2 }} ج.م</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="progress flex-grow-1 me-2" style="height: 6px;">
+                                    {% if product.quantity <= 0 %}
+                                        <div class="progress-bar bg-danger" role="progressbar" style="width: 0%;" aria-valuenow="{{ product.quantity }}" aria-valuemin="0" aria-valuemax="50"></div>
+                                    {% elif product.quantity <= product.reorder_level %}
+                                        <div class="progress-bar bg-warning" role="progressbar" style="width: {% widthratio product.quantity 50 100 %}%;" aria-valuenow="{{ product.quantity }}" aria-valuemin="0" aria-valuemax="50"></div>
+                                    {% else %}
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: {% widthratio product.quantity 50 100 %}%;" aria-valuenow="{{ product.quantity }}" aria-valuemin="0" aria-valuemax="50"></div>
+                                    {% endif %}
+                                </div>
+                                <span class="fw-bold">{{ product.quantity }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            {% if product.quantity <= 0 %}
+                                <span class="badge bg-danger">غير متوفر</span>
+                            {% elif product.quantity <= product.reorder_level %}
+                                <span class="badge bg-warning text-dark">منخفض</span>
+                            {% else %}
+                                <span class="badge bg-success">متوفر</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="d-flex gap-1 justify-content-center">
+                                <button class="btn btn-sm btn-outline-primary view-product" data-id="{{ product.id }}" title="عرض التفاصيل">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-success edit-product" data-id="{{ product.id }}" title="تعديل">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger delete-product" data-id="{{ product.id }}" title="حذف">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <i class="fas fa-box-open text-muted mb-3" style="font-size: 3rem;"></i>
+                            <p class="text-muted mb-0">لا توجد منتجات متاحة</p>
+                            <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                                <i class="fas fa-plus me-1"></i> إضافة منتج جديد
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+        <div>
+            <span class="text-muted">إجمالي المنتجات: <span class="fw-bold">{{ products|length }}</span></span>
+        </div>
+        <nav aria-label="Page navigation">
+            <ul class="pagination mb-0">
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                <li class="page-item">
+                    <a class="page-link" href="#" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<!-- Product Details Modal -->
+<div class="modal fade" id="productDetailsModal" tabindex="-1" aria-labelledby="productDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="productDetailsModalLabel">تفاصيل المنتج</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-4 text-center">
+                        <div class="product-image-placeholder mb-3 d-flex align-items-center justify-content-center" style="height: 200px; background-color: rgba(67, 97, 238, 0.1); border-radius: 12px;">
+                            <i class="fas fa-box text-primary" style="font-size: 3rem;"></i>
+                        </div>
+                        <div class="product-status mb-3">
+                            <span class="badge bg-success product-status-badge">متوفر</span>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <h4 class="product-name mb-3">اسم المنتج</h4>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="text-muted">الكود:</label>
+                                    <div class="fw-bold product-code">--</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="text-muted">السعر:</label>
+                                    <div class="fw-bold product-price">0.00 ج.م</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="text-muted">التصنيف:</label>
+                                    <div class="fw-bold product-category">بدون تصنيف</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="text-muted">المخزون:</label>
+                                    <div class="fw-bold product-stock">0</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="text-muted">الوصف:</label>
+                            <div class="product-description">لا يوجد وصف متاح</div>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5 class="mb-3">حركة المخزون</h5>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>التاريخ</th>
+                                        <th>النوع</th>
+                                        <th>الكمية</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="product-stock-movements">
+                                    <tr>
+                                        <td colspan="3" class="text-center">لا توجد حركات مخزون</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h5 class="mb-3">المبيعات الأخيرة</h5>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>التاريخ</th>
+                                        <th>العميل</th>
+                                        <th>الكمية</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="product-recent-sales">
+                                    <tr>
+                                        <td colspan="3" class="text-center">لا توجد مبيعات حديثة</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                <button type="button" class="btn btn-primary edit-product-btn">تعديل المنتج</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Product Modal -->
+<div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addProductModalLabel">إضافة منتج جديد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addProductForm">
+                    <input type="hidden" id="productId" value="">
+                    <div class="mb-3">
+                        <label for="productName" class="form-label">اسم المنتج <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="productName" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="productSku" class="form-label">الكود (SKU) <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="productSku" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="productCategory" class="form-label">التصنيف</label>
+                                <div class="input-group">
+                                    <select class="form-select" id="productCategory">
+                                        <option value="">اختر التصنيف</option>
+                                        {% for category in categories %}
+                                            <option value="{{ category.id }}">{{ category.name }}</option>
+                                        {% endfor %}
+                                        <option value="new" class="text-primary">+ إضافة تصنيف جديد</option>
+                                    </select>
+                                    <button class="btn btn-outline-primary" type="button" id="addNewCategoryBtn">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="productPrice" class="form-label">سعر البيع <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="productPrice" step="0.01" required>
+                                    <span class="input-group-text">ج.م</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="productCostPrice" class="form-label">سعر التكلفة <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="productCostPrice" step="0.01" required>
+                                    <span class="input-group-text">ج.م</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="productQuantity" class="form-label">المخزون الحالي <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="productQuantity" value="0" min="0" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="productReorderLevel" class="form-label">حد إعادة الطلب</label>
+                                <input type="number" class="form-control" id="productReorderLevel" value="10" min="0">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="productSupplier" class="form-label">المورد <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <select class="form-select" id="productSupplier" required>
+                                        <option value="">اختر المورد</option>
+                                        {% for supplier in suppliers %}
+                                            <option value="{{ supplier.id }}">{{ supplier.name }}</option>
+                                        {% endfor %}
+                                        <option value="new" class="text-primary">+ إضافة مورد جديد</option>
+                                    </select>
+                                    <button class="btn btn-outline-primary" type="button" id="addNewSupplierBtn">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="productLocation" class="form-label">مكان التخزين</label>
+                                <div class="input-group">
+                                    <select class="form-select" id="productLocation">
+                                        <option value="">اختر مكان التخزين</option>
+                                        {% for location in locations %}
+                                            <option value="{{ location.id }}">{{ location.name }}</option>
+                                        {% endfor %}
+                                        <option value="new" class="text-primary">+ إضافة مكان تخزين جديد</option>
+                                    </select>
+                                    <button class="btn btn-outline-primary" type="button" id="addNewLocationBtn">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="productDescription" class="form-label">الوصف</label>
+                        <textarea class="form-control" id="productDescription" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" id="saveProductBtn">حفظ المنتج</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmationModal" tabindex="-1" aria-labelledby="deleteConfirmationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteConfirmationModalLabel">تأكيد الحذف</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>هل أنت متأكد من حذف هذا المنتج؟</p>
+                <p class="text-danger"><small>لا يمكن التراجع عن هذا الإجراء.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">حذف</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add product modal show event - ensure form is always empty
+        document.getElementById('addProductModal').addEventListener('show.bs.modal', function(event) {
+            // Reset form completely
+            document.getElementById('addProductForm').reset();
+            document.getElementById('productId').value = '';
+            
+            // Only set title to "Add Product" if not triggered by edit button
+            if (!event.relatedTarget || !event.relatedTarget.classList.contains('edit-product')) {
+                document.getElementById('addProductModalLabel').textContent = 'إضافة منتج جديد';
+                
+                // Set default values for new products
+                document.getElementById('productQuantity').value = '0';
+                document.getElementById('productReorderLevel').value = '10';
+                
+                // Reset select fields
+                document.getElementById('productCategory').value = '';
+                document.getElementById('productSupplier').value = '';
+                document.getElementById('productLocation').value = '';
+            }
+        });
+        
+        // View product details
+        const viewProductButtons = document.querySelectorAll('.view-product');
+        viewProductButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const productId = this.getAttribute('data-id');
+                
+                // Show loading state
+                const modal = new bootstrap.Modal(document.getElementById('productDetailsModal'));
+                modal.show();
+                
+                // Set loading state
+                document.querySelector('.product-name').textContent = 'جاري التحميل...';
+                document.querySelector('.product-stock-movements').innerHTML = '<tr><td colspan="3" class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">جاري التحميل...</span></div></td></tr>';
+                document.querySelector('.product-recent-sales').innerHTML = '<tr><td colspan="3" class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">جاري التحميل...</span></div></td></tr>';
+                
+                // Fetch product details
+                fetch(`/api/products/${productId}/details/`, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        const product = data.product;
+                        
+                        // Update product details
+                        document.querySelector('.product-name').textContent = product.name;
+                        document.querySelector('.product-code').textContent = product.sku || '--';
+                        document.querySelector('.product-price').textContent = `${product.price.toLocaleString()} ج.م`;
+                        document.querySelector('.product-category').textContent = product.category || 'بدون تصنيف';
+                        document.querySelector('.product-stock').textContent = product.quantity;
+                        document.querySelector('.product-description').textContent = product.description || 'لا يوجد وصف متاح';
+                        
+                        // Update status badge
+                        const statusBadge = document.querySelector('.product-status-badge');
+                        if (product.quantity <= 0) {
+                            statusBadge.className = 'badge bg-danger product-status-badge';
+                            statusBadge.textContent = 'غير متوفر';
+                        } else if (product.quantity <= product.reorder_level) {
+                            statusBadge.className = 'badge bg-warning text-dark product-status-badge';
+                            statusBadge.textContent = 'منخفض';
+                        } else {
+                            statusBadge.className = 'badge bg-success product-status-badge';
+                            statusBadge.textContent = 'متوفر';
+                        }
+                        
+                        // Update stock movements
+                        let stockMovementsHtml = '';
+                        if (product.stock_movements.length > 0) {
+                            product.stock_movements.forEach(movement => {
+                                stockMovementsHtml += `
+                                    <tr>
+                                        <td>${movement.date}</td>
+                                        <td>${movement.type === 'received' ? 'استلام' : 'بيع'}</td>
+                                        <td>${movement.quantity}</td>
+                                    </tr>
+                                `;
+                            });
+                        } else {
+                            stockMovementsHtml = '<tr><td colspan="3" class="text-center">لا توجد حركات مخزون</td></tr>';
+                        }
+                        document.querySelector('.product-stock-movements').innerHTML = stockMovementsHtml;
+                        
+                        // Update recent sales
+                        let recentSalesHtml = '';
+                        if (product.recent_sales.length > 0) {
+                            product.recent_sales.forEach(sale => {
+                                recentSalesHtml += `
+                                    <tr>
+                                        <td>${sale.date}</td>
+                                        <td>${sale.client}</td>
+                                        <td>${sale.quantity}</td>
+                                    </tr>
+                                `;
+                            });
+                        } else {
+                            recentSalesHtml = '<tr><td colspan="3" class="text-center">لا توجد مبيعات حديثة</td></tr>';
+                        }
+                        document.querySelector('.product-recent-sales').innerHTML = recentSalesHtml;
+                        
+                        // Set up edit button
+                        document.querySelector('.edit-product-btn').setAttribute('data-id', product.id);
+                    } else {
+                        showAlert('danger', data.message || 'حدث خطأ أثناء تحميل بيانات المنتج');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('danger', 'حدث خطأ أثناء الاتصال بالخادم');
+                    
+                    // Close the modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('productDetailsModal'));
+                    modal.hide();
+                });
+            });
+        });
+        
+        // Edit product
+        const editProductButtons = document.querySelectorAll('.edit-product');
+        editProductButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const productId = this.getAttribute('data-id');
+                
+                // Show loading state
+                document.getElementById('addProductModalLabel').textContent = 'تعديل المنتج';
+                const modal = new bootstrap.Modal(document.getElementById('addProductModal'));
+                modal.show();
+                
+                // Disable form fields while loading
+                const formFields = document.getElementById('addProductForm').elements;
+                for (let i = 0; i < formFields.length; i++) {
+                    formFields[i].disabled = true;
+                }
+                
+                // Show loading message
+                document.getElementById('productName').value = 'جاري التحميل...';
+                
+                // Fetch product details
+                fetch(`/api/products/${productId}/details/`, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        const product = data.product;
+                        
+                        // Set product ID for form submission
+                        document.getElementById('productId').value = product.id;
+                        
+                        // Populate form fields
+                        document.getElementById('productName').value = product.name;
+                        document.getElementById('productSku').value = product.sku || '';
+                        document.getElementById('productDescription').value = product.description || '';
+                        document.getElementById('productPrice').value = product.price;
+                        document.getElementById('productCostPrice').value = product.cost_price;
+                        document.getElementById('productQuantity').value = product.quantity;
+                        document.getElementById('productReorderLevel').value = product.reorder_level;
+                        
+                        // Set select fields
+                        if (product.category_id) {
+                            document.getElementById('productCategory').value = product.category_id;
+                        }
+                        if (product.supplier_id) {
+                            document.getElementById('productSupplier').value = product.supplier_id;
+                        }
+                        if (product.location_id) {
+                            document.getElementById('productLocation').value = product.location_id;
+                        }
+                    } else {
+                        showAlert('danger', data.message || 'حدث خطأ أثناء تحميل بيانات المنتج');
+                        
+                        // Close the modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('addProductModal'));
+                        modal.hide();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('danger', 'حدث خطأ أثناء الاتصال بالخادم');
+                    
+                    // Close the modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('addProductModal'));
+                    modal.hide();
+                })
+                .finally(() => {
+                    // Re-enable form fields
+                    for (let i = 0; i < formFields.length; i++) {
+                        formFields[i].disabled = false;
+                    }
+                });
+            });
+        });
+        
+        // Edit product from details modal
+        document.querySelector('.edit-product-btn').addEventListener('click', function() {
+            const productId = this.getAttribute('data-id');
+            
+            // Close details modal
+            const detailsModal = bootstrap.Modal.getInstance(document.getElementById('productDetailsModal'));
+            detailsModal.hide();
+            
+            // Trigger edit product
+            setTimeout(() => {
+                const editButton = document.querySelector(`.edit-product[data-id="${productId}"]`);
+                if (editButton) {
+                    editButton.click();
+                } else {
+                    showAlert('danger', 'لم يتم العثور على المنتج');
+                }
+            }, 500);
+        });
+        
+        // Delete product
+        const deleteProductButtons = document.querySelectorAll('.delete-product');
+        deleteProductButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const productId = this.getAttribute('data-id');
+                const modal = new bootstrap.Modal(document.getElementById('deleteConfirmationModal'));
+                modal.show();
+                
+                // Set up the confirm delete button
+                document.getElementById('confirmDeleteBtn').setAttribute('data-id', productId);
+            });
+        });
+        
+        // Confirm delete
+        document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+            const productId = this.getAttribute('data-id');
+            
+            // Show loading state
+            const deleteBtn = document.getElementById('confirmDeleteBtn');
+            const originalText = deleteBtn.innerHTML;
+            deleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> جاري الحذف...';
+            deleteBtn.disabled = true;
+            
+            // Send delete request
+            fetch(`/api/products/${productId}/delete/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Close the modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('deleteConfirmationModal'));
+                modal.hide();
+                
+                if (data.success) {
+                    // Show success message
+                    showAlert('success', data.message || 'تم حذف المنتج بنجاح');
+                    
+                    // Remove the product row from the table
+                    const productRow = document.querySelector(`.delete-product[data-id="${productId}"]`).closest('tr');
+                    if (productRow) {
+                        productRow.remove();
+                    }
+                    
+                    // Update product count
+                    const productCount = document.querySelector('.card-footer .text-muted .fw-bold');
+                    if (productCount) {
+                        const count = parseInt(productCount.textContent) - 1;
+                        productCount.textContent = count;
+                    }
+                    
+                    // If no products left, show empty message
+                    const tbody = document.querySelector('#productsTable tbody');
+                    if (tbody.children.length === 0) {
+                        const emptyRow = document.createElement('tr');
+                        emptyRow.innerHTML = `
+                            <td colspan="7" class="text-center py-4">
+                                <i class="fas fa-box-open text-muted mb-3" style="font-size: 3rem;"></i>
+                                <p class="text-muted mb-0">لا توجد منتجات متاحة</p>
+                                <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                                    <i class="fas fa-plus me-1"></i> إضافة منتج جديد
+                                </button>
+                            </td>
+                        `;
+                        tbody.appendChild(emptyRow);
+                    }
+                } else {
+                    // Show error message
+                    showAlert('danger', data.message || 'حدث خطأ أثناء حذف المنتج');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('danger', 'حدث خطأ أثناء الاتصال بالخادم');
+                
+                // Close the modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('deleteConfirmationModal'));
+                modal.hide();
+            })
+            .finally(() => {
+                // Reset button state
+                deleteBtn.innerHTML = originalText;
+                deleteBtn.disabled = false;
+            });
+        });
+        
+        // Save product
+        document.getElementById('saveProductBtn').addEventListener('click', function() {
+            const form = document.getElementById('addProductForm');
+            if (form.checkValidity()) {
+                // Show loading state
+                const saveBtn = document.getElementById('saveProductBtn');
+                const originalText = saveBtn.innerHTML;
+                saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> جاري الحفظ...';
+                saveBtn.disabled = true;
+                
+                // Get form data
+                const productId = document.getElementById('productId').value;
+                const productData = {
+                    name: document.getElementById('productName').value,
+                    sku: document.getElementById('productSku').value,
+                    description: document.getElementById('productDescription').value,
+                    price: parseFloat(document.getElementById('productPrice').value),
+                    cost_price: parseFloat(document.getElementById('productCostPrice').value),
+                    quantity: parseInt(document.getElementById('productQuantity').value),
+                    reorder_level: parseInt(document.getElementById('productReorderLevel').value),
+                    category_id: document.getElementById('productCategory').value || null,
+                    supplier_id: document.getElementById('productSupplier').value || null,
+                    location_id: document.getElementById('productLocation').value || null
+                };
+                
+                // Determine if this is an update or create
+                const isUpdate = productId !== '';
+                const url = isUpdate ? `/api/products/${productId}/update/` : '/api/products/create/';
+                
+                // Always use POST method since our Django views use @require_POST
+                const method = 'POST';
+                
+                // Make sure supplier_id is not "new"
+                if (productData.supplier_id === "new") {
+                    showAlert('danger', 'يرجى اختيار مورد أو إضافة مورد جديد');
+                    saveBtn.innerHTML = originalText;
+                    saveBtn.disabled = false;
+                    return;
+                }
+                
+                // Make sure category_id is not "new"
+                if (productData.category_id === "new") {
+                    productData.category_id = null;
+                }
+                
+                // Make sure location_id is not "new"
+                if (productData.location_id === "new") {
+                    productData.location_id = null;
+                }
+                
+                // Send AJAX request with error handling
+                fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify(productData)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        // Close the modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('addProductModal'));
+                        modal.hide();
+                        
+                        // Show success message
+                        showAlert('success', data.message || 'تم حفظ المنتج بنجاح');
+                        
+                        // Reload the page to show the updated product list
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    } else {
+                        showAlert('danger', data.message || 'حدث خطأ أثناء حفظ المنتج');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('danger', 'حدث خطأ أثناء الاتصال بالخادم');
+                })
+                .finally(() => {
+                    // Reset button state
+                    saveBtn.innerHTML = originalText;
+                    saveBtn.disabled = false;
+                });
+            } else {
+                form.reportValidity();
+            }
+        });
+        
+        // Helper function to get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        // Add New Category
+        document.getElementById('addNewCategoryBtn').addEventListener('click', function() {
+            const categoryName = prompt('أدخل اسم التصنيف الجديد:');
+            if (categoryName) {
+                // Show loading state
+                this.disabled = true;
+                this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+                
+                // Send AJAX request to create new category
+                fetch('/api/categories/create/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ name: categoryName })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Add new option to select
+                        const select = document.getElementById('productCategory');
+                        const option = document.createElement('option');
+                        option.value = data.category_id;
+                        option.textContent = categoryName;
+                        
+                        // Insert before the "Add New" option
+                        select.insertBefore(option, select.lastElementChild);
+                        
+                        // Select the new option
+                        select.value = data.category_id;
+                        
+                        showAlert('success', 'تم إضافة التصنيف بنجاح');
+                    } else {
+                        showAlert('danger', data.message || 'حدث خطأ أثناء إضافة التصنيف');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('danger', 'حدث خطأ أثناء الاتصال بالخادم');
+                })
+                .finally(() => {
+                    // Reset button state
+                    this.disabled = false;
+                    this.innerHTML = '<i class="fas fa-plus"></i>';
+                });
+            }
+        });
+        
+        // Add New Supplier
+        document.getElementById('addNewSupplierBtn').addEventListener('click', function() {
+            // Create a modal for adding a new supplier
+            const modalHtml = `
+                <div class="modal fade" id="addNewSupplierModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">إضافة مورد جديد</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="newSupplierForm">
+                                    <div class="mb-3">
+                                        <label for="newSupplierName" class="form-label">اسم المورد <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="newSupplierName" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="newSupplierContact" class="form-label">الشخص المسؤول</label>
+                                        <input type="text" class="form-control" id="newSupplierContact">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="newSupplierPhone" class="form-label">رقم الهاتف</label>
+                                        <input type="text" class="form-control" id="newSupplierPhone">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="newSupplierEmail" class="form-label">البريد الإلكتروني</label>
+                                        <input type="email" class="form-control" id="newSupplierEmail">
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                                <button type="button" class="btn btn-primary" id="saveNewSupplierBtn">حفظ</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add modal to the document
+            const modalContainer = document.createElement('div');
+            modalContainer.innerHTML = modalHtml;
+            document.body.appendChild(modalContainer);
+            
+            // Show the modal
+            const modal = new bootstrap.Modal(document.getElementById('addNewSupplierModal'));
+            modal.show();
+            
+            // Handle save button click
+            document.getElementById('saveNewSupplierBtn').addEventListener('click', function() {
+                const form = document.getElementById('newSupplierForm');
+                if (form.checkValidity()) {
+                    // Show loading state
+                    this.disabled = true;
+                    this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> جاري الحفظ...';
+                    
+                    // Get form data
+                    const supplierData = {
+                        name: document.getElementById('newSupplierName').value,
+                        contact_person: document.getElementById('newSupplierContact').value,
+                        phone: document.getElementById('newSupplierPhone').value,
+                        email: document.getElementById('newSupplierEmail').value
+                    };
+                    
+                    // Send AJAX request to create new supplier
+                    fetch('/api/suppliers/create/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken'),
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify(supplierData)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Add new option to select
+                            const select = document.getElementById('productSupplier');
+                            const option = document.createElement('option');
+                            option.value = data.supplier_id;
+                            option.textContent = supplierData.name;
+                            
+                            // Insert before the "Add New" option
+                            select.insertBefore(option, select.lastElementChild);
+                            
+                            // Select the new option
+                            select.value = data.supplier_id;
+                            
+                            // Close the modal
+                            modal.hide();
+                            
+                            // Remove the modal from the DOM after it's hidden
+                            document.getElementById('addNewSupplierModal').addEventListener('hidden.bs.modal', function() {
+                                this.remove();
+                            });
+                            
+                            showAlert('success', 'تم إضافة المورد بنجاح');
+                        } else {
+                            showAlert('danger', data.message || 'حدث خطأ أثناء إضافة المورد');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showAlert('danger', 'حدث خطأ أثناء الاتصال بالخادم');
+                    })
+                    .finally(() => {
+                        // Reset button state
+                        this.disabled = false;
+                        this.innerHTML = 'حفظ';
+                    });
+                } else {
+                    form.reportValidity();
+                }
+            });
+        });
+        
+        // Add New Location
+        document.getElementById('addNewLocationBtn').addEventListener('click', function() {
+            const locationName = prompt('أدخل اسم مكان التخزين الجديد:');
+            if (locationName) {
+                // Show loading state
+                this.disabled = true;
+                this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+                
+                // Send AJAX request to create new location
+                fetch('/api/locations/create/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ name: locationName })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Add new option to select
+                        const select = document.getElementById('productLocation');
+                        const option = document.createElement('option');
+                        option.value = data.location_id;
+                        option.textContent = locationName;
+                        
+                        // Insert before the "Add New" option
+                        select.insertBefore(option, select.lastElementChild);
+                        
+                        // Select the new option
+                        select.value = data.location_id;
+                        
+                        showAlert('success', 'تم إضافة مكان التخزين بنجاح');
+                    } else {
+                        showAlert('danger', data.message || 'حدث خطأ أثناء إضافة مكان التخزين');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('danger', 'حدث خطأ أثناء الاتصال بالخادم');
+                })
+                .finally(() => {
+                    // Reset button state
+                    this.disabled = false;
+                    this.innerHTML = '<i class="fas fa-plus"></i>';
+                });
+            }
+        });
+        
+        // Helper function to show alerts
+        function showAlert(type, message) {
+            const alertContainer = document.createElement('div');
+            alertContainer.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3`;
+            alertContainer.style.zIndex = '9999';
+            alertContainer.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            document.body.appendChild(alertContainer);
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                const alert = bootstrap.Alert.getOrCreateInstance(alertContainer);
+                alert.close();
+            }, 5000);
+        }
+        
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('keyup', function() {
+            const searchValue = this.value.toLowerCase();
+            const table = document.getElementById('productsTable');
+            const rows = table.getElementsByTagName('tr');
+            
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                const cells = row.getElementsByTagName('td');
+                if (cells.length > 0) {
+                    const nameCell = cells[1].textContent.toLowerCase();
+                    const codeCell = cells[2].textContent.toLowerCase();
+                    
+                    if (nameCell.includes(searchValue) || codeCell.includes(searchValue)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                }
+            }
+        });
+        
+        // Filter functionality
+        const filterLinks = document.querySelectorAll('[data-filter]');
+        filterLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const filter = this.getAttribute('data-filter');
+                const table = document.getElementById('productsTable');
+                const rows = table.getElementsByTagName('tr');
+                
+                for (let i = 1; i < rows.length; i++) {
+                    const row = rows[i];
+                    const cells = row.getElementsByTagName('td');
+                    if (cells.length > 0) {
+                        const stockCell = cells[4].textContent.trim();
+                        const stockValue = parseInt(stockCell);
+                        
+                        // Get the reorder level from the badge class
+                        const badge = row.querySelector('.badge');
+                        const isLowStock = badge && badge.classList.contains('bg-warning');
+                        const isOutOfStock = badge && badge.classList.contains('bg-danger');
+                        
+                        if (filter === 'all') {
+                            row.style.display = '';
+                        } else if (filter === 'low-stock' && isLowStock) {
+                            row.style.display = '';
+                        } else if (filter === 'out-of-stock' && isOutOfStock) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    }
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

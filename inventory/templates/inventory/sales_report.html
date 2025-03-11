@@ -1,0 +1,350 @@
+{% extends "core/base.html" %}
+
+{% block title %}تقرير المبيعات - مخازن موهبة{% endblock %}
+
+{% block extra_css %}
+<style>
+    body, h1, h2, h3, h4, h5, h6, p, span, a, button, input, textarea, select, option {
+        font-family: 'Cairo', sans-serif !important;
+    }
+    .card-header .fw-bold,
+    .dropdown-menu,
+    .modal-title,
+    .modal-footer button,
+    .table th,
+    .table td,
+    .btn,
+    .badge,
+    .dropdown-item {
+        font-family: 'Cairo', sans-serif !important;
+    }
+    .pagination,
+    .form-label,
+    .form-control,
+    .form-select {
+        font-family: 'Cairo', sans-serif !important;
+    }
+</style>
+{% endblock %}
+
+{% block page_title %}تقرير المبيعات{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'export_sales_report' %}?start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}" class="btn btn-success">
+    <i class="fas fa-file-csv me-1"></i> تصدير CSV
+</a>
+<button type="button" class="btn btn-info ms-2" id="printReportBtn">
+    <i class="fas fa-print me-1"></i> طباعة التقرير
+</button>
+{% endblock %}
+
+{% block content %}
+<!-- Date Range Filter -->
+<div class="card mb-4">
+    <div class="card-header bg-white">
+        <h5 class="mb-0 fw-bold"><i class="fas fa-filter me-2 text-primary"></i>تصفية البيانات</h5>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label for="start_date" class="form-label">من تاريخ</label>
+                <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date|date:'Y-m-d' }}">
+            </div>
+            <div class="col-md-4">
+                <label for="end_date" class="form-label">إلى تاريخ</label>
+                <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date|date:'Y-m-d' }}">
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search me-1"></i> تطبيق
+                </button>
+                <button type="button" class="btn btn-outline-secondary ms-2" id="resetFilterBtn">
+                    <i class="fas fa-redo me-1"></i> إعادة تعيين
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-body text-center p-4">
+                <div class="dashboard-icon text-primary">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <h5 class="card-title fw-bold text-secondary">إجمالي المبيعات</h5>
+                <h3 class="mb-0 fw-bold">{{ total_sales|floatformat:2 }} ج.م</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-body text-center p-4">
+                <div class="dashboard-icon text-success">
+                    <i class="fas fa-box"></i>
+                </div>
+                <h5 class="card-title fw-bold text-secondary">إجمالي المنتجات المباعة</h5>
+                <h3 class="mb-0 fw-bold">{{ total_quantity }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-body text-center p-4">
+                <div class="dashboard-icon text-info">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h5 class="card-title fw-bold text-secondary">عدد العملاء</h5>
+                <h3 class="mb-0 fw-bold">{{ customer_count }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sales Chart -->
+<div class="card mb-4 shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold"><i class="fas fa-chart-line me-2 text-primary"></i>المبيعات حسب الفترة</h5>
+        <div class="btn-group" role="group">
+            <button type="button" class="btn btn-outline-secondary btn-sm active" data-period="daily">يومي</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-period="weekly">أسبوعي</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-period="monthly">شهري</button>
+        </div>
+    </div>
+    <div class="card-body">
+        <canvas id="salesChart" height="300"></canvas>
+    </div>
+</div>
+
+<!-- Top Products Table -->
+<div class="card shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold"><i class="fas fa-medal me-2 text-primary"></i>أكثر المنتجات مبيعاً</h5>
+        <div class="input-group" style="width: 300px;">
+            <input type="text" id="searchInput" class="form-control" placeholder="بحث عن منتج...">
+            <button class="btn btn-outline-secondary" type="button">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" id="salesTable">
+                <thead>
+                    <tr>
+                        <th width="5%">#</th>
+                        <th width="40%">المنتج</th>
+                        <th width="15%">الكمية المباعة</th>
+                        <th width="20%">إجمالي المبيعات</th>
+                        <th width="20%">نسبة المبيعات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in sales_data %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="product-icon me-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background-color: rgba(67, 97, 238, 0.1); border-radius: 8px;">
+                                    <i class="fas fa-box text-primary"></i>
+                                </div>
+                                <div class="fw-bold">{{ entry.product__name }}</div>
+                            </div>
+                        </td>
+                        <td class="fw-bold">{{ entry.total_sold }}</td>
+                        <td class="fw-bold">{{ entry.total_amount|floatformat:2 }} ج.م</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="progress flex-grow-1 me-2" style="height: 8px;">
+                                    <div class="progress-bar bg-primary" role="progressbar"
+                                        style="width: {% widthratio entry.total_sold sales_data.0.total_sold 100 %}%;"
+                                        aria-valuenow="{{ entry.total_sold }}" aria-valuemin="0"
+                                        aria-valuemax="{{ sales_data.0.total_sold }}"></div>
+                                </div>
+                                <span class="fw-bold">{% widthratio entry.total_sold total_quantity 100 %}%</span>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-4">
+                            <i class="fas fa-box-open text-muted mb-3" style="font-size: 3rem;"></i>
+                            <p class="text-muted mb-0">لا توجد بيانات متاحة</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+        <div>
+            <span class="text-muted">إجمالي المنتجات: <span class="fw-bold">{{ sales_data|length }}</span></span>
+        </div>
+        <nav aria-label="Page navigation">
+            <ul class="pagination mb-0">
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                <li class="page-item">
+                    <a class="page-link" href="#" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Sales Chart
+        var salesCtx = document.getElementById('salesChart').getContext('2d');
+        var salesChart = new Chart(salesCtx, {
+            type: 'line',
+            data: {
+                labels: {{ sales_dates|default:"[]"|safe }},
+                datasets: [{
+                    label: 'المبيعات',
+                    data: {{ sales_amounts|default:"[]"|safe }},
+                    backgroundColor: 'rgba(67, 97, 238, 0.2)',
+                    borderColor: 'rgba(67, 97, 238, 1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: 'white',
+                    pointBorderColor: 'rgba(67, 97, 238, 1)',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    pointHoverBackgroundColor: 'white',
+                    pointHoverBorderColor: 'rgba(67, 97, 238, 1)',
+                    pointHoverBorderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            font: {
+                                family: 'Cairo',
+                                size: 12
+                            },
+                            padding: 10,
+                            callback: function(value) {
+                                return value.toLocaleString() + ' ج.م';
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false,
+                            drawBorder: false
+                        },
+                        ticks: {
+                            font: {
+                                family: 'Cairo',
+                                size: 12
+                            },
+                            padding: 10
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            font: {
+                                family: 'Cairo',
+                                size: 14,
+                                weight: 'bold'
+                            },
+                            padding: 20
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleFont: {
+                            family: 'Cairo',
+                            size: 14,
+                            weight: 'bold'
+                        },
+                        bodyFont: {
+                            family: 'Cairo',
+                            size: 13
+                        },
+                        padding: 12,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.parsed.y.toLocaleString() + ' ج.م';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('keyup', function() {
+            const searchValue = this.value.toLowerCase();
+            const table = document.getElementById('salesTable');
+            const rows = table.getElementsByTagName('tr');
+            
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                const cells = row.getElementsByTagName('td');
+                if (cells.length > 0) {
+                    const productCell = cells[1].textContent.toLowerCase();
+                    
+                    if (productCell.includes(searchValue)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                }
+            }
+        });
+        
+        // Period buttons
+        const periodButtons = document.querySelectorAll('[data-period]');
+        periodButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                periodButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                
+                // In a real implementation, you would update the chart data based on the selected period
+                // For demo purposes, we'll just show an alert
+                alert('تم اختيار الفترة: ' + this.getAttribute('data-period'));
+            });
+        });
+        
+        // Print report button
+        document.getElementById('printReportBtn').addEventListener('click', function() {
+            window.print();
+        });
+        
+        // Reset filter button
+        document.getElementById('resetFilterBtn').addEventListener('click', function() {
+            document.getElementById('start_date').value = '';
+            document.getElementById('end_date').value = '';
+            // In a real implementation, you would submit the form or redirect to the page without filters
+        });
+    });
+</script>
+{% endblock %}

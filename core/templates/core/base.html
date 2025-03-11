@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="نظام إدارة المخازن والمبيعات - مخازن موهبة">
+    <meta name="author" content="MWHEBA">
+    <title>{% block title %}مخازن موهبة - MWHEBA Stock{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
+    
+    <!-- Bootstrap RTL CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts - Cairo -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-color: #01578a;
+            --secondary-color: #017bbd;
+            --success-color:rgb(36, 116, 5);
+            --danger-color:rgb(247, 37, 37);
+            --warning-color:rgb(233, 173, 35);
+            --info-color: #0096c7;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --sidebar-width: 280px;
+            --header-height: 60px;
+            --border-radius: 0.75rem;
+            --transition-speed: 0.3s;
+            --box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #f0f2f5;
+            font-weight: 400;
+            color: var(--dark-color);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+        
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+        
+        /* Layout */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(135deg, #01578a 0%,rgba(1, 88, 138, 0.84) 100%);
+            color: white;
+            position: fixed;
+            height: 100vh;
+            z-index: 1000;
+            box-shadow: var(--box-shadow);
+            transition: all var(--transition-speed) ease;
+            overflow-y: auto;
+        }
+        
+        .sidebar-header {
+            padding: 1.5rem;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .sidebar-logo {
+            font-size: 2rem;
+            margin-left: 0.75rem;
+            color: white;
+        }
+        
+        .sidebar-brand h3 {
+            margin: 0;
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: white;
+        }
+        
+        .sidebar-brand-subtitle {
+            font-size: 0.9rem;
+            opacity: 0.7;
+            font-weight: 400;
+        }
+        
+        .sidebar-user {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar-user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 0.75rem;
+        }
+        
+        .sidebar-user-info {
+            flex: 1;
+        }
+        
+        .sidebar-user-name {
+            font-weight: 600;
+            margin: 0;
+            font-size: 0.95rem;
+        }
+        
+        .sidebar-user-role {
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+        
+        .sidebar-nav {
+            padding: 1rem 0;
+        }
+        
+        .sidebar-nav-title {
+            padding: 0.5rem 1.5rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 700;
+            margin-top: 0.5rem;
+        }
+        
+        .nav-item {
+            margin: 0.25rem 0.75rem;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            color: rgba(255, 255, 255, 0.8);
+            border-radius: var(--border-radius);
+            transition: all var(--transition-speed) ease;
+            font-weight: 500;
+        }
+        
+        .nav-link:hover {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.1);
+            transform: translateX(-5px);
+        }
+        
+        .nav-link.active {
+            color: white;
+            background-color: #0171b2;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .nav-link i {
+            margin-left: 0.75rem;
+            font-size: 1.1rem;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .dropdown-menu {
+            background-color: #fff;
+            border: none;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 0.5rem;
+            min-width: 200px;
+        }
+        
+        .dropdown-item {
+            padding: 0.6rem 1rem;
+            border-radius: calc(var(--border-radius) - 0.25rem);
+            transition: all var(--transition-speed) ease;
+            font-weight: 500;
+        }
+        
+        .dropdown-item:hover {
+            background-color: rgba(67, 97, 238, 0.1);
+            color: var(--primary-color);
+        }
+        
+        .dropdown-item i {
+            margin-left: 0.5rem;
+            width: 20px;
+            text-align: center;
+            color: var(--primary-color);
+        }
+        
+        .sidebar-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: auto;
+        }
+        
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: var(--border-radius);
+            background-color: #01578a;
+            color: white;
+            border: none;
+            font-weight: 600;
+            transition: all var(--transition-speed) ease;
+        }
+        
+        .logout-btn:hover {
+            background-color:rgba(1, 88, 138, 0.8);
+        }
+        
+        .logout-btn i {
+            margin-left: 0.5rem;
+        }
+        
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-right: var(--sidebar-width);
+            padding: 2rem;
+            transition: all var(--transition-speed) ease;
+        }
+        
+        /* Header */
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .page-title {
+            font-weight: 700;
+            color: var(--dark-color);
+            margin: 0;
+            font-size: 1.75rem;
+        }
+        
+        /* Cards */
+        .card {
+            border: none;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            transition: all var(--transition-speed) ease;
+            margin-bottom: 1.5rem;
+            background-color: white;
+        }
+        
+        .card:hover {
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.12);
+            transform: translateY(-2px);
+        }
+        
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 1.25rem 1.5rem;
+            font-weight: 700;
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+        }
+        
+        /* Tables */
+        .table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+        }
+        
+        .table th {
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+            color: var(--secondary-color);
+            background-color: rgba(0, 0, 0, 0.02);
+            padding: 1rem;
+            border-bottom: 2px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .table td {
+            padding: 1rem;
+            vertical-align: middle;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .table-hover tbody tr:hover {
+            background-color: rgba(67, 97, 238, 0.05);
+        }
+        
+        /* Badges */
+        .badge {
+            padding: 0.5em 0.75em;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            border-radius: 50rem;
+        }
+        
+        /* Buttons */
+        .btn {
+            font-weight: 600;
+            padding: 0.5rem 1.25rem;
+            border-radius: 50rem;
+            transition: all var(--transition-speed) ease;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: #3a56d4;
+            border-color: #3a56d4;
+            box-shadow: 0 4px 10px rgba(67, 97, 238, 0.3);
+        }
+        
+        .btn-danger {
+            background-color: var(--danger-color);
+            border-color: var(--danger-color);
+        }
+        
+        .btn-danger:hover {
+            background-color: #e01e79;
+            border-color: #e01e79;
+            box-shadow: 0 4px 10px rgba(247, 37, 133, 0.3);
+        }
+        
+        .btn-sm {
+            padding: 0.4rem 1rem;
+            font-size: 0.875rem;
+        }
+        
+        /* Alerts */
+        .alert {
+            border-radius: var(--border-radius);
+            border: none;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        /* Dashboard Cards */
+        .dashboard-card {
+            transition: all var(--transition-speed) ease;
+            border: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            border-radius: var(--border-radius);
+        }
+        
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+        
+        .dashboard-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            opacity: 0.9;
+            transition: all var(--transition-speed) ease;
+        }
+        
+        .dashboard-card:hover .dashboard-icon {
+            transform: scale(1.1);
+        }
+        
+        /* Footer */
+        .footer {
+            padding: 1.5rem 0;
+            margin-top: 2rem;
+            text-align: center;
+            color: var(--secondary-color);
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        /* Responsive */
+        @media (max-width: 992px) {
+            :root {
+                --sidebar-width: 240px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(calc(var(--sidebar-width) * -1));
+                position: fixed;
+                z-index: 1030;
+            }
+            
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-right: 0;
+                width: 100%;
+            }
+            
+            .toggle-sidebar {
+                display: block;
+            }
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-brand">
+                    <div class="sidebar-logo">
+                        <i class="fas fa-box"></i>
+                    </div>
+                    <h3>مخازن موهبة</h3>
+                </div>
+                <div class="sidebar-brand-subtitle">MWHEBA Stock</div>
+            </div>
+            
+            <div class="sidebar-user">
+                <div class="sidebar-user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="sidebar-user-info">
+                    <h6 class="sidebar-user-name">{{ request.user.username }}</h6>
+                    <div class="sidebar-user-role">مدير النظام</div>
+                </div>
+            </div>
+            
+            <div class="sidebar-nav">
+                <div class="sidebar-nav-title">القائمة الرئيسية</div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/dashboard/' %}active{% endif %}" href="{% url 'dashboard' %}">
+                            <i class="fas fa-tachometer-alt"></i> لوحة التحكم
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/product' in request.path %}active{% endif %}" href="{% url 'product_list' %}">
+                            <i class="fas fa-box"></i> المنتجات
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/supplier' in request.path %}active{% endif %}" href="{% url 'supplier_list' %}">
+                            <i class="fas fa-truck"></i> الموردين
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/client' in request.path %}active{% endif %}" href="{% url 'client_list' %}">
+                            <i class="fas fa-users"></i> العملاء
+                        </a>
+                    </li>
+                </ul>
+                
+                <div class="sidebar-nav-title">المعاملات</div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/order' in request.path and not '/purchase' in request.path %}active{% endif %}" href="{% url 'order_list' %}">
+                            <i class="fas fa-shopping-cart"></i> المبيعات
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/purchase' in request.path %}active{% endif %}" href="{% url 'purchase_order_list' %}">
+                            <i class="fas fa-shopping-basket"></i> المشتريات
+                        </a>
+                    </li>
+                </ul>
+                
+                <div class="sidebar-nav-title">التقارير</div>
+                <ul class="nav flex-column">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="reportsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-chart-bar"></i> التقارير
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="reportsDropdown">
+                            <li><a class="dropdown-item" href="{% url 'stock_report' %}"><i class="fas fa-boxes"></i> تقرير المخزون</a></li>
+                            <li><a class="dropdown-item" href="{% url 'sales_report' %}"><i class="fas fa-chart-line"></i> تقرير المبيعات</a></li>
+                            <li><a class="dropdown-item" href="{% url 'profit_loss_report' %}"><i class="fas fa-balance-scale"></i> تقرير الأرباح والخسائر</a></li>
+                            <li><a class="dropdown-item" href="{% url 'stock_movement_report' %}"><i class="fas fa-exchange-alt"></i> تقرير حركة المخزون</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="sidebar-footer">
+                <form action="{% url 'logout' %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
+                    </button>
+                </form>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        <i class="fas fa-info-circle me-2"></i> {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+            
+            <!-- Page Header -->
+            <div class="content-header">
+                <h1 class="page-title">{% block page_title %}{% endblock %}</h1>
+                <div>
+                    {% block page_actions %}{% endblock %}
+                </div>
+            </div>
+            
+            <!-- Page Content -->
+            {% block content %}{% endblock %}
+            
+            <!-- Footer -->
+            <footer class="footer">
+                <div class="container">
+                    <p class="mb-0">© {{ current_year|default:2025 }} مخازن موهبة. جميع الحقوق محفوظة.</p>
+                </div>
+            </footer>
+        </main>
+    </div>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script>
+        // Initialize all dropdowns
+        document.addEventListener('DOMContentLoaded', function() {
+            var dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'));
+            var dropdownList = dropdownElementList.map(function(dropdownToggleEl) {
+                return new bootstrap.Dropdown(dropdownToggleEl);
+            });
+            
+            // Mobile sidebar toggle
+            const toggleSidebar = document.querySelector('.toggle-sidebar');
+            const sidebar = document.querySelector('.sidebar');
+            
+            if (toggleSidebar) {
+                toggleSidebar.addEventListener('click', function() {
+                    sidebar.classList.toggle('show');
+                });
+            }
+            
+            // Close sidebar when clicking outside on mobile
+            document.addEventListener('click', function(event) {
+                if (window.innerWidth <= 768 && 
+                    !sidebar.contains(event.target) && 
+                    !toggleSidebar.contains(event.target) &&
+                    sidebar.classList.contains('show')) {
+                    sidebar.classList.remove('show');
+                }
+            });
+            
+            // Current year for footer
+            document.querySelector('.footer .container p').innerHTML = 
+                document.querySelector('.footer .container p').innerHTML.replace('{{ current_year|default:2025 }}', new Date().getFullYear());
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
