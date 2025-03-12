@@ -14,6 +14,9 @@ class ProductAdmin(admin.ModelAdmin):
     list_filter = ('category', 'supplier', 'location')
     search_fields = ('name', 'sku', 'description')
     readonly_fields = ('created_at', 'updated_at')
+    autocomplete_fields = ['category', 'supplier', 'location']  # Enable autocomplete for related fields
+    search_fields = ['name', 'sku', 'description']  # Enable search for autocomplete
+    
     fieldsets = (
         ('Basic Information', {
             'fields': ('name', 'sku', 'description', 'category')
@@ -144,14 +147,24 @@ class PurchaseOrderAdmin(admin.ModelAdmin):
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
     extra = 1
-    # Only show inline items for existing orders
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        # Check if we're in an add view (no parent instance yet)
-        if not hasattr(self, 'parent_instance') or not self.parent_instance or not self.parent_instance.pk:
-            return qs.none()  # Return empty queryset for new orders
-        return qs
-        return qs
+    autocomplete_fields = ['product']  # Enable autocomplete for product field
+    
+    # Don't validate the formset until the form is submitted
+    validate_min = False
+    
+    # Don't require any fields in the formset
+    def get_formset(self, request, obj=None, **kwargs):
+        formset = super().get_formset(request, obj, **kwargs)
+        formset.validate_min = False
+        return formset
+    
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        """
+        Override to customize the product dropdown
+        """
+        if db_field.name == "product":
+            kwargs["queryset"] = Product.objects.filter(quantity__gt=0)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 # Order Admin
 class OrderAdmin(admin.ModelAdmin):
@@ -160,6 +173,8 @@ class OrderAdmin(admin.ModelAdmin):
     search_fields = ('invoice_number', 'client__name', 'notes')
     readonly_fields = ('created_at', 'updated_at', 'total_amount')
     inlines = [OrderItemInline]
+    autocomplete_fields = ['client']  # Enable autocomplete for client field
+    
     fieldsets = (
         ('Basic Information', {
             'fields': ('client', 'invoice_number', 'status', 'notes')
@@ -176,6 +191,9 @@ class OrderAdmin(admin.ModelAdmin):
         """
         Override save_model to handle saving the order without calculating totals
         """
+        if not obj.created_by:
+            obj.created_by = request.user
+            
         if not change:  # If this is a new order
             # Save without calculating totals
             obj.save(calculate_total=False)
@@ -187,10 +205,18 @@ class OrderAdmin(admin.ModelAdmin):
         """
         Override save_formset to handle saving inline items and recalculating totals
         """
+        # Check if the formset is valid
+        if not formset.is_valid():
+            return
+            
         instances = formset.save(commit=False)
         
         # Save new instances
         for instance in instances:
+            # Skip empty forms
+            if not instance.product_id or not instance.quantity:
+                continue
+                
             instance.save()
             
         # Delete marked for deletion
@@ -200,26 +226,33 @@ class OrderAdmin(admin.ModelAdmin):
         # Call formset's save_m2m
         formset.save_m2m()
         
-        # Recalculate totals for the order if this is the OrderItemInline formset
-        if instances and isinstance(instances[0], OrderItem):
-            order = form.instance
-            
-            # Manually calculate totals
-            subtotal = OrderItem.objects.filter(order=order).aggregate(
-                subtotal=Sum(F('quantity') * F('price')))['subtotal'] or 0
-            
-            # Calculate discount
-            if order.discount_percentage > 0:
-                order.discount_amount = subtotal * (order.discount_percentage / 100)
-            
-            # Calculate tax
-            tax_amount = (subtotal - order.discount_amount) * (order.tax_percentage / 100)
-            
-            # Calculate total
-            order.total_amount = subtotal - order.discount_amount + tax_amount + order.shipping_cost
-            
-            # Save the order without recalculating totals
-            order.save(calculate_total=False)
+        # Recalculate totals for the order
+        order = form.instance
+        
+        # Manually calculate totals
+        subtotal = OrderItem.objects.filter(order=order).aggregate(
+            subtotal=Sum(F('quantity') * F('price')))['subtotal'] or 0
+        
+        # Calculate discount
+        if order.discount_percentage > 0:
+            # Convert to float for calculation to avoid Decimal/float mismatch
+            subtotal_float = float(subtotal)
+            discount_percentage_float = float(order.discount_percentage)
+            order.discount_amount = subtotal_float * (discount_percentage_float / 100)
+        
+        # Calculate tax
+        # Convert to float for calculation to avoid Decimal/float mismatch
+        subtotal_float = float(subtotal)
+        discount_amount_float = float(order.discount_amount)
+        tax_percentage_float = float(order.tax_percentage)
+        tax_amount = (subtotal_float - discount_amount_float) * (tax_percentage_float / 100)
+        
+        # Calculate total
+        shipping_cost_float = float(order.shipping_cost)
+        order.total_amount = subtotal_float - discount_amount_float + tax_amount + shipping_cost_float
+        
+        # Save the order without recalculating totals
+        order.save(calculate_total=False)
 
 # Supplier Payment Admin
 class SupplierPaymentAdmin(admin.ModelAdmin):
@@ -255,11 +288,21 @@ class UserProfileAdmin(admin.ModelAdmin):
     list_filter = ('role',)
     search_fields = ('user__username', 'user__email', 'phone')
 
+# Category Admin
+class CategoryAdmin(admin.ModelAdmin):
+    search_fields = ['name']
+    list_display = ('name', 'description')
+
+# StorageLocation Admin
+class StorageLocationAdmin(admin.ModelAdmin):
+    search_fields = ['name']
+    list_display = ('name', 'description', 'address')
+
 # Register all models with their custom admin classes
 admin.site.register(Product, ProductAdmin)
 admin.site.register(Stock, StockAdmin)
-admin.site.register(Category)
-admin.site.register(StorageLocation)
+admin.site.register(Category, CategoryAdmin)
+admin.site.register(StorageLocation, StorageLocationAdmin)
 admin.site.register(Supplier, SupplierAdmin)
 admin.site.register(Client, ClientAdmin)
 admin.site.register(PurchaseOrder, PurchaseOrderAdmin)

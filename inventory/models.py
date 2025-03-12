@@ -447,6 +447,11 @@ class OrderItem(models.Model):
             raise ValidationError(f"Not enough inventory for {self.product.name}. Only {self.product.quantity} available.")
     
     def save(self, *args, **kwargs):
+        # Skip validation and inventory updates if product is not set
+        # This is needed for the admin interface when creating a new order
+        if not hasattr(self, 'product') or self.product is None:
+            return super().save(*args, **kwargs)
+            
         # Validate before saving
         self.clean()
         

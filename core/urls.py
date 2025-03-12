@@ -28,7 +28,12 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('inventory.urls')),  # Include inventory URLs
     path('logout/', LogoutView.as_view(), name='logout'),  # ✅ Correct logout setup
-
+    
+    # API endpoints for orders
+    path('api/orders/<int:order_id>/details/', views.order_details_api, name='order_details_api'),
+    path('api/orders/<int:order_id>/delete/', views.order_delete_api, name='order_delete_api'),
+    path('api/orders/<int:order_id>/update/', views.update_order_api, name='update_order_api'),
+    path('api/orders/create/', views.create_order, name='create_order_api'),
 ]
 
 # Add media file handling in development

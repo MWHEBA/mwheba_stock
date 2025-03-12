@@ -78,21 +78,21 @@
                     <tr>
                         <td>{{ forloop.counter }}</td>
                         <td>
-                            <div class="fw-bold">{{ order.id }}</div>
+                            <div class="fw-bold">{{ order.invoice_number }}</div>
                         </td>
                         <td>
                             <div class="d-flex align-items-center">
                                 <div class="client-icon me-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background-color: rgba(67, 97, 238, 0.1); border-radius: 8px;">
                                     <i class="fas fa-user text-primary"></i>
                                 </div>
-                                <div class="fw-bold">{{ order.customer }}</div>
+                                <div class="fw-bold">{{ order.client.name }}</div>
                             </div>
                         </td>
                         <td>
-                            <span class="text-muted">{{ order.date|default:"--" }}</span>
+                            <span class="text-muted">{{ order.order_date|date:"Y-m-d" }}</span>
                         </td>
                         <td class="fw-bold">
-                            {{ order.total|default:"0.00" }} ج.م
+                            {{ order.total_amount|floatformat:2 }} ج.م
                         </td>
                         <td>
                             {% if order.status == 'completed' %}
@@ -143,19 +143,41 @@
         </div>
         <nav aria-label="Page navigation">
             <ul class="pagination mb-0">
+                {% if orders.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ orders.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                {% else %}
                 <li class="page-item disabled">
                     <a class="page-link" href="#" aria-label="Previous">
                         <span aria-hidden="true">&laquo;</span>
                     </a>
                 </li>
-                <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                <li class="page-item"><a class="page-link" href="#">2</a></li>
-                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                {% endif %}
+                
+                {% for i in orders.paginator.page_range %}
+                    {% if orders.number == i %}
+                    <li class="page-item active"><a class="page-link" href="#">{{ i }}</a></li>
+                    {% else %}
+                    <li class="page-item"><a class="page-link" href="?page={{ i }}{% if search_query %}&search={{ search_query }}{% endif %}">{{ i }}</a></li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if orders.has_next %}
                 <li class="page-item">
+                    <a class="page-link" href="?page={{ orders.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
                     <a class="page-link" href="#" aria-label="Next">
                         <span aria-hidden="true">&raquo;</span>
                     </a>
                 </li>
+                {% endif %}
             </ul>
         </nav>
     </div>
@@ -273,7 +295,7 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="orderDate" class="form-label">تاريخ الفاتورة</label>
-                                <input type="date" class="form-control datepicker" id="orderDate" required>
+                                <input type="date" class="form-control" id="orderDate" required>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -433,22 +455,11 @@
         }
         
     document.addEventListener('DOMContentLoaded', function() {
-        // Set default date to today
+
+
+        // Set default date to today for the date input
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('orderDate').value = today;
-        
-        // Initialize datepicker with better styling
-        try {
-            $('.datepicker').datepicker({
-                format: 'yyyy-mm-dd',
-                autoclose: true,
-                todayHighlight: true,
-                language: 'ar',
-                rtl: true
-            });
-        } catch (e) {
-            console.log('Datepicker initialization failed, using native date input');
-        }
         
         // Search functionality
         document.getElementById('searchInput').addEventListener('keyup', function() {
@@ -493,15 +504,98 @@
             button.addEventListener('click', function(e) {
                 e.preventDefault();
                 const orderId = this.getAttribute('data-id');
-                // Here you would normally fetch order details via AJAX
-                // For demo purposes, we'll just show the modal with placeholder data
+                
+                // Show loading state
+                document.querySelector('.order-invoice-number').textContent = 'جاري التحميل...';
+                document.querySelector('.order-date').textContent = 'جاري التحميل...';
+                document.querySelector('.order-customer-name').textContent = 'جاري التحميل...';
+                document.querySelector('.order-items').innerHTML = '<tr><td colspan="5" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+                
+                // Show the modal
                 const modal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
                 modal.show();
                 
-                // In a real implementation, you would update the modal with actual order data
-                // Example: document.querySelector('.order-invoice-number').textContent = orderData.invoiceNumber;
+                // Fetch order details via AJAX
+                fetch(`/api/orders/${orderId}/details/`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const order = data.order;
+                        
+                        // Update order details
+                        document.querySelector('.order-invoice-number').textContent = order.invoice_number;
+                        document.querySelector('.order-date').textContent = order.order_date;
+                        document.querySelector('.order-status').innerHTML = getStatusBadge(order.status);
+                        document.querySelector('.order-customer-name').textContent = order.client_name;
+                        document.querySelector('.order-customer-phone').textContent = order.client_phone || '--';
+                        document.querySelector('.order-customer-address').textContent = order.client_address || '--';
+                        
+                        // Update order items
+                        let itemsHtml = '';
+                        if (order.items && order.items.length > 0) {
+                            order.items.forEach((item, index) => {
+                                itemsHtml += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${item.product_name || ''}</td>
+                        <td>${item.quantity || 0}</td>
+                        <td>${(item.price || 0).toFixed(2)} ج.م</td>
+                        <td>${(item.total || 0).toFixed(2)} ج.م</td>
+                    </tr>
+                `;
+                            });
+                        } else {
+                            itemsHtml = `
+                                <tr>
+                                    <td colspan="5" class="text-center py-4">
+                                        <span class="text-muted">لا توجد منتجات متاحة</span>
+                                    </td>
+                                </tr>
+                            `;
+                        }
+                        document.querySelector('.order-items').innerHTML = itemsHtml;
+                        
+                        // Update totals
+                        document.querySelector('.order-subtotal').textContent = `${(order.subtotal || 0).toFixed(2)} ج.م`;
+                        document.querySelector('.order-tax').textContent = `${(order.tax_amount || 0).toFixed(2)} ج.م`;
+                        document.querySelector('.order-discount').textContent = `${(order.discount_amount || 0).toFixed(2)} ج.م`;
+                        document.querySelector('.order-total').textContent = `${(order.total_amount || 0).toFixed(2)} ج.م`;
+                        
+                        // Update notes
+                        document.querySelector('.order-notes').textContent = order.notes || 'لا توجد ملاحظات متاحة';
+                        
+                        // Set order ID for edit and print buttons
+                        document.querySelector('.edit-order-btn').setAttribute('data-id', order.id);
+                        document.querySelector('.print-order-btn').setAttribute('data-id', order.id);
+                    } else {
+                        alert('حدث خطأ أثناء تحميل بيانات الفاتورة');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('حدث خطأ أثناء الاتصال بالخادم');
+                });
             });
         });
+        
+        // Helper function to get status badge HTML
+        function getStatusBadge(status) {
+            switch (status) {
+                case 'completed':
+                    return '<span class="badge bg-success">مكتمل</span>';
+                case 'pending':
+                    return '<span class="badge bg-warning text-dark">قيد الانتظار</span>';
+                case 'cancelled':
+                    return '<span class="badge bg-danger">ملغي</span>';
+                default:
+                    return '<span class="badge bg-secondary">مسودة</span>';
+            }
+        }
         
         // Edit order
         const editOrderButtons = document.querySelectorAll('.edit-order');
@@ -509,10 +603,148 @@
             button.addEventListener('click', function(e) {
                 e.preventDefault();
                 const orderId = this.getAttribute('data-id');
-                // Here you would normally fetch order details via AJAX and populate the form
-                const modal = new bootstrap.Modal(document.getElementById('addOrderModal'));
+                
+                // Clear previous items
+                const orderItemsTableBody = document.querySelector('#orderItemsTable tbody');
+                orderItemsTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+                
+                // Change modal title
                 document.getElementById('addOrderModalLabel').textContent = 'تعديل الفاتورة';
+                
+                // Add hidden input for order ID
+                let orderIdInput = document.getElementById('editOrderId');
+                if (!orderIdInput) {
+                    orderIdInput = document.createElement('input');
+                    orderIdInput.type = 'hidden';
+                    orderIdInput.id = 'editOrderId';
+                    document.getElementById('addOrderForm').appendChild(orderIdInput);
+                }
+                orderIdInput.value = orderId;
+                
+                // Show the modal
+                const modal = new bootstrap.Modal(document.getElementById('addOrderModal'));
                 modal.show();
+                
+                // Fetch order details via AJAX
+                fetch(`/api/orders/${orderId}/details/`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const order = data.order;
+                        
+                        // Populate form fields
+                        document.getElementById('orderDate').value = order.order_date;
+                        document.getElementById('customerSelect').value = order.client_id;
+                        document.getElementById('orderNotes').value = order.notes || '';
+                        document.getElementById('orderDiscount').value = order.discount_amount;
+                        
+                        // Clear previous items
+                        orderItemsTableBody.innerHTML = '';
+                        
+                        // Add order items
+                        if (order.items && order.items.length > 0) {
+                            order.items.forEach(item => {
+                                // Add a new row for each item
+                                const newRow = document.createElement('tr');
+                                newRow.innerHTML = `
+                                    <td>
+                                        <div class="input-group">
+                                            <select class="form-select product-select" required>
+                                                <option value="">اختر المنتج</option>
+                                                {% for product in products %}
+                                                    <option value="{{ product.id }}" data-price="{{ product.price }}" data-stock="{{ product.quantity }}" ${item.product_id == {{ product.id }} ? 'selected' : ''}>{{ product.name }}</option>
+                                                {% endfor %}
+                                                <option value="new" class="text-primary">+ إضافة منتج جديد</option>
+                                            </select>
+                                            <button class="btn btn-outline-primary add-new-product-btn" type="button">
+                                                <i class="fas fa-plus"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control item-quantity" min="1" value="${item.quantity}" required>
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control item-price" min="0" step="0.01" value="${(item.price || 0).toFixed(2)}" required>
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control item-total" min="0" step="0.01" value="${(item.total || 0).toFixed(2)}" readonly>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-danger remove-item">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </td>
+                                `;
+                                orderItemsTableBody.appendChild(newRow);
+                                
+                                // Set the selected product
+                                const productSelect = newRow.querySelector('.product-select');
+                                for (let i = 0; i < productSelect.options.length; i++) {
+                                    if (productSelect.options[i].value == item.product_id) {
+                                        productSelect.selectedIndex = i;
+                                        break;
+                                    }
+                                }
+                                
+                                // Setup event listeners for the new row
+                                setupItemEventListeners(newRow);
+                            });
+                        } else {
+                            // Add an empty row if no items
+                            const newRow = document.createElement('tr');
+                            newRow.innerHTML = `
+                                <td>
+                                    <div class="input-group">
+                                        <select class="form-select product-select" required>
+                                            <option value="">اختر المنتج</option>
+                                            {% for product in products %}
+                                                <option value="{{ product.id }}" data-price="{{ product.price }}" data-stock="{{ product.quantity }}">{{ product.name }}</option>
+                                            {% endfor %}
+                                            <option value="new" class="text-primary">+ إضافة منتج جديد</option>
+                                        </select>
+                                        <button class="btn btn-outline-primary add-new-product-btn" type="button">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control item-quantity" min="1" value="1" required>
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control item-price" min="0" step="0.01" value="0.00" required>
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control item-total" min="0" step="0.01" value="0.00" readonly>
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-danger remove-item">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </td>
+                            `;
+                            orderItemsTableBody.appendChild(newRow);
+                            setupItemEventListeners(newRow);
+                        }
+                        
+                        // Update totals
+                        updateOrderTotals();
+                        
+                        // Change save button text
+                        document.getElementById('saveOrderBtn').textContent = 'تحديث الفاتورة';
+                    } else {
+                        alert('حدث خطأ أثناء تحميل بيانات الفاتورة');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('حدث خطأ أثناء الاتصال بالخادم');
+                });
             });
         });
         
@@ -543,13 +775,54 @@
         // Confirm delete
         document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
             const orderId = this.getAttribute('data-id');
-            // Here you would normally send a delete request via AJAX
-            // For demo purposes, we'll just close the modal
-            const modal = bootstrap.Modal.getInstance(document.getElementById('deleteConfirmationModal'));
-            modal.hide();
             
-            // Show a success message
-            alert('تم حذف الفاتورة بنجاح');
+            // Show loading state
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> جاري الحذف...';
+            
+            // Send AJAX request to delete order
+            fetch(`/api/orders/${orderId}/delete/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Close the modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('deleteConfirmationModal'));
+                modal.hide();
+                
+                if (data.success) {
+                    // Show success message
+                    alert('تم حذف الفاتورة بنجاح');
+                    
+                    // Remove the order row from the table
+                    const orderRow = document.querySelector(`.delete-order[data-id="${orderId}"]`).closest('tr');
+                    if (orderRow) {
+                        orderRow.remove();
+                    }
+                    
+                    // Reload the page if no orders left
+                    const remainingRows = document.querySelectorAll('#ordersTable tbody tr').length;
+                    if (remainingRows === 0) {
+                        window.location.reload();
+                    }
+                } else {
+                    alert(data.message || 'حدث خطأ أثناء حذف الفاتورة');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('حدث خطأ أثناء الاتصال بالخادم');
+            })
+            .finally(() => {
+                // Reset button state
+                this.disabled = false;
+                this.innerHTML = 'حذف';
+            });
         });
         
         // Save order
@@ -585,12 +858,28 @@
                     }
                     
                     const productName = productSelect.options[productSelect.selectedIndex].text;
-                    const quantity = parseFloat(row.querySelector('.item-quantity').value);
+                    const quantity = parseInt(row.querySelector('.item-quantity').value, 10);
                     const price = parseFloat(row.querySelector('.item-price').value);
                     const itemTotal = parseFloat(row.querySelector('.item-total').value);
                     
+                    // Skip empty rows or rows with zero quantity
+                    if (quantity <= 0) {
+                        alert('الكمية يجب أن تكون أكبر من صفر للصف رقم ' + (index + 1));
+                        isValid = false;
+                        return;
+                    }
+                    
+                    // Log each item for debugging
+                    console.log('Processing item:', {
+                        product_id: parseInt(productId, 10),
+                        product_name: productName,
+                        quantity: quantity,
+                        price: price,
+                        total: itemTotal
+                    });
+                    
                     items.push({
-                        product_id: productId,
+                        product_id: parseInt(productId, 10), // Convert to integer
                         product_name: productName,
                         quantity: quantity,
                         price: price,
@@ -613,7 +902,29 @@
                 }
                 
                 if (items.length === 0) {
-                    alert('يرجى إضافة منتج واحد على الأقل');
+                    alert('يجب إضافة منتج واحد على الأقل إلى الفاتورة');
+                    console.error('خطأ: لا يوجد منتجات مضافة إلى الطلب');
+                    this.disabled = false;
+                    this.innerHTML = 'حفظ الفاتورة';
+                    return;
+                }
+                
+                // Validate stock availability for all items
+                let stockError = false;
+                rows.forEach((row, index) => {
+                    const productSelect = row.querySelector('.product-select');
+                    const selectedOption = productSelect.options[productSelect.selectedIndex];
+                    const availableStock = parseInt(selectedOption.getAttribute('data-stock') || 0);
+                    const requestedQuantity = parseInt(row.querySelector('.item-quantity').value) || 0;
+                    const productName = selectedOption.textContent;
+                    
+                    if (requestedQuantity > availableStock) {
+                        alert(`لا يوجد مخزون كافٍ للمنتج "${productName}". المتاح: ${availableStock}, المطلوب: ${requestedQuantity}`);
+                        stockError = true;
+                    }
+                });
+                
+                if (stockError) {
                     this.disabled = false;
                     this.innerHTML = 'حفظ الفاتورة';
                     return;
@@ -621,18 +932,30 @@
                 
                 // Create order data object
                 const orderData = {
-                    client_id: customerId,
-                    order_date: orderDate,
+                    client_id: parseInt(customerId, 10), // Convert to integer
                     notes: notes,
                     status: 'completed',
-                    tax_percentage: 14, // Fixed at 14%
-                    discount_amount: discount,
-                    items: items.map(item => ({
-                        product_id: item.product_id,
-                        quantity: item.quantity,
-                        price: item.price
-                    }))
+                    tax_percentage: 14, // Send as number
+                    discount_percentage: 0, // Send as number
+                    discount_amount: discount, // Send as number
+                    // Ensure items array is properly formatted
+                    items: items.length > 0 ? items.map(item => {
+                        console.log('Processing item:', item);
+                        return {
+                            product_id: parseInt(item.product_id, 10), // Convert to integer
+                            quantity: parseInt(item.quantity, 10), // Convert to integer
+                            price: parseFloat(item.price) // Convert to float
+                        };
+                    }) : []
                 };
+
+                // Add order_date if needed (though backend uses auto_now_add)
+                if (orderDate) {
+                    // Ensure date is in YYYY-MM-DD format
+                    const formattedDate = new Date(orderDate).toISOString().split('T')[0];
+                    orderData.order_date = formattedDate;
+                    console.log('Formatted order date:', formattedDate);
+                }
 
                 // Check if user is authenticated
                 const isAuthenticated = document.querySelector('meta[name="user-is-authenticated"]');
@@ -647,18 +970,57 @@
                 // Log the data being sent for debugging
                 console.log('Sending order data:', orderData);
                 
-                // Send AJAX request to save order
-                fetch('/api/orders/create/', {
-                    method: 'POST',
+                // Get and log CSRF token
+                const csrfToken = getCookie('csrftoken');
+                console.log('CSRF Token:', csrfToken);
+                
+                // Check if we're editing an existing order or creating a new one
+                const editOrderId = document.getElementById('editOrderId')?.value;
+                let apiUrl;
+                let method;
+                
+                if (editOrderId) {
+                    // We're updating an existing order
+                    apiUrl = window.location.origin + `/api/orders/${editOrderId}/update/`;
+                    method = 'POST';
+                    console.log('Updating existing order:', editOrderId);
+                } else {
+                    // We're creating a new order
+                    apiUrl = window.location.origin + '/api/orders/create/';
+                    method = 'POST';
+                    console.log('Creating new order');
+                }
+                
+                console.log('API URL:', apiUrl);
+                
+                fetch(apiUrl, {
+                    method: method,
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRFToken': getCookie('csrftoken'),
+                        'X-CSRFToken': csrfToken, // Include CSRF token
                         'X-Requested-With': 'XMLHttpRequest'
                     },
                     body: JSON.stringify(orderData)
                 })
-                .then(response => response.json())
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    console.log('Response headers:', response.headers);
+                    
+                    if (!response.ok) {
+                        return response.json().then(errorData => {
+                            console.error('Server error response:', errorData);
+                            throw new Error(errorData.message || 'Server error');
+                        });
+                    }
+                    
+                    return response.json().catch(error => {
+                        console.error('Error parsing JSON:', error);
+                        throw new Error('Invalid JSON response');
+                    });
+                })
                 .then(data => {
+                    console.log('Success response:', data);
+                    
                     // Close the modal
                     const modal = bootstrap.Modal.getInstance(document.getElementById('addOrderModal'));
                     modal.hide();
@@ -666,13 +1028,26 @@
                     // Show success message
                     alert('تم حفظ الفاتورة بنجاح');
                     
-                    // Reload the page to show the updated order list
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1000);
+                    // Reload the page to show the new order
+                    window.location.reload();
                 })
                 .catch(error => {
                     console.error('Error:', error);
+                    
+                    // Try to get more detailed error information
+                    fetch('/api/orders/create/', {
+                        method: 'OPTIONS',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => {
+                        console.log('OPTIONS response:', response);
+                        console.log('OPTIONS headers:', response.headers);
+                    })
+                    .catch(optionsError => {
+                        console.error('OPTIONS error:', optionsError);
+                    });
                     
                     // Show more detailed error message
                     let errorMessage = 'حدث خطأ أثناء الاتصال بالخادم';
@@ -691,17 +1066,167 @@
                 form.reportValidity();
             }
         });
-        
+
         // Edit order button in details modal
         document.querySelector('.edit-order-btn').addEventListener('click', function() {
+            const orderId = this.getAttribute('data-id');
+            if (!orderId) {
+                alert('لم يتم العثور على معرف الفاتورة');
+                return;
+            }
+            
             // Close the details modal
             const detailsModal = bootstrap.Modal.getInstance(document.getElementById('orderDetailsModal'));
             detailsModal.hide();
             
-            // Open the edit modal
-            const editModal = new bootstrap.Modal(document.getElementById('addOrderModal'));
-            document.getElementById('addOrderModalLabel').textContent = 'تعديل الفاتورة';
-            editModal.show();
+            // Find the edit button for this order and click it
+            const editButton = document.querySelector(`.edit-order[data-id="${orderId}"]`);
+            if (editButton) {
+                editButton.click();
+            } else {
+                // If we can't find the button, we'll manually trigger the edit process
+                // Clear previous items
+                const orderItemsTableBody = document.querySelector('#orderItemsTable tbody');
+                orderItemsTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+                
+                // Change modal title
+                document.getElementById('addOrderModalLabel').textContent = 'تعديل الفاتورة';
+                
+                // Add hidden input for order ID
+                let orderIdInput = document.getElementById('editOrderId');
+                if (!orderIdInput) {
+                    orderIdInput = document.createElement('input');
+                    orderIdInput.type = 'hidden';
+                    orderIdInput.id = 'editOrderId';
+                    document.getElementById('addOrderForm').appendChild(orderIdInput);
+                }
+                orderIdInput.value = orderId;
+                
+                // Show the modal
+                const modal = new bootstrap.Modal(document.getElementById('addOrderModal'));
+                modal.show();
+                
+                // Fetch order details via AJAX
+                fetch(`/api/orders/${orderId}/details/`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const order = data.order;
+                        
+                        // Populate form fields
+                        document.getElementById('orderDate').value = order.order_date;
+                        document.getElementById('customerSelect').value = order.client_id;
+                        document.getElementById('orderNotes').value = order.notes || '';
+                        document.getElementById('orderDiscount').value = order.discount_amount;
+                        
+                        // Clear previous items
+                        orderItemsTableBody.innerHTML = '';
+                        
+                        // Add order items
+                        if (order.items && order.items.length > 0) {
+                            order.items.forEach(item => {
+                                // Add a new row for each item
+                                const newRow = document.createElement('tr');
+                                newRow.innerHTML = `
+                                    <td>
+                                        <div class="input-group">
+                                            <select class="form-select product-select" required>
+                                                <option value="">اختر المنتج</option>
+                                                {% for product in products %}
+                                                    <option value="{{ product.id }}" data-price="{{ product.price }}" data-stock="{{ product.quantity }}">{{ product.name }}</option>
+                                                {% endfor %}
+                                                <option value="new" class="text-primary">+ إضافة منتج جديد</option>
+                                            </select>
+                                            <button class="btn btn-outline-primary add-new-product-btn" type="button">
+                                                <i class="fas fa-plus"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control item-quantity" min="1" value="${item.quantity}" required>
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control item-price" min="0" step="0.01" value="${(item.price || 0).toFixed(2)}" required>
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control item-total" min="0" step="0.01" value="${(item.total || 0).toFixed(2)}" readonly>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-danger remove-item">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </td>
+                                `;
+                                orderItemsTableBody.appendChild(newRow);
+                                
+                                // Set the selected product
+                                const productSelect = newRow.querySelector('.product-select');
+                                for (let i = 0; i < productSelect.options.length; i++) {
+                                    if (productSelect.options[i].value == item.product_id) {
+                                        productSelect.selectedIndex = i;
+                                        break;
+                                    }
+                                }
+                                
+                                // Setup event listeners for the new row
+                                setupItemEventListeners(newRow);
+                            });
+                        } else {
+                            // Add an empty row if no items
+                            const newRow = document.createElement('tr');
+                            newRow.innerHTML = `
+                                <td>
+                                    <div class="input-group">
+                                        <select class="form-select product-select" required>
+                                            <option value="">اختر المنتج</option>
+                                            {% for product in products %}
+                                                <option value="{{ product.id }}" data-price="{{ product.price }}" data-stock="{{ product.quantity }}">{{ product.name }}</option>
+                                            {% endfor %}
+                                            <option value="new" class="text-primary">+ إضافة منتج جديد</option>
+                                        </select>
+                                        <button class="btn btn-outline-primary add-new-product-btn" type="button">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control item-quantity" min="1" value="1" required>
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control item-price" min="0" step="0.01" value="0.00" required>
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control item-total" min="0" step="0.01" value="0.00" readonly>
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-danger remove-item">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </td>
+                            `;
+                            orderItemsTableBody.appendChild(newRow);
+                            setupItemEventListeners(newRow);
+                        }
+                        
+                        // Update totals
+                        updateOrderTotals();
+                        
+                        // Change save button text
+                        document.getElementById('saveOrderBtn').textContent = 'تحديث الفاتورة';
+                    } else {
+                        alert('حدث خطأ أثناء تحميل بيانات الفاتورة');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('حدث خطأ أثناء الاتصال بالخادم');
+                });
+            }
         });
         
         // Print order button
@@ -1030,13 +1555,39 @@
             productSelect.addEventListener('change', function() {
                 const selectedOption = this.options[this.selectedIndex];
                 const price = selectedOption.getAttribute('data-price') || 0;
+                const availableStock = parseInt(selectedOption.getAttribute('data-stock') || 0);
+                
+                // Set price
                 priceInput.value = parseFloat(price).toFixed(2);
+                
+                // Check if current quantity exceeds stock
+                const currentQuantity = parseInt(quantityInput.value) || 1;
+                if (currentQuantity > availableStock) {
+                    // Set quantity to available stock or 1 (minimum)
+                    quantityInput.value = Math.max(1, availableStock);
+                    if (availableStock < 1) {
+                        alert(`تحذير: هذا المنتج غير متوفر في المخزون!`);
+                    }
+                }
+                
                 updateItemTotal(row);
                 updateOrderTotals();
             });
             
             // Quantity change
             quantityInput.addEventListener('input', function() {
+                // Get the selected product's stock
+                const productSelect = row.querySelector('.product-select');
+                const selectedOption = productSelect.options[productSelect.selectedIndex];
+                const availableStock = parseInt(selectedOption.getAttribute('data-stock') || 0);
+                const requestedQuantity = parseInt(this.value) || 0;
+                
+                // Check if quantity exceeds stock
+                if (requestedQuantity > availableStock) {
+                    alert(`لا يوجد مخزون كافٍ. المتاح: ${availableStock}`);
+                    this.value = availableStock; // Set to maximum available
+                }
+                
                 updateItemTotal(row);
                 updateOrderTotals();
             });
