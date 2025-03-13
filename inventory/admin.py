@@ -180,7 +180,7 @@ class OrderAdmin(admin.ModelAdmin):
             'fields': ('client', 'invoice_number', 'status', 'notes')
         }),
         ('Pricing', {
-            'fields': ('discount_percentage', 'discount_amount', 'tax_percentage', 'shipping_cost', 'total_amount')
+            'fields': ('discount_percentage', 'discount_amount', 'shipping_cost', 'total_amount')
         }),
         ('Metadata', {
             'fields': ('created_by', 'created_at', 'updated_at')
@@ -240,16 +240,13 @@ class OrderAdmin(admin.ModelAdmin):
             discount_percentage_float = float(order.discount_percentage)
             order.discount_amount = subtotal_float * (discount_percentage_float / 100)
         
-        # Calculate tax
         # Convert to float for calculation to avoid Decimal/float mismatch
         subtotal_float = float(subtotal)
         discount_amount_float = float(order.discount_amount)
-        tax_percentage_float = float(order.tax_percentage)
-        tax_amount = (subtotal_float - discount_amount_float) * (tax_percentage_float / 100)
         
         # Calculate total
         shipping_cost_float = float(order.shipping_cost)
-        order.total_amount = subtotal_float - discount_amount_float + tax_amount + shipping_cost_float
+        order.total_amount = subtotal_float - discount_amount_float + shipping_cost_float
         
         # Save the order without recalculating totals
         order.save(calculate_total=False)

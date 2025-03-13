@@ -355,7 +355,6 @@ class Order(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
     discount_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    tax_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     shipping_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     notes = models.TextField(blank=True, null=True)
@@ -378,11 +377,8 @@ class Order(models.Model):
                 if self.discount_percentage > 0:
                     self.discount_amount = subtotal * (self.discount_percentage / 100)
                 
-                # Calculate tax
-                tax_amount = (subtotal - self.discount_amount) * (self.tax_percentage / 100)
-                
                 # Calculate total
-                self.total_amount = subtotal - self.discount_amount + tax_amount + self.shipping_cost
+                self.total_amount = subtotal - self.discount_amount + self.shipping_cost
             except Exception as e:
                 # Log the error but don't crash
                 print(f"Error calculating total: {str(e)}")

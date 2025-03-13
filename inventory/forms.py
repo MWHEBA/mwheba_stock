@@ -98,8 +98,7 @@ PurchaseOrderItemFormset = forms.inlineformset_factory(
 class OrderForm(forms.ModelForm):
     class Meta:
         model = Order
-        fields = ['client', 'invoice_number', 'status', 'discount_percentage',
-                 'tax_percentage', 'shipping_cost', 'notes']
+        fields = ['client', 'invoice_number', 'status', 'discount_percentage', 'shipping_cost', 'notes']
         widgets = {
             'notes': forms.Textarea(attrs={'rows': 3}),
         }

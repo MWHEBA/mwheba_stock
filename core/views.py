@@ -379,7 +379,7 @@ def export_sales_report(request):
     writer = csv.writer(response)
     
     # Write headers
-    writer.writerow(['Invoice Number', 'Client', 'Date', 'Status', 'Discount', 'Tax', 'Shipping', 'Total Amount', 'Profit'])
+    writer.writerow(['Invoice Number', 'Client', 'Date', 'Status', 'Discount', 'Shipping', 'Total Amount', 'Profit'])
     
     # Write data rows
     for order in orders:
@@ -389,7 +389,6 @@ def export_sales_report(request):
             order.order_date,
             order.status,
             order.discount_amount,
-            order.tax_percentage,
             order.shipping_cost,
             order.total_amount,
             order.get_profit()
@@ -1194,10 +1193,6 @@ def create_order(request):
                         if isinstance(discount_percentage, str):
                             discount_percentage = float(discount_percentage)
                             
-                        tax_percentage = data.get('tax_percentage', 0)
-                        if isinstance(tax_percentage, str):
-                            tax_percentage = float(tax_percentage)
-                            
                         shipping_cost = data.get('shipping_cost', 0)
                         if isinstance(shipping_cost, str):
                             shipping_cost = float(shipping_cost)
@@ -1206,7 +1201,6 @@ def create_order(request):
                             client_id=client_id,
                             status=data.get('status', 'draft'),
                             discount_percentage=discount_percentage,
-                            tax_percentage=tax_percentage,
                             shipping_cost=shipping_cost,
                             notes=data.get('notes', ''),
                             created_by=request.user if request.user.is_authenticated else None
@@ -1248,7 +1242,6 @@ def create_order(request):
                     # Log the data for debugging
                     print(f"Creating order with data: {data}")
                     print(f"Client ID: {order.client_id}, type: {type(order.client_id)}")
-                    print(f"Tax percentage: {order.tax_percentage}, type: {type(order.tax_percentage)}")
                     print(f"Discount percentage: {order.discount_percentage}, type: {type(order.discount_percentage)}")
                     print(f"Discount amount: {order.discount_amount}, type: {type(order.discount_amount)}")
                 except Exception as e:
@@ -1377,16 +1370,13 @@ def create_order(request):
                     discount_percentage_float = float(order.discount_percentage)
                     order.discount_amount = subtotal_float * (discount_percentage_float / 100)
                 
-                # Calculate tax
                 # Convert to float for calculation to avoid Decimal/float mismatch
                 subtotal_float = float(subtotal)
                 discount_amount_float = float(order.discount_amount)
-                tax_percentage_float = float(order.tax_percentage)
-                tax_amount = (subtotal_float - discount_amount_float) * (tax_percentage_float / 100)
                 
                 # Calculate total
                 shipping_cost_float = float(order.shipping_cost)
-                order.total_amount = subtotal_float - discount_amount_float + tax_amount + shipping_cost_float
+                order.total_amount = subtotal_float - discount_amount_float + shipping_cost_float
                 
                 # Save the order again with the calculated total
                 order.save(calculate_total=False)
@@ -1440,12 +1430,9 @@ def create_order(request):
                 discount_amount = float(subtotal) * (float(order.discount_percentage) / 100)
                 order.discount_amount = discount_amount
             
-            # Calculate tax
-            tax_amount = (float(subtotal) - float(order.discount_amount)) * (float(order.tax_percentage) / 100)
-            
             # Calculate total
             shipping_cost = float(order.shipping_cost) if order.shipping_cost else 0
-            total_amount = float(subtotal) - float(order.discount_amount) + tax_amount + shipping_cost
+            total_amount = float(subtotal) - float(order.discount_amount) + shipping_cost
             
             # Update the total amount
             order.total_amount = total_amount
@@ -1478,7 +1465,6 @@ def update_order(request, order_id):
             order.client_id = data.get('client_id', order.client_id)
             order.status = data.get('status', order.status)
             order.discount_percentage = data.get('discount_percentage', order.discount_percentage)
-            order.tax_percentage = data.get('tax_percentage', order.tax_percentage)
             order.shipping_cost = data.get('shipping_cost', order.shipping_cost)
             order.notes = data.get('notes', order.notes)
             
@@ -1518,12 +1504,9 @@ def update_order(request, order_id):
                 discount_amount = float(subtotal) * (float(order.discount_percentage) / 100)
                 order.discount_amount = discount_amount
             
-            # Calculate tax
-            tax_amount = (float(subtotal) - float(order.discount_amount)) * (float(order.tax_percentage) / 100)
-            
             # Calculate total
             shipping_cost = float(order.shipping_cost) if order.shipping_cost else 0
-            total_amount = float(subtotal) - float(order.discount_amount) + tax_amount + shipping_cost
+            total_amount = float(subtotal) - float(order.discount_amount) + shipping_cost
             
             # Update the total amount
             order.total_amount = total_amount
@@ -1532,7 +1515,6 @@ def update_order(request, order_id):
             print(f"Order {order.id} calculation (update_order):")
             print(f"Subtotal: {subtotal}")
             print(f"Discount: {order.discount_amount}")
-            print(f"Tax: {tax_amount}")
             print(f"Shipping: {shipping_cost}")
             print(f"Total: {total_amount}")
             
@@ -1578,7 +1560,6 @@ def get_order_details(request, order_id):
                 'status': order.status,
                 'discount_percentage': float(order.discount_percentage),
                 'discount_amount': float(order.discount_amount),
-                'tax_percentage': float(order.tax_percentage),
                 'shipping_cost': float(order.shipping_cost),
                 'total_amount': float(order.total_amount),
                 'notes': order.notes,
@@ -2107,12 +2088,10 @@ def order_details_api(request, order_id):
             
             # Calculate tax amount
             discount_amount = float(order.discount_amount) if order.discount_amount else 0
-            tax_percentage = float(order.tax_percentage) if order.tax_percentage else 0
-            tax_amount = (subtotal - discount_amount) * (tax_percentage / 100)
             
             # Calculate total amount
             shipping_cost = float(order.shipping_cost) if order.shipping_cost else 0
-            total_amount = subtotal - discount_amount + tax_amount + shipping_cost
+            total_amount = subtotal - discount_amount + shipping_cost
             
             # Prepare response data
             data = {
@@ -2128,8 +2107,6 @@ def order_details_api(request, order_id):
                     'status': order.status or 'draft',
                     'notes': order.notes or '',
                     'subtotal': subtotal,
-                    'tax_percentage': tax_percentage,
-                    'tax_amount': tax_amount,
                     'discount_percentage': float(order.discount_percentage) if order.discount_percentage else 0,
                     'discount_amount': discount_amount,
                     'shipping_cost': float(order.shipping_cost) if order.shipping_cost else 0,
@@ -2183,8 +2160,6 @@ def update_order_api(request, order_id):
                 order.status = data.get('status')
             if 'notes' in data:
                 order.notes = data.get('notes')
-            if 'tax_percentage' in data:
-                order.tax_percentage = data.get('tax_percentage')
             if 'discount_percentage' in data:
                 order.discount_percentage = data.get('discount_percentage')
             if 'discount_amount' in data:
@@ -2239,12 +2214,9 @@ def update_order_api(request, order_id):
                 discount_amount = float(subtotal) * (float(order.discount_percentage) / 100)
                 order.discount_amount = discount_amount
             
-            # Calculate tax
-            tax_amount = (float(subtotal) - float(order.discount_amount)) * (float(order.tax_percentage) / 100)
-            
             # Calculate total
             shipping_cost = float(order.shipping_cost) if order.shipping_cost else 0
-            total_amount = float(subtotal) - float(order.discount_amount) + tax_amount + shipping_cost
+            total_amount = float(subtotal) - float(order.discount_amount) + shipping_cost
             
             # Update the total amount
             order.total_amount = total_amount
@@ -2253,7 +2225,6 @@ def update_order_api(request, order_id):
             print(f"Order {order.id} calculation:")
             print(f"Subtotal: {subtotal}")
             print(f"Discount: {order.discount_amount}")
-            print(f"Tax: {tax_amount}")
             print(f"Shipping: {shipping_cost}")
             print(f"Total: {total_amount}")
             

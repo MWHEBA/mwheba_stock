@@ -123,7 +123,6 @@ class Migration(migrations.Migration):
                 ('status', models.CharField(choices=[('draft', 'Draft'), ('pending', 'Pending'), ('completed', 'Completed'), ('cancelled', 'Cancelled')], default='draft', max_length=20)),
                 ('discount_percentage', models.DecimalField(decimal_places=2, default=0, max_digits=5)),
                 ('discount_amount', models.DecimalField(decimal_places=2, default=0, max_digits=10)),
-                ('tax_percentage', models.DecimalField(decimal_places=2, default=0, max_digits=5)),
                 ('shipping_cost', models.DecimalField(decimal_places=2, default=0, max_digits=10)),
                 ('total_amount', models.DecimalField(decimal_places=2, default=0, max_digits=10)),
                 ('notes', models.TextField(blank=True, null=True)),

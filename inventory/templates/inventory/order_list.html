@@ -251,10 +251,6 @@
                                 <td class="fw-bold order-subtotal">0.00 ج.م</td>
                             </tr>
                             <tr>
-                                <td colspan="4" class="text-end fw-bold">الضريبة (14%):</td>
-                                <td class="fw-bold order-tax">0.00 ج.م</td>
-                            </tr>
-                            <tr>
                                 <td colspan="4" class="text-end fw-bold">الخصم:</td>
                                 <td class="fw-bold order-discount">0.00 ج.م</td>
                             </tr>
@@ -372,13 +368,6 @@
                                     <td colspan="3" class="text-end fw-bold">المجموع:</td>
                                     <td>
                                         <input type="number" class="form-control" id="orderSubtotal" min="0" step="0.01" value="0.00" readonly>
-                                    </td>
-                                    <td></td>
-                                </tr>
-                                <tr>
-                                    <td colspan="3" class="text-end fw-bold">الضريبة (14%):</td>
-                                    <td>
-                                        <input type="number" class="form-control" id="orderTax" min="0" step="0.01" value="0.00" readonly>
                                     </td>
                                     <td></td>
                                 </tr>
@@ -562,7 +551,6 @@
                         
                         // Update totals
                         document.querySelector('.order-subtotal').textContent = `${(order.subtotal || 0).toFixed(2)} ج.م`;
-                        document.querySelector('.order-tax').textContent = `${(order.tax_amount || 0).toFixed(2)} ج.م`;
                         document.querySelector('.order-discount').textContent = `${(order.discount_amount || 0).toFixed(2)} ج.م`;
                         document.querySelector('.order-total').textContent = `${(order.total_amount || 0).toFixed(2)} ج.م`;
                         
@@ -838,7 +826,6 @@
                 const customerId = document.getElementById('customerSelect').value;
                 const notes = document.getElementById('orderNotes').value;
                 const subtotal = parseFloat(document.getElementById('orderSubtotal').value);
-                const tax = parseFloat(document.getElementById('orderTax').value);
                 const discount = parseFloat(document.getElementById('orderDiscount').value);
                 const total = parseFloat(document.getElementById('orderTotal').value);
                 
@@ -935,7 +922,6 @@
                     client_id: parseInt(customerId, 10), // Convert to integer
                     notes: notes,
                     status: 'completed',
-                    tax_percentage: 14, // Send as number
                     discount_percentage: 0, // Send as number
                     discount_amount: discount, // Send as number
                     // Ensure items array is properly formatted
@@ -1622,12 +1608,10 @@
                 subtotal += parseFloat(item.value) || 0;
             });
             
-            const tax = subtotal * 0.14;
             const discount = parseFloat(document.getElementById('orderDiscount').value) || 0;
-            const total = subtotal + tax - discount;
+            const total = subtotal - discount;
             
             document.getElementById('orderSubtotal').value = subtotal.toFixed(2);
-            document.getElementById('orderTax').value = tax.toFixed(2);
             document.getElementById('orderTotal').value = total.toFixed(2);
         }
         
