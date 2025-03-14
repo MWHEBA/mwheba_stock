@@ -908,6 +908,24 @@ def product_list(request):
 
 # Create Product API View
 @login_required
+def get_products(request):
+    """API endpoint to get all products"""
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        try:
+            products = Product.objects.all().values('id', 'name', 'price', 'cost_price', 'quantity')
+            return JsonResponse({
+                'success': True,
+                'products': list(products)
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=500)
+    
+    return JsonResponse({'success': False, 'message': 'Invalid request'}, status=400)
+
+@login_required
 @require_POST
 def create_product(request):
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -1655,6 +1673,13 @@ def create_purchase_order(request):
                     created_by=request.user if request.user.is_authenticated else None
                 )
                 
+                # Handle discount if provided
+                if 'discount' in data:
+                    discount = data.get('discount', 0)
+                    if isinstance(discount, str):
+                        discount = float(discount)
+                    purchase_order.discount = discount
+                
                 # Manually set the reference number if not provided
                 if not purchase_order.reference_number:
                     purchase_order.reference_number = f"PO-{timezone.now().strftime('%Y%m%d')}-{PurchaseOrder.objects.count() + 1}"
@@ -1725,6 +1750,13 @@ def update_purchase_order(request, purchase_order_id):
             purchase_order.reference_number = data.get('reference_number', purchase_order.reference_number)
             purchase_order.status = data.get('status', purchase_order.status)
             purchase_order.notes = data.get('notes', purchase_order.notes)
+            
+            # Handle discount if provided
+            if 'discount' in data:
+                discount = data.get('discount', 0)
+                if isinstance(discount, str):
+                    discount = float(discount)
+                purchase_order.discount = discount
             
             # Handle purchase order items
             if 'items' in data:
@@ -1797,15 +1829,25 @@ def get_purchase_order_details(request, purchase_order_id):
                     'total': float(item.get_total())
                 })
             
+            # Calculate subtotal
+            subtotal = sum(item['total'] for item in items) if items else 0
+            
+            # Get discount if available
+            discount = getattr(purchase_order, 'discount', 0) or 0
+            
             data = {
                 'id': purchase_order.id,
                 'reference_number': purchase_order.reference_number,
                 'supplier_id': purchase_order.supplier.id,
                 'supplier_name': purchase_order.supplier.name,
+                'supplier_contact_person': purchase_order.supplier.contact_person if purchase_order.supplier.contact_person else '',
+                'supplier_phone': purchase_order.supplier.phone if purchase_order.supplier.phone else '',
                 'date': purchase_order.date.strftime('%Y-%m-%d'),
                 'status': purchase_order.status,
                 'notes': purchase_order.notes,
                 'items': items,
+                'subtotal': subtotal,
+                'discount': float(discount),
                 'total': float(purchase_order.get_total())
             }
             

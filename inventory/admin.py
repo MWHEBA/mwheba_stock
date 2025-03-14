@@ -74,13 +74,24 @@ class ClientAdmin(admin.ModelAdmin):
 class PurchaseOrderItemInline(admin.TabularInline):
     model = PurchaseOrderItem
     extra = 1
-    # Only show inline items for existing purchase orders
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        # Check if we're in an add view (no parent instance yet)
-        if not hasattr(self, 'parent_instance') or not self.parent_instance or not self.parent_instance.pk:
-            return qs.none()  # Return empty queryset for new purchase orders
-        return qs
+    autocomplete_fields = ['product']  # Enable autocomplete for product field
+    
+    # Don't validate the formset until the form is submitted
+    validate_min = False
+    
+    # Don't require any fields in the formset
+    def get_formset(self, request, obj=None, **kwargs):
+        formset = super().get_formset(request, obj, **kwargs)
+        formset.validate_min = False
+        return formset
+    
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        """
+        Override to customize the product dropdown
+        """
+        if db_field.name == "product":
+            kwargs["queryset"] = Product.objects.all()
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 # Purchase Order Admin
 class PurchaseOrderAdmin(admin.ModelAdmin):
@@ -89,9 +100,14 @@ class PurchaseOrderAdmin(admin.ModelAdmin):
     search_fields = ('reference_number', 'supplier__name', 'notes')
     readonly_fields = ('created_at', 'updated_at')
     inlines = [PurchaseOrderItemInline]
+    autocomplete_fields = ['supplier']  # Enable autocomplete for supplier field
+    
     fieldsets = (
         ('Basic Information', {
             'fields': ('supplier', 'reference_number', 'status', 'notes')
+        }),
+        ('Pricing', {
+            'fields': ('discount',)
         }),
         ('Metadata', {
             'fields': ('created_by', 'created_at', 'updated_at')
@@ -102,6 +118,9 @@ class PurchaseOrderAdmin(admin.ModelAdmin):
         """
         Override save_model to handle saving the purchase order
         """
+        if not obj.created_by:
+            obj.created_by = request.user
+            
         if not change:  # If this is a new purchase order
             # Save with calculate_total=False
             obj.save(calculate_total=False)
@@ -111,12 +130,20 @@ class PurchaseOrderAdmin(admin.ModelAdmin):
     
     def save_formset(self, request, form, formset, change):
         """
-        Override save_formset to handle saving inline items
+        Override save_formset to handle saving inline items and recalculating totals
         """
+        # Check if the formset is valid
+        if not formset.is_valid():
+            return
+            
         instances = formset.save(commit=False)
         
         # Save new instances
         for instance in instances:
+            # Skip empty forms
+            if not instance.product_id or not instance.quantity:
+                continue
+                
             instance.save()
             
         # Delete marked for deletion
@@ -126,10 +153,24 @@ class PurchaseOrderAdmin(admin.ModelAdmin):
         # Call formset's save_m2m
         formset.save_m2m()
         
+        # Recalculate totals for the purchase order
+        purchase_order = form.instance
+        
+        # Manually calculate totals
+        subtotal = PurchaseOrderItem.objects.filter(purchase_order=purchase_order).aggregate(
+            subtotal=Sum(F('quantity') * F('price')))['subtotal'] or 0
+        
+        # Calculate discount
+        if hasattr(purchase_order, 'discount_percentage') and purchase_order.discount_percentage > 0:
+            # Convert to float for calculation to avoid Decimal/float mismatch
+            subtotal_float = float(subtotal)
+            discount_percentage_float = float(purchase_order.discount_percentage)
+            purchase_order.discount = subtotal_float * (discount_percentage_float / 100)
+        
         # Update product quantities if status is 'received'
-        if form.instance.status == 'received':
+        if purchase_order.status == 'received':
             for item in instances:
-                if isinstance(item, PurchaseOrderItem):
+                if isinstance(item, PurchaseOrderItem) and item.product_id and item.quantity:
                     product = item.product
                     product.quantity += item.quantity
                     product.save()
@@ -141,8 +182,11 @@ class PurchaseOrderAdmin(admin.ModelAdmin):
                         quantity_sold=0,
                         date_received=timezone.now().date(),
                         stock_type='received',
-                        notes=f"Received in purchase order #{form.instance.reference_number}"
+                        notes=f"Received in purchase order #{purchase_order.reference_number}"
                     )
+        
+        # Save the purchase order without recalculating totals
+        purchase_order.save(calculate_total=False)
 # Order Item Inline
 class OrderItemInline(admin.TabularInline):
     model = OrderItem

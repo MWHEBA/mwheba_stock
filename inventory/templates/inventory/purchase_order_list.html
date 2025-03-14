@@ -78,7 +78,7 @@
                     <tr>
                         <td>{{ forloop.counter }}</td>
                         <td>
-                            <div class="fw-bold">{{ purchase_order.id }}</div>
+                            <div class="fw-bold">{{ purchase_order.reference_number }}</div>
                         </td>
                         <td>
                             <div class="d-flex align-items-center">
@@ -92,7 +92,7 @@
                             <span class="text-muted">{{ purchase_order.date|default:"--" }}</span>
                         </td>
                         <td class="fw-bold">
-                            {{ purchase_order.total|default:"0.00" }} ج.م
+                            {{ purchase_order.get_total|floatformat:2 }} ج.م
                         </td>
                         <td>
                             {% if purchase_order.status == 'received' %}
@@ -143,19 +143,41 @@
         </div>
         <nav aria-label="Page navigation">
             <ul class="pagination mb-0">
+                {% if purchase_orders.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ purchase_orders.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                {% else %}
                 <li class="page-item disabled">
                     <a class="page-link" href="#" aria-label="Previous">
                         <span aria-hidden="true">&laquo;</span>
                     </a>
                 </li>
-                <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                <li class="page-item"><a class="page-link" href="#">2</a></li>
-                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                {% endif %}
+                
+                {% for i in purchase_orders.paginator.page_range %}
+                    {% if purchase_orders.number == i %}
+                    <li class="page-item active"><a class="page-link" href="#">{{ i }}</a></li>
+                    {% else %}
+                    <li class="page-item"><a class="page-link" href="?page={{ i }}{% if search_query %}&search={{ search_query }}{% endif %}">{{ i }}</a></li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if purchase_orders.has_next %}
                 <li class="page-item">
+                    <a class="page-link" href="?page={{ purchase_orders.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
                     <a class="page-link" href="#" aria-label="Next">
                         <span aria-hidden="true">&raquo;</span>
                     </a>
                 </li>
+                {% endif %}
             </ul>
         </nav>
     </div>
@@ -229,10 +251,6 @@
                                 <td class="fw-bold purchase-order-subtotal">0.00 ج.م</td>
                             </tr>
                             <tr>
-                                <td colspan="4" class="text-end fw-bold">الضريبة (14%):</td>
-                                <td class="fw-bold purchase-order-tax">0.00 ج.م</td>
-                            </tr>
-                            <tr>
                                 <td colspan="4" class="text-end fw-bold">الخصم:</td>
                                 <td class="fw-bold purchase-order-discount">0.00 ج.م</td>
                             </tr>
@@ -274,10 +292,6 @@
                             <div class="mb-3">
                                 <label for="purchaseOrderDate" class="form-label">تاريخ الطلب</label>
                                 <input type="date" class="form-control" id="purchaseOrderDate" required>
-                                <script>
-                                    // Set default date to today
-                                    document.getElementById('purchaseOrderDate').valueAsDate = new Date();
-                                </script>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -289,7 +303,6 @@
                                         {% for supplier in suppliers %}
                                             <option value="{{ supplier.id }}">{{ supplier.name }}</option>
                                         {% endfor %}
-                                        <option value="new" class="text-primary">+ إضافة مورد جديد</option>
                                     </select>
                                     <button class="btn btn-outline-primary" type="button" id="addNewSupplierBtn">
                                         <i class="fas fa-plus"></i>
@@ -319,7 +332,6 @@
                                                 {% for product in products %}
                                                     <option value="{{ product.id }}" data-price="{{ product.price }}" data-stock="{{ product.quantity }}">{{ product.name }}</option>
                                                 {% endfor %}
-                                                <option value="new" class="text-primary">+ إضافة منتج جديد</option>
                                             </select>
                                             <button class="btn btn-outline-primary add-new-product-btn" type="button">
                                                 <i class="fas fa-plus"></i>
@@ -354,13 +366,6 @@
                                     <td colspan="3" class="text-end fw-bold">المجموع:</td>
                                     <td>
                                         <input type="number" class="form-control" id="purchaseOrderSubtotal" min="0" step="0.01" value="0.00" readonly>
-                                    </td>
-                                    <td></td>
-                                </tr>
-                                <tr>
-                                    <td colspan="3" class="text-end fw-bold">الضريبة (14%):</td>
-                                    <td>
-                                        <input type="number" class="form-control" id="purchaseOrderTax" min="0" step="0.01" value="0.00" readonly>
                                     </td>
                                     <td></td>
                                 </tr>
@@ -414,1010 +419,94 @@
         </div>
     </div>
 </div>
+
+<!-- Add New Supplier Modal -->
+<div class="modal fade" id="addNewSupplierModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">إضافة مورد جديد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newSupplierForm">
+                    <div class="mb-3">
+                        <label for="newSupplierName" class="form-label">اسم المورد <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="newSupplierName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="newSupplierContactPerson" class="form-label">الشخص المسؤول</label>
+                        <input type="text" class="form-control" id="newSupplierContactPerson">
+                    </div>
+                    <div class="mb-3">
+                        <label for="newSupplierPhone" class="form-label">رقم الهاتف <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="newSupplierPhone" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="newSupplierEmail" class="form-label">البريد الإلكتروني</label>
+                        <input type="email" class="form-control" id="newSupplierEmail">
+                    </div>
+                    <div class="mb-3">
+                        <label for="newSupplierAddress" class="form-label">العنوان</label>
+                        <textarea class="form-control" id="newSupplierAddress" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" id="saveNewSupplierBtn">حفظ</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
-
 {% block extra_js %}
+{% load static %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Search functionality
-        document.getElementById('searchInput').addEventListener('keyup', function() {
-            const searchValue = this.value.toLowerCase();
-            const table = document.getElementById('purchaseOrdersTable');
-            const rows = table.getElementsByTagName('tr');
-            
-            for (let i = 1; i < rows.length; i++) {
-                const row = rows[i];
-                const cells = row.getElementsByTagName('td');
-                if (cells.length > 0) {
-                    const poNumberCell = cells[1].textContent.toLowerCase();
-                    const supplierCell = cells[2].textContent.toLowerCase();
-                    const dateCell = cells[3].textContent.toLowerCase();
-                    
-                    if (poNumberCell.includes(searchValue) || 
-                        supplierCell.includes(searchValue) || 
-                        dateCell.includes(searchValue)) {
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
-                    }
+    // Function to get CSRF token from cookies (Important for AJAX requests)
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                // Check if this cookie is the CSRF token
+                if (cookie.startsWith(name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
                 }
             }
-        });
-        
-        // Filter functionality
-        const filterLinks = document.querySelectorAll('[data-filter]');
-        filterLinks.forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                const filter = this.getAttribute('data-filter');
-                // In a real implementation, you would filter based on purchase order status
-                // For demo purposes, we'll just show an alert
-                alert('تم اختيار تصفية: ' + filter);
-            });
-        });
-        
-        // Helper function to get CSRF token
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
         }
+        return cookieValue;
+    }
+    
+    // Function to show alert/notification
+    function showAlert(message) {
+        // Create alert element
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-success alert-dismissible fade show';
+        alertDiv.setAttribute('role', 'alert');
+        alertDiv.style.position = 'fixed';
+        alertDiv.style.top = '20px';
+        alertDiv.style.right = '20px';
+        alertDiv.style.zIndex = '9999';
+        alertDiv.style.minWidth = '300px';
         
-        // View purchase order details
-        document.querySelectorAll('.view-purchase-order').forEach(button => {
-            button.addEventListener('click', function() {
-                const purchaseOrderId = this.getAttribute('data-id');
-                
-                // Show loading state
-                this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
-                this.disabled = true;
-                
-                // Fetch purchase order details via AJAX
-                fetch(`/api/purchase-orders/${purchaseOrderId}/details/`, {
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Update modal with purchase order data
-                        document.querySelector('.purchase-order-number').textContent = data.purchase_order.reference_number;
-                        document.querySelector('.purchase-order-date').textContent = data.purchase_order.date;
-                        document.querySelector('.purchase-order-supplier-name').textContent = data.purchase_order.supplier_name;
-                        document.querySelector('.purchase-order-contact-person').textContent = data.purchase_order.supplier_contact || '--';
-                        document.querySelector('.purchase-order-supplier-phone').textContent = data.purchase_order.supplier_phone || '--';
-                        
-                        // Update status badge
-                        let statusBadge = '';
-                        if (data.purchase_order.status === 'received') {
-                            statusBadge = '<span class="badge bg-success">مستلم</span>';
-                        } else if (data.purchase_order.status === 'pending') {
-                            statusBadge = '<span class="badge bg-warning text-dark">قيد الانتظار</span>';
-                        } else if (data.purchase_order.status === 'cancelled') {
-                            statusBadge = '<span class="badge bg-danger">ملغي</span>';
-                        } else {
-                            statusBadge = '<span class="badge bg-secondary">مسودة</span>';
-                        }
-                        document.querySelector('.purchase-order-status').innerHTML = statusBadge;
-                        
-                        // Update items table
-                        const itemsContainer = document.querySelector('.purchase-order-items');
-                        if (data.purchase_order.items && data.purchase_order.items.length > 0) {
-                            let itemsHtml = '';
-                            data.purchase_order.items.forEach((item, index) => {
-                                itemsHtml += `
-                                    <tr>
-                                        <td>${index + 1}</td>
-                                        <td>${item.product_name}</td>
-                                        <td>${item.quantity}</td>
-                                        <td>${item.price} ج.م</td>
-                                        <td>${item.total} ج.م</td>
-                                    </tr>
-                                `;
-                            });
-                            itemsContainer.innerHTML = itemsHtml;
-                        } else {
-                            itemsContainer.innerHTML = `
-                                <tr>
-                                    <td colspan="5" class="text-center py-4">
-                                        <span class="text-muted">لا توجد منتجات متاحة</span>
-                                    </td>
-                                </tr>
-                            `;
-                        }
-                        
-                        // Update totals
-                        document.querySelector('.purchase-order-subtotal').textContent = data.purchase_order.subtotal + ' ج.م';
-                        document.querySelector('.purchase-order-tax').textContent = data.purchase_order.tax + ' ج.م';
-                        document.querySelector('.purchase-order-discount').textContent = data.purchase_order.discount + ' ج.م';
-                        document.querySelector('.purchase-order-total').textContent = data.purchase_order.total + ' ج.م';
-                        
-                        // Update notes
-                        document.querySelector('.purchase-order-notes').textContent = data.purchase_order.notes || 'لا توجد ملاحظات متاحة';
-                        
-                        // Show the modal
-                        const modal = new bootstrap.Modal(document.getElementById('purchaseOrderDetailsModal'));
-                        modal.show();
-                    } else {
-                        alert(data.message || 'حدث خطأ أثناء جلب بيانات طلب الشراء');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('حدث خطأ أثناء الاتصال بالخادم');
-                })
-                .finally(() => {
-                    // Reset button state
-                    this.innerHTML = '<i class="fas fa-eye"></i>';
-                    this.disabled = false;
-                });
-            });
-        });
+        // Add message and close button
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
         
-        // Edit purchase order
-        document.querySelectorAll('.edit-purchase-order').forEach(button => {
-            button.addEventListener('click', function() {
-                const purchaseOrderId = this.getAttribute('data-id');
-                
-                // Show loading state
-                this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
-                this.disabled = true;
-                
-                // Fetch purchase order details via AJAX
-                fetch(`/api/purchase-orders/${purchaseOrderId}/details/`, {
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Update form with purchase order data
-                        document.getElementById('purchaseOrderDate').value = data.purchase_order.date;
-                        document.getElementById('supplierSelect').value = data.purchase_order.supplier_id;
-                        document.getElementById('purchaseOrderNotes').value = data.purchase_order.notes || '';
-                        
-                        // Clear existing items
-                        const tbody = document.querySelector('#purchaseOrderItemsTable tbody');
-                        tbody.innerHTML = '';
-                        
-                        // Add items
-                        if (data.purchase_order.items && data.purchase_order.items.length > 0) {
-                            data.purchase_order.items.forEach(item => {
-                                const newRow = document.createElement('tr');
-                                newRow.innerHTML = `
-                                    <td>
-                                        <div class="input-group">
-                                            <select class="form-select product-select" required>
-                                                <option value="">اختر المنتج</option>
-                                                {% for product in products %}
-                                                    <option value="{{ product.id }}" data-price="{{ product.price }}" data-stock="{{ product.quantity }}" ${item.product_id == {{ product.id }} ? 'selected' : ''}>{{ product.name }}</option>
-                                                {% endfor %}
-                                                <option value="new" class="text-primary">+ إضافة منتج جديد</option>
-                                            </select>
-                                            <button class="btn btn-outline-primary add-new-product-btn" type="button">
-                                                <i class="fas fa-plus"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <input type="number" class="form-control item-quantity" min="1" value="${item.quantity}" required>
-                                    </td>
-                                    <td>
-                                        <input type="number" class="form-control item-price" min="0" step="0.01" value="${item.price}" required>
-                                    </td>
-                                    <td>
-                                        <input type="number" class="form-control item-total" min="0" step="0.01" value="${item.total}" readonly>
-                                    </td>
-                                    <td>
-                                        <button type="button" class="btn btn-sm btn-danger remove-item">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </td>
-                                `;
-                                tbody.appendChild(newRow);
-                                
-                                // Set up event listeners for the new row
-                                setupItemEventListeners(newRow);
-                            });
-                        } else {
-                            // Add an empty row if no items
-                            const newRow = document.createElement('tr');
-                            newRow.innerHTML = `
-                                <td>
-                                    <div class="input-group">
-                                        <select class="form-select product-select" required>
-                                            <option value="">اختر المنتج</option>
-                                            {% for product in products %}
-                                                <option value="{{ product.id }}" data-price="{{ product.price }}" data-stock="{{ product.quantity }}">{{ product.name }}</option>
-                                            {% endfor %}
-                                            <option value="new" class="text-primary">+ إضافة منتج جديد</option>
-                                        </select>
-                                        <button class="btn btn-outline-primary add-new-product-btn" type="button">
-                                            <i class="fas fa-plus"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                                <td>
-                                    <input type="number" class="form-control item-quantity" min="1" value="1" required>
-                                </td>
-                                <td>
-                                    <input type="number" class="form-control item-price" min="0" step="0.01" value="0.00" required>
-                                </td>
-                                <td>
-                                    <input type="number" class="form-control item-total" min="0" step="0.01" value="0.00" readonly>
-                                </td>
-                                <td>
-                                    <button type="button" class="btn btn-sm btn-danger remove-item">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </td>
-                            `;
-                            tbody.appendChild(newRow);
-                            
-                            // Set up event listeners for the new row
-                            setupItemEventListeners(newRow);
-                        }
-                        
-                        // Update totals
-                        updatePurchaseOrderTotals();
-                        
-                        // Update modal title
-                        document.getElementById('addPurchaseOrderModalLabel').textContent = 'تعديل طلب الشراء';
-                        
-                        // Store purchase order ID for later use
-                        document.getElementById('savePurchaseOrderBtn').setAttribute('data-id', purchaseOrderId);
-                        
-                        // Show the modal
-                        const modal = new bootstrap.Modal(document.getElementById('addPurchaseOrderModal'));
-                        modal.show();
-                    } else {
-                        alert(data.message || 'حدث خطأ أثناء جلب بيانات طلب الشراء');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('حدث خطأ أثناء الاتصال بالخادم');
-                })
-                .finally(() => {
-                    // Reset button state
-                    this.innerHTML = '<i class="fas fa-edit"></i>';
-                    this.disabled = false;
-                });
-            });
-        });
+        // Add to document
+        document.body.appendChild(alertDiv);
         
-        // Delete purchase order
-        document.querySelectorAll('.delete-purchase-order').forEach(button => {
-            button.addEventListener('click', function() {
-                const purchaseOrderId = this.getAttribute('data-id');
-                
-                // Set up the confirm delete button
-                document.getElementById('confirmDeleteBtn').setAttribute('data-id', purchaseOrderId);
-                
-                // Show the modal
-                const modal = new bootstrap.Modal(document.getElementById('deleteConfirmationModal'));
-                modal.show();
-            });
-        });
-        
-        // Confirm delete
-        document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
-            const purchaseOrderId = this.getAttribute('data-id');
-            // Here you would normally send a delete request via AJAX
-            // For demo purposes, we'll just close the modal
-            const modal = bootstrap.Modal.getInstance(document.getElementById('deleteConfirmationModal'));
-            modal.hide();
-            
-            // Show a success message
-            alert('تم حذف طلب الشراء بنجاح');
-        });
-        
-        // Add New Supplier Button
-        document.getElementById('addNewSupplierBtn').addEventListener('click', function() {
-            // Create a modal for adding a new supplier
-            const modalHtml = `
-                <div class="modal fade" id="addNewSupplierModal" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">إضافة مورد جديد</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <form id="newSupplierForm">
-                                    <div class="mb-3">
-                                        <label for="newSupplierName" class="form-label">اسم المورد <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" id="newSupplierName" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="newSupplierContactPerson" class="form-label">الشخص المسؤول</label>
-                                        <input type="text" class="form-control" id="newSupplierContactPerson">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="newSupplierPhone" class="form-label">رقم الهاتف</label>
-                                        <input type="text" class="form-control" id="newSupplierPhone">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="newSupplierEmail" class="form-label">البريد الإلكتروني</label>
-                                        <input type="email" class="form-control" id="newSupplierEmail">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="newSupplierAddress" class="form-label">العنوان</label>
-                                        <textarea class="form-control" id="newSupplierAddress" rows="2"></textarea>
-                                    </div>
-                                </form>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                                <button type="button" class="btn btn-primary" id="saveNewSupplierBtn">حفظ</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            // Add modal to the document
-            const modalContainer = document.createElement('div');
-            modalContainer.innerHTML = modalHtml;
-            document.body.appendChild(modalContainer);
-            
-            // Show the modal
-            const modal = new bootstrap.Modal(document.getElementById('addNewSupplierModal'));
-            modal.show();
-            
-            // Handle save button click
-            document.getElementById('saveNewSupplierBtn').addEventListener('click', function() {
-                const form = document.getElementById('newSupplierForm');
-                if (form.checkValidity()) {
-                    // Show loading state
-                    this.disabled = true;
-                    this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> جاري الحفظ...';
-                    
-                    // Get form data
-                    const supplierData = {
-                        name: document.getElementById('newSupplierName').value,
-                        contact_person: document.getElementById('newSupplierContactPerson').value,
-                        phone: document.getElementById('newSupplierPhone').value,
-                        email: document.getElementById('newSupplierEmail').value,
-                        address: document.getElementById('newSupplierAddress').value
-                    };
-                    
-                    // Send AJAX request to create new supplier
-                    fetch('/inventory/supplier/create/', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': getCookie('csrftoken'),
-                            'X-Requested-With': 'XMLHttpRequest'
-                        },
-                        body: JSON.stringify(supplierData)
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        // Add new option to select
-                        const select = document.getElementById('supplierSelect');
-                        const option = document.createElement('option');
-                        option.value = data.supplier_id || Date.now(); // Use timestamp as fallback ID
-                        option.textContent = supplierData.name;
-                        
-                        // Insert before the "Add New" option
-                        select.insertBefore(option, select.lastElementChild);
-                        
-                        // Select the new option
-                        select.value = option.value;
-                        
-                        // Close the modal
-                        modal.hide();
-                        
-                        // Remove the modal from the DOM after it's hidden
-                        document.getElementById('addNewSupplierModal').addEventListener('hidden.bs.modal', function() {
-                            this.remove();
-                        });
-                        
-                        alert('تم إضافة المورد بنجاح');
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('حدث خطأ أثناء الاتصال بالخادم');
-                    })
-                    .finally(() => {
-                        // Reset button state
-                        this.disabled = false;
-                        this.innerHTML = 'حفظ';
-                    });
-                } else {
-                    form.reportValidity();
-                }
-            });
-        });
-        
-        // Add New Product Button
-        document.querySelectorAll('.add-new-product-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                // Create a modal for adding a new product
-                const modalHtml = `
-                    <div class="modal fade" id="addNewProductModal" tabindex="-1" aria-hidden="true">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title">إضافة منتج جديد</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <form id="newProductForm">
-                                        <div class="mb-3">
-                                            <label for="newProductName" class="form-label">اسم المنتج <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" id="newProductName" required>
-                                        </div>
-                                        <div class="row">
-                                            <div class="col-md-6">
-                                                <div class="mb-3">
-                                                    <label for="newProductPrice" class="form-label">سعر البيع <span class="text-danger">*</span></label>
-                                                    <input type="number" class="form-control" id="newProductPrice" step="0.01" min="0" required>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="mb-3">
-                                                    <label for="newProductCostPrice" class="form-label">سعر التكلفة <span class="text-danger">*</span></label>
-                                                    <input type="number" class="form-control" id="newProductCostPrice" step="0.01" min="0" required>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="newProductQuantity" class="form-label">الكمية المتوفرة <span class="text-danger">*</span></label>
-                                            <input type="number" class="form-control" id="newProductQuantity" min="0" value="0" required>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="newProductDescription" class="form-label">الوصف</label>
-                                            <textarea class="form-control" id="newProductDescription" rows="2"></textarea>
-                                        </div>
-                                    </form>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                                    <button type="button" class="btn btn-primary" id="saveNewProductBtn">حفظ</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
-                // Add modal to the document
-                const modalContainer = document.createElement('div');
-                modalContainer.innerHTML = modalHtml;
-                document.body.appendChild(modalContainer);
-                
-                // Show the modal
-                const modal = new bootstrap.Modal(document.getElementById('addNewProductModal'));
-                modal.show();
-                
-                // Get the current row
-                const currentRow = this.closest('tr');
-                
-                // Handle save button click
-                document.getElementById('saveNewProductBtn').addEventListener('click', function() {
-                    const form = document.getElementById('newProductForm');
-                    if (form.checkValidity()) {
-                        // Show loading state
-                        this.disabled = true;
-                        this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> جاري الحفظ...';
-                        
-                        // Get form data
-                        const productData = {
-                            name: document.getElementById('newProductName').value,
-                            price: parseFloat(document.getElementById('newProductPrice').value),
-                            cost_price: parseFloat(document.getElementById('newProductCostPrice').value),
-                            quantity: parseInt(document.getElementById('newProductQuantity').value),
-                            description: document.getElementById('newProductDescription').value,
-                            sku: 'SKU-' + Date.now(), // Generate a temporary SKU
-                            reorder_level: 10 // Default reorder level
-                        };
-                        
-                        // Send AJAX request to create new product
-                        fetch('/inventory/product/create/', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRFToken': getCookie('csrftoken'),
-                                'X-Requested-With': 'XMLHttpRequest'
-                            },
-                            body: JSON.stringify(productData)
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            // Add new option to all product selects
-                            const productId = data.product_id || Date.now(); // Use timestamp as fallback ID
-                            const productSelects = document.querySelectorAll('.product-select');
-                            productSelects.forEach(select => {
-                                const option = document.createElement('option');
-                                option.value = productId;
-                                option.textContent = productData.name;
-                                option.setAttribute('data-price', productData.price);
-                                option.setAttribute('data-stock', productData.quantity);
-                                
-                                // Insert before the "Add New" option
-                                select.insertBefore(option, select.lastElementChild);
-                            });
-                            
-                            // Select the new option in the current row
-                            if (currentRow) {
-                                const select = currentRow.querySelector('.product-select');
-                                select.value = productId;
-                                
-                                // Update price
-                                const priceInput = currentRow.querySelector('.item-price');
-                                priceInput.value = productData.price.toFixed(2);
-                                
-                                // Update item total
-                                updateItemTotal(currentRow);
-                                updatePurchaseOrderTotals();
-                            }
-                            
-                            // Close the modal
-                            modal.hide();
-                            
-                            // Remove the modal from the DOM after it's hidden
-                            document.getElementById('addNewProductModal').addEventListener('hidden.bs.modal', function() {
-                                this.remove();
-                            });
-                            
-                            alert('تم إضافة المنتج بنجاح');
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                            alert('حدث خطأ أثناء الاتصال بالخادم');
-                        })
-                        .finally(() => {
-                            // Reset button state
-                            this.disabled = false;
-                            this.innerHTML = 'حفظ';
-                        });
-                    } else {
-                        form.reportValidity();
-                    }
-                });
-            });
-        });
-
-        // Save purchase order
-        document.getElementById('savePurchaseOrderBtn').addEventListener('click', function() {
-            const form = document.getElementById('addPurchaseOrderForm');
-            if (form.checkValidity()) {
-                // Show loading state
-                this.disabled = true;
-                this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> جاري الحفظ...';
-                
-                // Get form data
-                const purchaseOrderDate = document.getElementById('purchaseOrderDate').value;
-                const supplierId = document.getElementById('supplierSelect').value;
-                const notes = document.getElementById('purchaseOrderNotes').value;
-                const subtotal = parseFloat(document.getElementById('purchaseOrderSubtotal').value);
-                const tax = parseFloat(document.getElementById('purchaseOrderTax').value);
-                const discount = parseFloat(document.getElementById('purchaseOrderDiscount').value);
-                const total = parseFloat(document.getElementById('purchaseOrderTotal').value);
-                
-                // Get purchase order items
-                const items = [];
-                const rows = document.querySelectorAll('#purchaseOrderItemsTable tbody tr');
-                
-                let isValid = true;
-                rows.forEach((row, index) => {
-                    const productSelect = row.querySelector('.product-select');
-                    const productId = productSelect.value;
-                    
-                    if (!productId || productId === 'new') {
-                        alert('يرجى اختيار منتج للصف رقم ' + (index + 1));
-                        isValid = false;
-                        return;
-                    }
-                    
-                    const productName = productSelect.options[productSelect.selectedIndex].text;
-                    const quantity = parseFloat(row.querySelector('.item-quantity').value);
-                    const price = parseFloat(row.querySelector('.item-price').value);
-                    const itemTotal = parseFloat(row.querySelector('.item-total').value);
-                    
-                    items.push({
-                        product_id: productId,
-                        product_name: productName,
-                        quantity: quantity,
-                        price: price,
-                        total: itemTotal
-                    });
-                });
-                
-                // Check if supplier is selected and not "new"
-                if (!supplierId || supplierId === 'new') {
-                    alert('يرجى اختيار مورد');
-                    this.disabled = false;
-                    this.innerHTML = 'حفظ الطلب';
-                    return;
-                }
-                
-                if (!isValid) {
-                    this.disabled = false;
-                    this.innerHTML = 'حفظ الطلب';
-                    return;
-                }
-                
-                if (items.length === 0) {
-                    alert('يرجى إضافة منتج واحد على الأقل');
-                    this.disabled = false;
-                    this.innerHTML = 'حفظ الطلب';
-                    return;
-                }
-                
-                // Create purchase order data object
-                const purchaseOrderData = {
-                    supplier_id: supplierId,
-                    date: purchaseOrderDate,
-                    notes: notes,
-                    status: 'draft',
-                    items: items.map(item => ({
-                        product_id: item.product_id,
-                        quantity: item.quantity,
-                        price: item.price
-                    }))
-                };
-                
-                // Log the data being sent for debugging
-                console.log('Sending purchase order data:', purchaseOrderData);
-                
-                // Send AJAX request to save purchase order
-                fetch('/api/purchase-orders/create/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': getCookie('csrftoken'),
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: JSON.stringify(purchaseOrderData)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    // Close the modal
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('addPurchaseOrderModal'));
-                    modal.hide();
-                    
-                    // Show success message
-                    alert('تم حفظ طلب الشراء بنجاح');
-                    
-                    // Reload the page to show the updated purchase order list
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1000);
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    
-                    // Show more detailed error message
-                    let errorMessage = 'حدث خطأ أثناء الاتصال بالخادم';
-                    if (error.message) {
-                        errorMessage += ': ' + error.message;
-                    }
-                    
-                    alert(errorMessage);
-                })
-                .finally(() => {
-                    // Reset button state
-                    this.disabled = false;
-                    this.innerHTML = 'حفظ الطلب';
-                });
-            } else {
-                form.reportValidity();
-            }
-        });
-        
-        // Edit purchase order button in details modal
-        document.querySelector('.edit-purchase-order-btn').addEventListener('click', function() {
-            // Close the details modal
-            const detailsModal = bootstrap.Modal.getInstance(document.getElementById('purchaseOrderDetailsModal'));
-            detailsModal.hide();
-            
-            // Open the edit modal
-            const editModal = new bootstrap.Modal(document.getElementById('addPurchaseOrderModal'));
-            document.getElementById('addPurchaseOrderModalLabel').textContent = 'تعديل طلب الشراء';
-            editModal.show();
-        });
-        
-        // Print purchase order buttons
-        document.querySelector('.print-purchase-order-btn').addEventListener('click', function() {
-            printPurchaseOrder();
-        });
-        
-        document.querySelectorAll('.print-purchase-order').forEach(button => {
-            button.addEventListener('click', function(e) {
-                e.preventDefault();
-                const purchaseOrderId = this.getAttribute('data-id');
-                printPurchaseOrder(purchaseOrderId);
-            });
-        });
-        
-        function printPurchaseOrder(purchaseOrderId) {
-            // Create a new window for printing
-            const printWindow = window.open('', '_blank');
-            
-            // Generate HTML content
-            const html = `
-                <!DOCTYPE html>
-                <html dir="rtl" lang="ar">
-                <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>طلب شراء</title>
-                    <style>
-                        body {
-                            font-family: 'Arial', sans-serif;
-                            margin: 0;
-                            padding: 20px;
-                            direction: rtl;
-                        }
-                        .invoice-header {
-                            text-align: center;
-                            margin-bottom: 30px;
-                        }
-                        .invoice-header h1 {
-                            margin-bottom: 5px;
-                            color: #333;
-                        }
-                        .invoice-details {
-                            display: flex;
-                            justify-content: space-between;
-                            margin-bottom: 30px;
-                        }
-                        .invoice-details div {
-                            flex: 1;
-                        }
-                        table {
-                            width: 100%;
-                            border-collapse: collapse;
-                            margin-bottom: 30px;
-                        }
-                        th, td {
-                            border: 1px solid #ddd;
-                            padding: 10px;
-                            text-align: right;
-                        }
-                        th {
-                            background-color: #f2f2f2;
-                        }
-                        .totals {
-                            width: 300px;
-                            margin-left: auto;
-                        }
-                        .totals table {
-                            margin-bottom: 0;
-                        }
-                        .totals th {
-                            text-align: left;
-                        }
-                        .totals td {
-                            text-align: right;
-                        }
-                        .footer {
-                            margin-top: 50px;
-                            text-align: center;
-                            color: #777;
-                            font-size: 14px;
-                        }
-                        @media print {
-                            body {
-                                print-color-adjust: exact;
-                                -webkit-print-color-adjust: exact;
-                            }
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div class="invoice-header">
-                        <h1>طلب شراء</h1>
-                        <p>رقم الطلب: ${purchaseOrderId || 'جديد'}</p>
-                        <p>التاريخ: ${new Date().toLocaleDateString('ar-EG')}</p>
-                    </div>
-                    
-                    <div class="invoice-details">
-                        <div>
-                            <h3>المورد:</h3>
-                            <p>${document.getElementById('supplierSelect')?.options[document.getElementById('supplierSelect')?.selectedIndex]?.text || 'غير محدد'}</p>
-                        </div>
-                        <div>
-                            <h3>الشركة:</h3>
-                            <p>مخازن موهبة</p>
-                            <p>العنوان: القاهرة، مصر</p>
-                            <p>الهاتف: 01234567890</p>
-                        </div>
-                    </div>
-                    
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>المنتج</th>
-                                <th>الكمية</th>
-                                <th>السعر</th>
-                                <th>الإجمالي</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${Array.from(document.querySelectorAll('#purchaseOrderItemsTable tbody tr')).map((row, index) => {
-                                const productSelect = row.querySelector('.product-select');
-                                const productName = productSelect?.options[productSelect?.selectedIndex]?.text || 'غير محدد';
-                                const quantity = row.querySelector('.item-quantity')?.value || '0';
-                                const price = row.querySelector('.item-price')?.value || '0';
-                                const total = row.querySelector('.item-total')?.value || '0';
-                                
-                                return `
-                                    <tr>
-                                        <td>${index + 1}</td>
-                                        <td>${productName}</td>
-                                        <td>${quantity}</td>
-                                        <td>${price}</td>
-                                        <td>${total}</td>
-                                    </tr>
-                                `;
-                            }).join('')}
-                        </tbody>
-                        <tfoot>
-                            <tr>
-                                <td colspan="4" class="text-end fw-bold">المجموع:</td>
-                                <td>${document.getElementById('purchaseOrderSubtotal')?.value || '0'} ج.م</td>
-                            </tr>
-                            <tr>
-                                <td colspan="4" class="text-end fw-bold">الضريبة (14%):</td>
-                                <td>${document.getElementById('purchaseOrderTax')?.value || '0'} ج.م</td>
-                            </tr>
-                            <tr>
-                                <td colspan="4" class="text-end fw-bold">الخصم:</td>
-                                <td>${document.getElementById('purchaseOrderDiscount')?.value || '0'} ج.م</td>
-                            </tr>
-                            <tr>
-                                <td colspan="4" class="text-end fw-bold">الإجمالي:</td>
-                                <td>${document.getElementById('purchaseOrderTotal')?.value || '0'} ج.م</td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                    
-                    <div class="footer">
-                        <p>شكراً لتعاملكم معنا</p>
-                    </div>
-                    
-                    <script>
-                        window.onload = function() {
-                            window.print();
-                        }
-                    </script>
-                </body>
-                </html>
-            `;
-            
-            // Write HTML to the new window
-            printWindow.document.write(html);
-            printWindow.document.close();
-        }
-        
-        // Add item button
-        document.getElementById('addItemBtn').addEventListener('click', function() {
-            const tbody = document.querySelector('#purchaseOrderItemsTable tbody');
-            const newRow = document.createElement('tr');
-            newRow.innerHTML = `
-                <td>
-                    <div class="input-group">
-                        <select class="form-select product-select" required>
-                            <option value="">اختر المنتج</option>
-                            {% for product in products %}
-                                <option value="{{ product.id }}" data-price="{{ product.price }}" data-stock="{{ product.quantity }}">{{ product.name }}</option>
-                            {% endfor %}
-                            <option value="new" class="text-primary">+ إضافة منتج جديد</option>
-                        </select>
-                        <button class="btn btn-outline-primary add-new-product-btn" type="button">
-                            <i class="fas fa-plus"></i>
-                        </button>
-                    </div>
-                </td>
-                <td>
-                    <input type="number" class="form-control item-quantity" min="1" value="1" required>
-                </td>
-                <td>
-                    <input type="number" class="form-control item-price" min="0" step="0.01" value="0.00" required>
-                </td>
-                <td>
-                    <input type="number" class="form-control item-total" min="0" step="0.01" value="0.00" readonly>
-                </td>
-                <td>
-                    <button type="button" class="btn btn-sm btn-danger remove-item">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </td>
-            `;
-            tbody.appendChild(newRow);
-            
-            // Set up event listeners for the new row
-            setupItemEventListeners(newRow);
-            
-            // Update totals
-            updatePurchaseOrderTotals();
-        });
-        
-        // Setup item event listeners
-        function setupItemEventListeners(row) {
-            const productSelect = row.querySelector('.product-select');
-            const quantityInput = row.querySelector('.item-quantity');
-            const priceInput = row.querySelector('.item-price');
-            const totalInput = row.querySelector('.item-total');
-            const removeButton = row.querySelector('.remove-item');
-            
-            // Product select change
-            productSelect.addEventListener('change', function() {
-                const selectedOption = this.options[this.selectedIndex];
-                const price = selectedOption.getAttribute('data-price') || 0;
-                priceInput.value = parseFloat(price).toFixed(2);
-                updateItemTotal(row);
-                updatePurchaseOrderTotals();
-            });
-            
-            // Quantity change
-            quantityInput.addEventListener('input', function() {
-                updateItemTotal(row);
-                updatePurchaseOrderTotals();
-            });
-            
-            // Price change
-            priceInput.addEventListener('input', function() {
-                updateItemTotal(row);
-                updatePurchaseOrderTotals();
-            });
-            
-            // Remove item
-            removeButton.addEventListener('click', function() {
-                row.remove();
-                updatePurchaseOrderTotals();
-            });
-        }
-        
-        // Update item total
-        function updateItemTotal(row) {
-            const quantity = parseFloat(row.querySelector('.item-quantity').value) || 0;
-            const price = parseFloat(row.querySelector('.item-price').value) || 0;
-            const total = quantity * price;
-            row.querySelector('.item-total').value = total.toFixed(2);
-        }
-        
-        // Update purchase order totals
-        function updatePurchaseOrderTotals() {
-            const itemTotals = document.querySelectorAll('.item-total');
-            let subtotal = 0;
-            
-            itemTotals.forEach(item => {
-                subtotal += parseFloat(item.value) || 0;
-            });
-            
-            const tax = subtotal * 0.14;
-            const discount = parseFloat(document.getElementById('purchaseOrderDiscount').value) || 0;
-            const total = subtotal + tax - discount;
-            
-            document.getElementById('purchaseOrderSubtotal').value = subtotal.toFixed(2);
-            document.getElementById('purchaseOrderTax').value = tax.toFixed(2);
-            document.getElementById('purchaseOrderTotal').value = total.toFixed(2);
-        }
-        
-        // Discount change
-        document.getElementById('purchaseOrderDiscount').addEventListener('input', updatePurchaseOrderTotals);
-        
-        // Setup initial event listeners for the first row
-        const firstRow = document.querySelector('#purchaseOrderItemsTable tbody tr');
-        if (firstRow) {
-            setupItemEventListeners(firstRow);
-        }
-    });
+        // Auto-remove after 3 seconds
+        setTimeout(() => {
+            const bsAlert = new bootstrap.Alert(alertDiv);
+            bsAlert.close();
+        }, 3000);
+    }
 </script>
+<script src="{% static 'js/purchase_order_fixes.js' %}"></script>
 {% endblock %}

@@ -137,6 +137,7 @@ class PurchaseOrder(models.Model):
     reference_number = models.CharField(max_length=50, unique=True, blank=True, null=True)
     date = models.DateField(auto_now_add=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     notes = models.TextField(blank=True, null=True)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_purchase_orders')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -147,8 +148,13 @@ class PurchaseOrder(models.Model):
     
     def get_total(self):
         try:
-            return self.purchaseorderitem_set.aggregate(
+            subtotal = self.purchaseorderitem_set.aggregate(
                 total=Sum(F('quantity') * F('price')))['total'] or 0
+            
+            # Subtract discount
+            total = subtotal - self.discount
+            
+            return total
         except Exception as e:
             print(f"Error calculating purchase order total: {str(e)}")
             return 0

@@ -303,7 +303,6 @@
                                         {% for client in clients %}
                                             <option value="{{ client.id }}">{{ client.name }}</option>
                                         {% endfor %}
-                                        <option value="new" class="text-primary">+ إضافة عميل جديد</option>
                                     </select>
                                     <button class="btn btn-outline-primary" type="button" id="addNewClientBtn">
                                         <i class="fas fa-plus"></i>
@@ -333,7 +332,6 @@
                                                 {% for product in products %}
                                                     <option value="{{ product.id }}" data-price="{{ product.price }}" data-stock="{{ product.quantity }}">{{ product.name }}</option>
                                                 {% endfor %}
-                                                <option value="new" class="text-primary">+ إضافة منتج جديد</option>
                                             </select>
                                             <button class="btn btn-outline-primary add-new-product-btn" type="button">
                                                 <i class="fas fa-plus"></i>
@@ -441,6 +439,34 @@
                 }
             }
             return cookieValue;
+        }
+        
+        // Function to show alert/notification
+        function showAlert(message) {
+            // Create alert element
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success alert-dismissible fade show';
+            alertDiv.setAttribute('role', 'alert');
+            alertDiv.style.position = 'fixed';
+            alertDiv.style.top = '20px';
+            alertDiv.style.right = '20px';
+            alertDiv.style.zIndex = '9999';
+            alertDiv.style.minWidth = '300px';
+            
+            // Add message and close button
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            
+            // Add to document
+            document.body.appendChild(alertDiv);
+            
+            // Auto-remove after 3 seconds
+            setTimeout(() => {
+                const bsAlert = new bootstrap.Alert(alertDiv);
+                bsAlert.close();
+            }, 3000);
         }
         
     document.addEventListener('DOMContentLoaded', function() {
@@ -647,7 +673,6 @@
                                                 {% for product in products %}
                                                     <option value="{{ product.id }}" data-price="{{ product.price }}" data-stock="{{ product.quantity }}" ${item.product_id == {{ product.id }} ? 'selected' : ''}>{{ product.name }}</option>
                                                 {% endfor %}
-                                                <option value="new" class="text-primary">+ إضافة منتج جديد</option>
                                             </select>
                                             <button class="btn btn-outline-primary add-new-product-btn" type="button">
                                                 <i class="fas fa-plus"></i>
@@ -694,7 +719,6 @@
                                             {% for product in products %}
                                                 <option value="{{ product.id }}" data-price="{{ product.price }}" data-stock="{{ product.quantity }}">{{ product.name }}</option>
                                             {% endfor %}
-                                            <option value="new" class="text-primary">+ إضافة منتج جديد</option>
                                         </select>
                                         <button class="btn btn-outline-primary add-new-product-btn" type="button">
                                             <i class="fas fa-plus"></i>
@@ -785,7 +809,7 @@
                 
                 if (data.success) {
                     // Show success message
-                    alert('تم حذف الفاتورة بنجاح');
+                    showAlert('تم حذف الفاتورة بنجاح');
                     
                     // Remove the order row from the table
                     const orderRow = document.querySelector(`.delete-order[data-id="${orderId}"]`).closest('tr');
@@ -1012,10 +1036,13 @@
                     modal.hide();
                     
                     // Show success message
-                    alert('تم حفظ الفاتورة بنجاح');
+                    showAlert('تم حفظ الفاتورة بنجاح');
                     
                     // Reload the page to show the new order
-                    window.location.reload();
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, 3000);
+                    
                 })
                 .catch(error => {
                     console.error('Error:', error);
@@ -1126,7 +1153,6 @@
                                                 {% for product in products %}
                                                     <option value="{{ product.id }}" data-price="{{ product.price }}" data-stock="{{ product.quantity }}">{{ product.name }}</option>
                                                 {% endfor %}
-                                                <option value="new" class="text-primary">+ إضافة منتج جديد</option>
                                             </select>
                                             <button class="btn btn-outline-primary add-new-product-btn" type="button">
                                                 <i class="fas fa-plus"></i>
@@ -1173,7 +1199,6 @@
                                             {% for product in products %}
                                                 <option value="{{ product.id }}" data-price="{{ product.price }}" data-stock="{{ product.quantity }}">{{ product.name }}</option>
                                             {% endfor %}
-                                            <option value="new" class="text-primary">+ إضافة منتج جديد</option>
                                         </select>
                                         <button class="btn btn-outline-primary add-new-product-btn" type="button">
                                             <i class="fas fa-plus"></i>
@@ -1287,7 +1312,7 @@
                     };
                     
                     // Send AJAX request to create new client
-                    fetch('/inventory/client/create/', {
+                    fetch('/api/clients/create/', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -1318,7 +1343,7 @@
                             this.remove();
                         });
                         
-                        alert('تم إضافة العميل بنجاح');
+                        showAlert('تم إضافة العميل بنجاح');
                     })
                     .catch(error => {
                         console.error('Error:', error);
@@ -1418,7 +1443,7 @@
                         };
                         
                         // Send AJAX request to create new product
-                        fetch('/inventory/product/create/', {
+                        fetch('/api/products/create/', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -1465,7 +1490,7 @@
                                     this.remove();
                                 });
                                 
-                                alert('تم إضافة المنتج بنجاح');
+                                showAlert('تم إضافة المنتج بنجاح');
                             } else {
                                 alert(data.message || 'حدث خطأ أثناء إضافة المنتج');
                             }
@@ -1498,7 +1523,6 @@
                             {% for product in products %}
                                 <option value="{{ product.id }}" data-price="{{ product.price }}" data-stock="{{ product.quantity }}">{{ product.name }}</option>
                             {% endfor %}
-                            <option value="new" class="text-primary">+ إضافة منتج جديد</option>
                         </select>
                         <button class="btn btn-outline-primary add-new-product-btn" type="button">
                             <i class="fas fa-plus"></i>

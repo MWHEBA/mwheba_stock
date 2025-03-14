@@ -34,6 +34,17 @@ urlpatterns = [
     path('api/orders/<int:order_id>/delete/', views.order_delete_api, name='order_delete_api'),
     path('api/orders/<int:order_id>/update/', views.update_order_api, name='update_order_api'),
     path('api/orders/create/', views.create_order, name='create_order_api'),
+    
+    # API endpoints for purchase orders
+    path('api/purchase-orders/<int:purchase_order_id>/details/', views.get_purchase_order_details, name='purchase_order_details_api'),
+    path('api/purchase-orders/<int:purchase_order_id>/delete/', views.delete_purchase_order, name='purchase_order_delete_api'),
+    path('api/purchase-orders/<int:purchase_order_id>/update/', views.update_purchase_order, name='purchase_order_update_api'),
+    path('api/purchase-orders/create/', views.create_purchase_order, name='create_purchase_order_api'),
+    
+    # API endpoints for products and suppliers
+    path('api/products/', views.get_products, name='get_products_api'),
+    path('api/products/create/', views.create_product, name='create_product_api'),
+    path('api/suppliers/create/', views.create_supplier, name='create_supplier_api'),
 ]
 
 # Add media file handling in development
