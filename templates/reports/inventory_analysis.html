@@ -1,0 +1,444 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}تحليل المخزون - MWHEBA Stock{% endblock %}
+
+{% block page_header %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-0 text-primary">
+                <i class="fas fa-chart-pie me-2"></i> تحليل المخزون
+            </h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">لوحة التحكم</a></li>
+                    <li class="breadcrumb-item active">تحليل المخزون</li>
+                </ol>
+            </nav>
+        </div>
+        <div>
+            <button class="btn btn-outline-primary me-2" onclick="window.print()">
+                <i class="fas fa-print me-1"></i> طباعة
+            </button>
+            <button class="btn btn-outline-success" id="exportExcelBtn">
+                <i class="fas fa-file-excel me-1"></i> تصدير إكسيل
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- بطاقات ملخص المخزون -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3 class="display-4 text-primary fw-bold">{{ total_products }}</h3>
+                    <p class="mb-0">إجمالي المنتجات</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3 class="display-6 text-success fw-bold">{{ total_inventory_value|floatformat:2 }}</h3>
+                    <p class="mb-0">قيمة المخزون (ج.م)</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3 class="display-6 text-warning fw-bold">{{ out_of_stock_count }}</h3>
+                    <p class="mb-0">منتجات نفذت من المخزون</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3 class="display-6 text-danger fw-bold">{{ low_stock_count }}</h3>
+                    <p class="mb-0">منتجات تحت الحد الأدنى</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- الرسم البياني لتوزيع المخزون -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie me-1"></i> توزيع قيمة المخزون حسب الفئة
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="inventoryDistributionChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- الرسم البياني لحركة المخزون -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line me-1"></i> حركة المخزون خلال الأشهر الستة الماضية
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="inventoryMovementChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- بطاقة المنتجات الراكدة -->
+    <div class="card mb-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">
+                <i class="fas fa-exclamation-triangle me-1 text-warning"></i> المنتجات الراكدة (لم تباع منذ أكثر من 60 يوم)
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>المنتج</th>
+                            <th>الفئة</th>
+                            <th>الكمية</th>
+                            <th>قيمة المخزون</th>
+                            <th>آخر بيع</th>
+                            <th>عدد الأيام</th>
+                            <th>الإجراء</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in slow_moving_products %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'product-detail' product.id %}">{{ product.name }}</a>
+                            </td>
+                            <td>{{ product.category.name }}</td>
+                            <td>{{ product.quantity }}</td>
+                            <td>{{ product.stock_value|floatformat:2 }} ج.م</td>
+                            <td>{{ product.last_sale_date|date:"Y-m-d"|default:"لم يباع" }}</td>
+                            <td>{{ product.days_since_last_sale }}</td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#discountModal" data-product-id="{{ product.id }}" data-product-name="{{ product.name }}">
+                                    خصم خاص
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-3 text-muted">لا توجد منتجات راكدة</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- بطاقة المنتجات الأسرع حركة -->
+    <div class="card mb-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">
+                <i class="fas fa-bolt me-1 text-success"></i> المنتجات الأكثر مبيعاً
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>المنتج</th>
+                            <th>الفئة</th>
+                            <th>الكمية المباعة</th>
+                            <th>الكمية المتاحة</th>
+                            <th>نسبة الدوران</th>
+                            <th>آخر بيع</th>
+                            <th>الإجراء</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in top_selling_products %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'product-detail' product.id %}">{{ product.name }}</a>
+                            </td>
+                            <td>{{ product.category.name }}</td>
+                            <td>{{ product.sold_quantity }}</td>
+                            <td>{{ product.quantity }}</td>
+                            <td>{{ product.turnover_rate|floatformat:1 }}x</td>
+                            <td>{{ product.last_sale_date|date:"Y-m-d" }}</td>
+                            <td>
+                                <a href="{% url 'purchase-create' %}?product_id={{ product.id }}" class="btn btn-sm btn-primary">
+                                    طلب شراء
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-3 text-muted">لا توجد بيانات</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- بطاقة المنتجات التي تحتاج للتجديد -->
+    <div class="card mb-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">
+                <i class="fas fa-bell me-1 text-danger"></i> منتجات تحتاج لإعادة الطلب
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>المنتج</th>
+                            <th>الفئة</th>
+                            <th>المخزون الحالي</th>
+                            <th>الحد الأدنى للمخزون</th>
+                            <th>الكمية المقترح طلبها</th>
+                            <th>آخر عملية شراء</th>
+                            <th>الإجراء</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in low_inventory_products %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'product-detail' product.id %}">{{ product.name }}</a>
+                            </td>
+                            <td>{{ product.category.name }}</td>
+                            <td class="{% if product.quantity <= 0 %}text-danger fw-bold{% elif product.quantity <= product.min_stock %}text-warning fw-bold{% else %}text-dark{% endif %}">
+                                {{ product.quantity }}
+                            </td>
+                            <td>{{ product.min_stock }}</td>
+                            <td>{{ product.suggested_order_quantity }}</td>
+                            <td>{{ product.last_purchase_date|date:"Y-m-d"|default:"غير متوفر" }}</td>
+                            <td>
+                                <a href="{% url 'purchase-create' %}?product_id={{ product.id }}" class="btn btn-sm btn-primary">
+                                    طلب شراء
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-3 text-muted">لا توجد منتجات تحتاج للطلب</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- مودال الخصم الخاص -->
+<div class="modal fade" id="discountModal" tabindex="-1" aria-labelledby="discountModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="discountModalLabel">إضافة خصم خاص</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{% url 'add-special-discount' %}" method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <input type="hidden" name="product_id" id="discount-product-id">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">المنتج</label>
+                        <input type="text" class="form-control" id="discount-product-name" readonly>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">نسبة الخصم (%)</label>
+                        <input type="number" name="discount_percentage" class="form-control" min="1" max="90" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">تاريخ البداية</label>
+                        <input type="date" name="start_date" class="form-control" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">تاريخ الانتهاء</label>
+                        <input type="date" name="end_date" class="form-control" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">ملاحظات</label>
+                        <textarea name="notes" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">حفظ الخصم</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // تهيئة مودال الخصم
+        const discountModal = document.getElementById('discountModal');
+        discountModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const productId = button.getAttribute('data-product-id');
+            const productName = button.getAttribute('data-product-name');
+            
+            document.getElementById('discount-product-id').value = productId;
+            document.getElementById('discount-product-name').value = productName;
+        });
+        
+        // رسم بياني دائري لتوزيع المخزون
+        const ctxDistribution = document.getElementById('inventoryDistributionChart').getContext('2d');
+        new Chart(ctxDistribution, {
+            type: 'pie',
+            data: {
+                labels: {{ category_labels|safe }},
+                datasets: [{
+                    data: {{ category_values|safe }},
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.7)',
+                        'rgba(54, 162, 235, 0.7)',
+                        'rgba(255, 206, 86, 0.7)',
+                        'rgba(75, 192, 192, 0.7)',
+                        'rgba(153, 102, 255, 0.7)',
+                        'rgba(255, 159, 64, 0.7)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                const percentage = ((value / {{ total_inventory_value }}) * 100).toFixed(1);
+                                return `${label}: ${value} ج.م (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // رسم بياني لحركة المخزون
+        const ctxMovement = document.getElementById('inventoryMovementChart').getContext('2d');
+        new Chart(ctxMovement, {
+            type: 'line',
+            data: {
+                labels: {{ movement_labels|safe }},
+                datasets: [{
+                    label: 'المشتريات',
+                    data: {{ purchases_data|safe }},
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    tension: 0.1,
+                    fill: true
+                }, {
+                    label: 'المبيعات',
+                    data: {{ sales_data|safe }},
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    tension: 0.1,
+                    fill: true
+                }, {
+                    label: 'قيمة المخزون',
+                    data: {{ inventory_data|safe }},
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    tension: 0.1,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    },
+                    title: {
+                        display: true,
+                        text: 'تطور حركة المخزون خلال الفترة السابقة',
+                        font: {
+                            size: 16
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        
+        // زر تصدير البيانات إلى إكسيل
+        document.getElementById('exportExcelBtn').addEventListener('click', function() {
+            // تنفيذ التصدير (في النظام الحقيقي سيتم استخدام AJAX)
+            alert('جاري تصدير بيانات المخزون إلى ملف إكسيل...');
+        });
+        
+        // إضافة أنماط CSS للطباعة
+        const style = document.createElement('style');
+        style.type = 'text/css';
+        style.media = 'print';
+        style.innerHTML = `
+            @media print {
+                .btn, button, .modal, .modal-backdrop {
+                    display: none !important;
+                }
+                .card {
+                    border: none !important;
+                    box-shadow: none !important;
+                }
+                .table {
+                    border-collapse: collapse;
+                }
+                .table th, .table td {
+                    border: 1px solid #ddd !important;
+                }
+                body {
+                    font-size: 12pt;
+                }
+                a {
+                    text-decoration: none !important;
+                    color: #000 !important;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    });
+</script>
+{% endblock %}

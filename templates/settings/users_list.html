@@ -1,0 +1,496 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}إدارة المستخدمين - MWHEBA Stock{% endblock %}
+
+{% block page_header %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-0 text-primary">
+                <i class="fas fa-users-cog me-2"></i> إدارة المستخدمين
+            </h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">لوحة التحكم</a></li>
+                    <li class="breadcrumb-item active">إدارة المستخدمين</li>
+                </ol>
+            </nav>
+        </div>
+        <div>
+            <a href="{% url 'user-create' %}" class="btn btn-primary">
+                <i class="fas fa-user-plus me-1"></i> إضافة مستخدم جديد
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- قائمة الإعدادات الجانبية -->
+        <div class="col-md-3 mb-4">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">الإعدادات</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="{% url 'general-settings' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-store me-2"></i> إعدادات الشركة
+                    </a>
+                    <a href="{% url 'system-settings' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-sliders-h me-2"></i> إعدادات النظام
+                    </a>
+                    <a href="{% url 'users-list' %}" class="list-group-item list-group-item-action active">
+                        <i class="fas fa-users-cog me-2"></i> إدارة المستخدمين
+                    </a>
+                    <a href="{% url 'categories' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-tags me-2"></i> الفئات
+                    </a>
+                    <a href="{% url 'tax-settings' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-percentage me-2"></i> إعدادات الضرائب
+                    </a>
+                    <a href="{% url 'backup-restore' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-database me-2"></i> النسخ الاحتياطي والاستعادة
+                    </a>
+                </div>
+            </div>
+            
+            <!-- إحصائيات المستخدمين -->
+            <div class="card mt-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">إحصائيات المستخدمين</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>إجمالي المستخدمين:</span>
+                            <span class="fw-bold">{{ total_users }}</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>مستخدمين نشطين:</span>
+                            <span class="fw-bold">{{ active_users }}</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>مستخدمين غير نشطين:</span>
+                            <span class="fw-bold">{{ inactive_users }}</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>مدراء النظام:</span>
+                            <span class="fw-bold">{{ admin_users }}</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="d-flex justify-content-between">
+                            <span>مستخدمين عاديين:</span>
+                            <span class="fw-bold">{{ staff_users }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- جدول المستخدمين -->
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-users me-2"></i> قائمة المستخدمين
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>المستخدم</th>
+                                    <th>البريد الإلكتروني</th>
+                                    <th>الدور</th>
+                                    <th>آخر تسجيل دخول</th>
+                                    <th>الحالة</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="user-avatar me-2 bg-{{ user.get_color_class }} text-white">
+                                                {{ user.get_initials }}
+                                            </div>
+                                            <div>
+                                                {{ user.get_full_name|default:user.username }}
+                                                {% if user.is_superuser %}
+                                                <span class="badge bg-danger ms-1">المدير</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ user.email }}</td>
+                                    <td>
+                                        {% if user.is_superuser %}
+                                            مدير النظام
+                                        {% elif user.is_staff %}
+                                            موظف
+                                        {% else %}
+                                            مستخدم عادي
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if user.last_login %}
+                                            {{ user.last_login|date:"Y-m-d H:i" }}
+                                        {% else %}
+                                            لم يسجل الدخول بعد
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if user.is_active %}
+                                            <span class="badge bg-success">نشط</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">معطل</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{% url 'user-edit' user.id %}" class="btn btn-sm btn-primary" title="تعديل">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button class="btn btn-sm btn-info text-white" title="إعادة تعيين كلمة المرور"
+                                                    data-bs-toggle="modal" data-bs-target="#resetPasswordModal"
+                                                    data-user-id="{{ user.id }}" data-user-name="{{ user.username }}">
+                                                <i class="fas fa-key"></i>
+                                            </button>
+                                            {% if user.is_active %}
+                                                <button class="btn btn-sm btn-warning" title="تعطيل الحساب"
+                                                        data-bs-toggle="modal" data-bs-target="#toggleActiveModal"
+                                                        data-user-id="{{ user.id }}" data-user-name="{{ user.username }}" data-action="deactivate">
+                                                    <i class="fas fa-ban"></i>
+                                                </button>
+                                            {% else %}
+                                                <button class="btn btn-sm btn-success" title="تنشيط الحساب"
+                                                        data-bs-toggle="modal" data-bs-target="#toggleActiveModal"
+                                                        data-user-id="{{ user.id }}" data-user-name="{{ user.username }}" data-action="activate">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                            {% endif %}
+                                            {% if user.id != request.user.id %}
+                                                <button class="btn btn-sm btn-danger" title="حذف"
+                                                        data-bs-toggle="modal" data-bs-target="#deleteUserModal"
+                                                        data-user-id="{{ user.id }}" data-user-name="{{ user.username }}">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-5">
+                                        <div class="text-muted">
+                                            <i class="fas fa-users fa-3x mb-3"></i>
+                                            <h5>لم يتم العثور على مستخدمين</h5>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                {% if is_paginated %}
+                <div class="card-footer bg-white">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center mb-0">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                                        <i class="fas fa-chevron-right me-1"></i> السابق
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" tabindex="-1">
+                                        <i class="fas fa-chevron-right me-1"></i> السابق
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for i in page_obj.paginator.page_range %}
+                                {% if page_obj.number == i %}
+                                    <li class="page-item active">
+                                        <a class="page-link" href="#">{{ i }}</a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ i }}">{{ i }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                                        التالي <i class="fas fa-chevron-left ms-1"></i>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" tabindex="-1">
+                                        التالي <i class="fas fa-chevron-left ms-1"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal إعادة تعيين كلمة المرور -->
+<div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="resetPasswordModalLabel">إعادة تعيين كلمة المرور</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="reset-password-form" method="post" action="">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p>هل أنت متأكد من إعادة تعيين كلمة المرور للمستخدم <strong id="reset-user-name"></strong>؟</p>
+                    <div class="mb-3">
+                        <label for="new_password" class="form-label">كلمة المرور الجديدة <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <input type="password" id="new_password" name="new_password" class="form-control" required>
+                            <button class="btn btn-outline-secondary toggle-password" type="button">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirm_password" class="form-label">تأكيد كلمة المرور <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <input type="password" id="confirm_password" name="confirm_password" class="form-control" required>
+                            <button class="btn btn-outline-secondary toggle-password" type="button">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="password-strength-meter mt-2 d-none">
+                        <div class="progress" style="height: 5px;">
+                            <div class="progress-bar bg-danger" role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <small class="password-strength-text text-muted mt-1 d-block"></small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">إعادة تعيين كلمة المرور</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal تنشيط/تعطيل المستخدم -->
+<div class="modal fade" id="toggleActiveModal" tabindex="-1" aria-labelledby="toggleActiveModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="toggleActiveModalLabel">تغيير حالة المستخدم</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="toggle-active-form" method="post" action="">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p id="toggle-active-text"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" id="toggle-active-btn" class="btn"></button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal حذف المستخدم -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteUserModalLabel">حذف المستخدم</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="delete-user-form" method="post" action="">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p>هل أنت متأكد من حذف المستخدم <strong id="delete-user-name"></strong>؟</p>
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i> تحذير: لا يمكن التراجع عن هذا الإجراء. ستفقد جميع البيانات المرتبطة بهذا المستخدم.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-danger">حذف المستخدم</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // إعداد مودال إعادة تعيين كلمة المرور
+        const resetPasswordModal = document.getElementById('resetPasswordModal');
+        resetPasswordModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const userId = button.getAttribute('data-user-id');
+            const userName = button.getAttribute('data-user-name');
+            
+            document.getElementById('reset-user-name').textContent = userName;
+            document.getElementById('reset-password-form').action = `/settings/users/${userId}/reset-password/`;
+            
+            // تفريغ الحقول
+            document.getElementById('new_password').value = '';
+            document.getElementById('confirm_password').value = '';
+            document.querySelector('.password-strength-meter').classList.add('d-none');
+        });
+        
+        // إظهار/إخفاء كلمة المرور
+        document.querySelectorAll('.toggle-password').forEach(button => {
+            button.addEventListener('click', function() {
+                const input = this.parentNode.querySelector('input');
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    this.innerHTML = '<i class="fas fa-eye-slash"></i>';
+                } else {
+                    input.type = 'password';
+                    this.innerHTML = '<i class="fas fa-eye"></i>';
+                }
+            });
+        });
+        
+        // إعداد مودال تنشيط/تعطيل المستخدم
+        const toggleActiveModal = document.getElementById('toggleActiveModal');
+        toggleActiveModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const userId = button.getAttribute('data-user-id');
+            const userName = button.getAttribute('data-user-name');
+            const action = button.getAttribute('data-action');
+            
+            const toggleActiveText = document.getElementById('toggle-active-text');
+            const toggleActiveBtn = document.getElementById('toggle-active-btn');
+            
+            if (action === 'activate') {
+                toggleActiveText.textContent = `هل أنت متأكد من تنشيط حساب المستخدم "${userName}"؟`;
+                toggleActiveBtn.textContent = 'تنشيط';
+                toggleActiveBtn.classList.remove('btn-danger');
+                toggleActiveBtn.classList.add('btn-success');
+                document.getElementById('toggle-active-form').action = `/settings/users/${userId}/activate/`;
+            } else {
+                toggleActiveText.textContent = `هل أنت متأكد من تعطيل حساب المستخدم "${userName}"؟`;
+                toggleActiveBtn.textContent = 'تعطيل';
+                toggleActiveBtn.classList.remove('btn-success');
+                toggleActiveBtn.classList.add('btn-danger');
+                document.getElementById('toggle-active-form').action = `/settings/users/${userId}/deactivate/`;
+            }
+        });
+        
+        // إعداد مودال حذف المستخدم
+        const deleteUserModal = document.getElementById('deleteUserModal');
+        deleteUserModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const userId = button.getAttribute('data-user-id');
+            const userName = button.getAttribute('data-user-name');
+            
+            document.getElementById('delete-user-name').textContent = userName;
+            document.getElementById('delete-user-form').action = `/settings/users/${userId}/delete/`;
+        });
+        
+        // التحقق من تطابق كلمات المرور
+        const passwordInput = document.getElementById('new_password');
+        const confirmInput = document.getElementById('confirm_password');
+        const passwordStrengthMeter = document.querySelector('.password-strength-meter');
+        const passwordStrengthProgress = document.querySelector('.password-strength-meter .progress-bar');
+        const passwordStrengthText = document.querySelector('.password-strength-text');
+        
+        passwordInput.addEventListener('input', function() {
+            const password = this.value;
+            
+            // إظهار مقياس قوة كلمة المرور
+            if (password) {
+                passwordStrengthMeter.classList.remove('d-none');
+                
+                // تقييم قوة كلمة المرور (مثال بسيط)
+                let strength = 0;
+                if (password.length >= 8) strength += 25;
+                if (password.match(/[A-Z]/)) strength += 25;
+                if (password.match(/[0-9]/)) strength += 25;
+                if (password.match(/[^A-Za-z0-9]/)) strength += 25;
+                
+                // تحديث مقياس القوة
+                passwordStrengthProgress.style.width = strength + '%';
+                
+                // تغيير اللون بناءً على القوة
+                if (strength < 25) {
+                    passwordStrengthProgress.className = 'progress-bar bg-danger';
+                    passwordStrengthText.textContent = 'ضعيفة جداً';
+                } else if (strength < 50) {
+                    passwordStrengthProgress.className = 'progress-bar bg-warning';
+                    passwordStrengthText.textContent = 'ضعيفة';
+                } else if (strength < 75) {
+                    passwordStrengthProgress.className = 'progress-bar bg-info';
+                    passwordStrengthText.textContent = 'متوسطة';
+                } else {
+                    passwordStrengthProgress.className = 'progress-bar bg-success';
+                    passwordStrengthText.textContent = 'قوية';
+                }
+            } else {
+                passwordStrengthMeter.classList.add('d-none');
+            }
+            
+            // التحقق من التطابق
+            if (confirmInput.value && confirmInput.value !== password) {
+                confirmInput.classList.add('is-invalid');
+            } else {
+                confirmInput.classList.remove('is-invalid');
+            }
+        });
+        
+        confirmInput.addEventListener('input', function() {
+            if (this.value && this.value !== passwordInput.value) {
+                this.classList.add('is-invalid');
+            } else {
+                this.classList.remove('is-invalid');
+            }
+        });
+        
+        // التحقق قبل إرسال نموذج إعادة تعيين كلمة المرور
+        document.getElementById('reset-password-form').addEventListener('submit', function(e) {
+            if (passwordInput.value !== confirmInput.value) {
+                e.preventDefault();
+                alert('كلمات المرور غير متطابقة');
+                return false;
+            }
+            return true;
+        });
+    });
+</script>
+{% endblock %}

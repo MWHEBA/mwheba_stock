@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}تقرير المعاملات - MWHEBA Stock{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2 class="mb-4">تقرير المعاملات المالية</h2>
+    
+    <!-- فلاتر البحث -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">نوع المعاملة</label>
+                    <select id="transaction-type" class="form-select">
+                        <option value="all">الكل</option>
+                        <option value="income">إيرادات</option>
+                        <option value="expense">مصروفات</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">من تاريخ</label>
+                    <input type="date" id="start-date" class="form-control">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">إلى تاريخ</label>
+                    <input type="date" id="end-date" class="form-control">
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button id="filter-btn" class="btn btn-primary w-100">تطبيق</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- قائمة المعاملات -->
+    <div class="card">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">المعاملات المالية</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>رقم المعاملة</th>
+                            <th>التاريخ</th>
+                            <th>النوع</th>
+                            <th>المبلغ</th>
+                            <th>الوصف</th>
+                            <th>بواسطة</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactions-container">
+                        <!-- هنا سيتم إضافة البيانات بواسطة JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/paginated-data-loader.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // الحصول على عناصر الفلترة
+        const typeFilter = document.getElementById('transaction-type');
+        const startDateFilter = document.getElementById('start-date');
+        const endDateFilter = document.getElementById('end-date');
+        const filterBtn = document.getElementById('filter-btn');
+        const container = document.getElementById('transactions-container');
+        
+        // إنشاء كائن لتحميل البيانات المقسمة
+        const dataLoader = new PaginatedDataLoader({
+            apiUrl: '/api/transactions/',
+            container: container,
+            pageSize: 50,
+            template: function(transaction) {
+                // تحديد لون ورمز نوع المعاملة
+                let typeClass, typeLabel;
+                if (transaction.type === 'income') {
+                    typeClass = 'success';
+                    typeLabel = 'إيرادات';
+                } else {
+                    typeClass = 'danger';
+                    typeLabel = 'مصروفات';
+                }
+                
+                // إنشاء عنصر الصف في الجدول
+                return `
+                    <tr>
+                        <td>${transaction.id}</td>
+                        <td>${transaction.date}</td>
+                        <td><span class="badge bg-${typeClass}">${typeLabel}</span></td>
+                        <td>${transaction.amount.toFixed(2)} ج.م</td>
+                        <td>${transaction.description || '-'}</td>
+                        <td>${transaction.user__username}</td>
+                    </tr>
+                `;
+            }
+        });
+        
+        // معالج نقر زر التصفية
+        filterBtn.addEventListener('click', function() {
+            dataLoader.updateFilters({
+                type: typeFilter.value,
+                start_date: startDateFilter.value,
+                end_date: endDateFilter.value
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,337 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}تقرير الأرباح - MWHEBA Stock{% endblock %}
+
+{% block page_header %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-0 text-primary">
+                <i class="fas fa-chart-line me-2"></i> تقرير الأرباح
+            </h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">لوحة التحكم</a></li>
+                    <li class="breadcrumb-item active">تقرير الأرباح</li>
+                </ol>
+            </nav>
+        </div>
+        <div>
+            <button class="btn btn-outline-primary me-2" onclick="window.print()">
+                <i class="fas fa-print me-1"></i> طباعة
+            </button>
+            <button class="btn btn-outline-success" id="exportExcelBtn">
+                <i class="fas fa-file-excel me-1"></i> تصدير إكسيل
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- عناصر التصفية -->
+    <div class="card mb-4 no-print">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">
+                <i class="fas fa-filter me-1"></i> عوامل التصفية
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="get" action="{% url 'profit-report' %}" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">الفترة</label>
+                    <select name="period" class="form-select" id="period-select">
+                        <option value="today" {% if request.GET.period == 'today' %}selected{% endif %}>اليوم</option>
+                        <option value="yesterday" {% if request.GET.period == 'yesterday' %}selected{% endif %}>البارحة</option>
+                        <option value="this_week" {% if request.GET.period == 'this_week' %}selected{% endif %}>هذا الأسبوع</option>
+                        <option value="this_month" {% if request.GET.period == 'this_month' %}selected{% endif %}>هذا الشهر</option>
+                        <option value="last_month" {% if request.GET.period == 'last_month' %}selected{% endif %}>الشهر الماضي</option>
+                        <option value="this_year" {% if request.GET.period == 'this_year' %}selected{% endif %}>هذا العام</option>
+                        <option value="custom" {% if request.GET.period == 'custom' %}selected{% endif %}>فترة مخصصة</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-6 custom-date-range" {% if request.GET.period != 'custom' %}style="display: none;"{% endif %}>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">من تاريخ</label>
+                            <input type="date" name="start_date" class="form-control" value="{{ request.GET.start_date|default:'' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">إلى تاريخ</label>
+                            <input type="date" name="end_date" class="form-control" value="{{ request.GET.end_date|default:'' }}">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3 d-flex align-items-end">
+                    <div class="d-grid w-100">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search me-1"></i> عرض التقرير
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- بطاقة ملخص الأرباح -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3 class="display-6 text-success fw-bold">{{ total_sales|floatformat:2 }}</h3>
+                    <p class="mb-0">إجمالي المبيعات (ج.م)</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3 class="display-6 text-danger fw-bold">{{ total_expenses|floatformat:2 }}</h3>
+                    <p class="mb-0">إجمالي التكاليف (ج.م)</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3 class="display-6 text-primary fw-bold">{{ total_profit|floatformat:2 }}</h3>
+                    <p class="mb-0">صافي الربح (ج.م)</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3 class="display-6 text-warning fw-bold">{{ profit_margin|floatformat:2 }}%</h3>
+                    <p class="mb-0">هامش الربح</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- الرسم البياني -->
+    <div class="card mb-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">
+                <i class="fas fa-chart-bar me-1"></i> تحليل الأرباح
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <!-- الرسم البياني للأرباح -->
+                    <canvas id="profitChart" height="300"></canvas>
+                </div>
+                <div class="col-md-4">
+                    <!-- المنتجات الأكثر ربحاً -->
+                    <h6 class="border-bottom pb-2 mb-3">المنتجات الأكثر ربحاً</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>المنتج</th>
+                                    <th>الربح</th>
+                                    <th>النسبة</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in top_products %}
+                                <tr>
+                                    <td>{{ product.name }}</td>
+                                    <td>{{ product.profit|floatformat:2 }} ج.م</td>
+                                    <td>{{ product.percentage|floatformat:1 }}%</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted">لا توجد بيانات</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- جدول تفاصيل الأرباح -->
+    <div class="card">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">تفاصيل الأرباح حسب المنتج</h5>
+            <span class="badge bg-primary rounded-pill">{{ products.count }}</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>المنتج</th>
+                            <th>الكمية المباعة</th>
+                            <th>سعر البيع</th>
+                            <th>تكلفة الشراء</th>
+                            <th>إجمالي المبيعات</th>
+                            <th>إجمالي التكلفة</th>
+                            <th>الربح</th>
+                            <th>نسبة الربح</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'product-detail' product.id %}">{{ product.name }}</a>
+                            </td>
+                            <td>{{ product.sold_quantity }}</td>
+                            <td>{{ product.sale_price|floatformat:2 }} ج.م</td>
+                            <td>{{ product.purchase_price|floatformat:2 }} ج.م</td>
+                            <td>{{ product.total_sales|floatformat:2 }} ج.م</td>
+                            <td>{{ product.total_cost|floatformat:2 }} ج.م</td>
+                            <td class="{% if product.profit > 0 %}text-success{% else %}text-danger{% endif %} fw-bold">
+                                {{ product.profit|floatformat:2 }} ج.م
+                            </td>
+                            <td>{{ product.profit_margin|floatformat:1 }}%</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5">
+                                <div class="text-muted">
+                                    <i class="fas fa-chart-line fa-3x mb-3"></i>
+                                    <h5>لا توجد بيانات لعرضها</h5>
+                                    <p>قم بتعديل معايير البحث أو تسجيل مبيعات</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-primary fw-bold">
+                            <td>الإجمالي</td>
+                            <td>{{ total_quantity }}</td>
+                            <td>--</td>
+                            <td>--</td>
+                            <td>{{ total_sales|floatformat:2 }} ج.م</td>
+                            <td>{{ total_expenses|floatformat:2 }} ج.م</td>
+                            <td>{{ total_profit|floatformat:2 }} ج.م</td>
+                            <td>{{ profit_margin|floatformat:1 }}%</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // تنسيق تصدير البيانات إلى إكسيل
+        document.getElementById('exportExcelBtn').addEventListener('click', function() {
+            // هنا يكون التنفيذ الفعلي للتصدير باستخدام مكتبة مناسبة
+            alert('جاري تصدير البيانات إلى ملف إكسيل...');
+        });
+        
+        // التعامل مع اختيار الفترة
+        const periodSelect = document.getElementById('period-select');
+        const customDateRange = document.querySelector('.custom-date-range');
+        
+        periodSelect.addEventListener('change', function() {
+            if (this.value === 'custom') {
+                customDateRange.style.display = 'block';
+            } else {
+                customDateRange.style.display = 'none';
+            }
+        });
+        
+        // رسم بياني للأرباح
+        const ctx = document.getElementById('profitChart').getContext('2d');
+        
+        // بيانات للرسم البياني (ستكون ديناميكية من الخلفية)
+        const chartData = {
+            labels: {{ chart_labels|safe }},
+            datasets: [
+                {
+                    label: 'المبيعات',
+                    data: {{ chart_sales|safe }},
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'التكاليف',
+                    data: {{ chart_costs|safe }},
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'الأرباح',
+                    data: {{ chart_profits|safe }},
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }
+            ]
+        };
+        
+        new Chart(ctx, {
+            type: 'bar',
+            data: chartData,
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'تحليل المبيعات والأرباح',
+                        font: {
+                            size: 16
+                        }
+                    },
+                    legend: {
+                        position: 'bottom'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        
+        // إضافة أنماط CSS للطباعة
+        const style = document.createElement('style');
+        style.type = 'text/css';
+        style.media = 'print';
+        style.innerHTML = `
+            @media print {
+                .no-print {
+                    display: none !important;
+                }
+                body {
+                    font-size: 12pt;
+                    color: #000;
+                    background-color: #fff;
+                }
+                .table {
+                    width: 100%;
+                    border-collapse: collapse;
+                }
+                .table th, .table td {
+                    border: 1px solid #000 !important;
+                }
+                .card {
+                    border: none !important;
+                    box-shadow: none !important;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    });
+</script>
+{% endblock %}

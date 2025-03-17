@@ -1,0 +1,298 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}قائمة المبيعات - MWHEBA Stock{% endblock %}
+
+{% block page_header %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-0 text-primary">
+                <i class="fas fa-shopping-cart me-2"></i> المبيعات
+            </h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">لوحة التحكم</a></li>
+                    <li class="breadcrumb-item active">المبيعات</li>
+                </ol>
+            </nav>
+        </div>
+        <div>
+            <a href="{% url 'sale-create' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i> فاتورة جديدة
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- بطاقة البحث والتصفية -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" id="filter-form">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <div class="position-relative">
+                            <input type="text" name="search" class="form-control" placeholder="بحث عن فاتورة..." 
+                                   value="{{ request.GET.search|default:'' }}">
+                            <i class="fas fa-search position-absolute top-50 translate-middle-y" 
+                               style="left: 15px;"></i>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <select name="status" class="form-select">
+                            <option value="">كل الحالات</option>
+                            <option value="paid" {% if request.GET.status == 'paid' %}selected{% endif %}>مدفوعة</option>
+                            <option value="partially_paid" {% if request.GET.status == 'partially_paid' %}selected{% endif %}>مدفوعة جزئياً</option>
+                            <option value="unpaid" {% if request.GET.status == 'unpaid' %}selected{% endif %}>غير مدفوعة</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select name="customer" class="form-select">
+                            <option value="">كل العملاء</option>
+                            {% for customer in customers %}
+                                <option value="{{ customer.id }}" {% if request.GET.customer|stringformat:"s" == customer.id|stringformat:"s" %}selected{% endif %}>{{ customer.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="input-group">
+                            <input type="date" name="date" class="form-control" value="{{ request.GET.date|default:'' }}">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-filter me-1"></i> تصفية
+                            </button>
+                            <a href="{% url 'sale-list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-redo-alt"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ملخص المبيعات -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <h3 class="display-4 text-primary fw-bold">{{ sales_count }}</h3>
+                    <p class="mb-0">إجمالي الفواتير</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <h3 class="display-6 text-success fw-bold">{{ total_amount|floatformat:2 }}</h3>
+                    <p class="mb-0">إجمالي المبيعات (ج.م)</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <h3 class="display-6 text-warning fw-bold">{{ total_paid|floatformat:2 }}</h3>
+                    <p class="mb-0">إجمالي المدفوعات (ج.م)</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <h3 class="display-6 text-danger fw-bold">{{ total_unpaid|floatformat:2 }}</h3>
+                    <p class="mb-0">إجمالي المتبقي (ج.م)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- جدول المبيعات -->
+    <div class="card">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">قائمة المبيعات</h5>
+            <span class="badge bg-primary rounded-pill">{{ sales.count }}</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>رقم الفاتورة</th>
+                            <th>التاريخ</th>
+                            <th>العميل</th>
+                            <th>المبلغ</th>
+                            <th>المدفوع</th>
+                            <th>المتبقي</th>
+                            <th>الحالة</th>
+                            <th>المندوب</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sale in sales %}
+                        <tr>
+                            <td>#{{ sale.id }}</td>
+                            <td>{{ sale.sale_date|date:"Y-m-d" }}</td>
+                            <td>
+                                <a href="{% url 'customer-detail' sale.customer.id %}">{{ sale.customer.name }}</a>
+                            </td>
+                            <td>{{ sale.total_price|floatformat:2 }} ج.م</td>
+                            <td>{{ sale.paid_amount|floatformat:2 }} ج.م</td>
+                            <td>{{ sale.remaining_amount|floatformat:2 }} ج.م</td>
+                            <td>
+                                {% if sale.status == 'paid' %}
+                                    <span class="badge bg-success">مدفوعة</span>
+                                {% elif sale.status == 'partially_paid' %}
+                                    <span class="badge bg-warning">مدفوعة جزئياً</span>
+                                {% else %}
+                                    <span class="badge bg-danger">غير مدفوعة</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ sale.created_by.get_full_name }}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{% url 'sale-detail' sale.id %}" class="btn btn-sm btn-primary" title="عرض">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'sale-edit' sale.id %}" class="btn btn-sm btn-info text-white" title="تعديل">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'sale-print' sale.id %}" class="btn btn-sm btn-secondary" target="_blank" title="طباعة">
+                                        <i class="fas fa-print"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-danger" 
+                                            data-bs-toggle="modal" data-bs-target="#deleteSaleModal" 
+                                            data-id="{{ sale.id }}" title="حذف">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center py-5">
+                                <div class="text-muted">
+                                    <i class="fas fa-shopping-cart fa-3x mb-3"></i>
+                                    <h5>لا توجد مبيعات</h5>
+                                    <p>قم بإضافة فواتير جديدة لعرضها هنا</p>
+                                    <a href="{% url 'sale-create' %}" class="btn btn-primary">
+                                        <i class="fas fa-plus me-1"></i> إضافة فاتورة جديدة
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- ترقيم الصفحات -->
+        {% if is_paginated %}
+        <div class="card-footer bg-white">
+            <nav>
+                <ul class="pagination justify-content-center mb-0">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">السابق</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">السابق</span>
+                        </li>
+                    {% endif %}
+                    
+                    {% for i in paginator.page_range %}
+                        {% if page_obj.number == i %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ i }}</span>
+                            </li>
+                        {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ i }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ i }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">التالي</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">التالي</span>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- مودال تأكيد الحذف -->
+<div class="modal fade" id="deleteSaleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تأكيد الحذف</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>هل أنت متأكد من حذف هذه الفاتورة؟</p>
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i> تحذير: لا يمكن التراجع عن هذا الإجراء! سيتم استعادة المنتجات إلى المخزون.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <form id="delete-form" method="post">
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-danger">حذف</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // تعيين مسار الحذف في النموذج
+        const deleteModal = document.getElementById('deleteSaleModal');
+        if (deleteModal) {
+            deleteModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                const saleId = button.dataset.id;
+                document.getElementById('delete-form').action = `/sales/${saleId}/delete/`;
+            });
+        }
+
+        // تقديم النموذج عند تغيير التصفية
+        const filterSelects = document.querySelectorAll('#filter-form select');
+        filterSelects.forEach(select => {
+            select.addEventListener('change', function() {
+                document.getElementById('filter-form').submit();
+            });
+        });
+
+        // مؤثرات بصرية للجدول
+        const saleTable = document.querySelector('.table');
+        if (saleTable) {
+            const rows = saleTable.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                row.addEventListener('mouseenter', function() {
+                    this.style.backgroundColor = 'rgba(13, 110, 253, 0.05)';
+                });
+                row.addEventListener('mouseleave', function() {
+                    this.style.backgroundColor = '';
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

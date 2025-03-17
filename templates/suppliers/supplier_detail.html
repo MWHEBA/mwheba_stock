@@ -1,0 +1,358 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{{ supplier.name }} - MWHEBA Stock{% endblock %}
+
+{% block page_header %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">لوحة التحكم</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'supplier-list' %}">الموردين</a></li>
+                <li class="breadcrumb-item active">{{ supplier.name }}</li>
+            </ol>
+        </nav>
+        <div class="btn-group">
+            <a href="{% url 'supplier-edit' supplier.id %}" class="btn btn-primary">
+                <i class="fas fa-edit me-1"></i> تعديل
+            </a>
+            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteSupplierModal">
+                <i class="fas fa-trash me-1"></i> حذف
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <!-- بطاقة بيانات المورد -->
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-truck me-2 text-primary"></i> بيانات المورد
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="bg-light rounded-circle mx-auto d-flex align-items-center justify-content-center mb-3" 
+                             style="width: 100px; height: 100px;">
+                            <i class="fas fa-truck-loading text-primary" style="font-size: 40px;"></i>
+                        </div>
+                        <h4 class="mb-0">{{ supplier.name }}</h4>
+                        {% if supplier.debt > 0 %}
+                            <div class="badge bg-danger mt-2">له مديونية</div>
+                        {% else %}
+                            <div class="badge bg-success mt-2">لا توجد مديونية</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="border-top pt-3">
+                        <div class="row mb-3">
+                            <div class="col-5 text-muted">رقم الهاتف:</div>
+                            <div class="col-7">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-phone text-primary me-2"></i>
+                                    {{ supplier.phone|default:"غير متاح" }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-5 text-muted">العنوان:</div>
+                            <div class="col-7">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-map-marker-alt text-primary me-2"></i>
+                                    {{ supplier.address|default:"غير متاح" }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-5 text-muted">البريد الإلكتروني:</div>
+                            <div class="col-7">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-envelope text-primary me-2"></i>
+                                    {{ supplier.email|default:"غير متاح" }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-5 text-muted">إجمالي المشتريات:</div>
+                            <div class="col-7 fw-bold text-success">{{ total_purchases|floatformat:2 }} ج.م</div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-5 text-muted">المديونية:</div>
+                            <div class="col-7 fw-bold {% if supplier.debt > 0 %}text-danger{% else %}text-success{% endif %}">
+                                {{ supplier.debt|floatformat:2 }} ج.م
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-white">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'purchase-create' %}?supplier_id={{ supplier.id }}" class="btn btn-primary">
+                            <i class="fas fa-plus-circle me-2"></i> إضافة أمر شراء جديد
+                        </a>
+                        {% if supplier.debt > 0 %}
+                            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addPaymentModal">
+                                <i class="fas fa-money-bill-wave me-2"></i> تسجيل دفعة
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8 mb-4">
+            <!-- مؤشرات إحصائية -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card text-center h-100">
+                        <div class="card-body">
+                            <h3 class="display-4 fw-bold text-primary">{{ purchases_count }}</h3>
+                            <p class="mb-0">إجمالي أوامر الشراء</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center h-100">
+                        <div class="card-body">
+                            <h3 class="display-4 fw-bold text-success">{{ products_count }}</h3>
+                            <p class="mb-0">عدد المنتجات الموردة</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center h-100">
+                        <div class="card-body">
+                            <h3 class="display-4 fw-bold text-warning">{{ last_purchase_days }}</h3>
+                            <p class="mb-0">أيام منذ آخر عملية</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- أوامر شراء المورد -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-receipt me-2 text-primary"></i> أوامر الشراء
+                    </h5>
+                    <span class="badge bg-primary rounded-pill">{{ purchases.count }}</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>رقم الأمر</th>
+                                    <th>التاريخ</th>
+                                    <th>المبلغ</th>
+                                    <th>المدفوع</th>
+                                    <th>المتبقي</th>
+                                    <th>الحالة</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for purchase in purchases %}
+                                <tr>
+                                    <td>#{{ purchase.id }}</td>
+                                    <td>{{ purchase.purchase_date|date:"Y-m-d" }}</td>
+                                    <td>{{ purchase.total_price|floatformat:2 }} ج.م</td>
+                                    <td>{{ purchase.paid_amount|floatformat:2 }} ج.م</td>
+                                    <td>{{ purchase.remaining_amount|floatformat:2 }} ج.م</td>
+                                    <td>
+                                        {% if purchase.status == 'paid' %}
+                                            <span class="badge bg-success">مدفوع</span>
+                                        {% elif purchase.status == 'partially_paid' %}
+                                            <span class="badge bg-warning">مدفوع جزئياً</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">غير مدفوع</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{% url 'purchase-detail' purchase.id %}" class="btn btn-sm btn-light" title="عرض">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-5 text-muted">
+                                        <i class="fas fa-receipt fa-3x mb-3"></i>
+                                        <h5>لا توجد أوامر شراء من هذا المورد</h5>
+                                        <a href="{% url 'purchase-create' %}?supplier_id={{ supplier.id }}" class="btn btn-primary mt-2">
+                                            <i class="fas fa-plus me-1"></i> إضافة أمر شراء
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- المنتجات الموردة -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-box me-2 text-primary"></i> المنتجات الموردة
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>المنتج</th>
+                                    <th>كود المورد</th>
+                                    <th>آخر سعر</th>
+                                    <th>آخر عملية</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in supplier_products %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'product-detail' product.id %}">{{ product.name }}</a>
+                                    </td>
+                                    <td>{{ product.supplier_code|default:"-" }}</td>
+                                    <td>{{ product.purchase_price|floatformat:2 }} ج.م</td>
+                                    <td>{{ product.last_purchase|date:"Y-m-d" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-5 text-muted">
+                                        لا توجد منتجات موردة بعد
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- سجل المدفوعات -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-money-bill me-2 text-primary"></i> سجل المدفوعات
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>التاريخ</th>
+                                    <th>المبلغ</th>
+                                    <th>طريقة الدفع</th>
+                                    <th>تفاصيل</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for payment in payments %}
+                                <tr>
+                                    <td>{{ payment.payment_date|date:"Y-m-d" }}</td>
+                                    <td>{{ payment.amount|floatformat:2 }} ج.م</td>
+                                    <td>{{ payment.get_payment_method_display }}</td>
+                                    <td>{{ payment.notes|default:"-" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-5 text-muted">
+                                        لا توجد مدفوعات مسجلة
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- مودال تأكيد الحذف -->
+<div class="modal fade" id="deleteSupplierModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تأكيد الحذف</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>هل أنت متأكد من حذف المورد <strong>{{ supplier.name }}</strong>؟</p>
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i> تحذير: سيتم حذف جميع البيانات المتعلقة بهذا المورد!
+                </div>
+            </div>
+            <div class="modal-footer">
+                <form action="{% url 'supplier-delete' supplier.id %}" method="post">
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-danger">حذف</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- مودال إضافة دفعة -->
+<div class="modal fade" id="addPaymentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تسجيل دفعة للمورد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{% url 'add-supplier-payment' supplier.id %}" method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">المبلغ <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <input type="number" name="amount" class="form-control" step="0.01" min="0.01" max="{{ supplier.debt }}" value="{{ supplier.debt }}" required>
+                            <span class="input-group-text">ج.م</span>
+                        </div>
+                        <div class="form-text">المديونية الحالية: {{ supplier.debt|floatformat:2 }} ج.م</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">طريقة الدفع <span class="text-danger">*</span></label>
+                        <select name="payment_method" class="form-select" required>
+                            <option value="cash" selected>نقدي</option>
+                            <option value="credit_card">بطاقة ائتمان</option>
+                            <option value="bank_transfer">تحويل بنكي</option>
+                            <option value="check">شيك</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">ملاحظات</label>
+                        <textarea name="notes" class="form-control" rows="2" placeholder="مثال: دفعة من إجمالي المديونية"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">تسجيل الدفعة</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,316 @@
+<!-- filepath: c:\Users\UTD\MWHEBA_App\templates\accounts\profile.html -->
+{% extends "base.html" %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% trans "الصفحة الشخصية" %} | MWHEBA Stock{% endblock %}
+
+{% block page_header %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-id-card me-2"></i>{% trans "الصفحة الشخصية" %}
+    </h1>
+    <div>
+        <a href="{% url 'profile-edit' %}" class="btn btn-sm btn-primary">
+            <i class="fas fa-edit me-1"></i>{% trans "تعديل البيانات" %}
+        </a>
+        <a href="{% url 'password-change' %}" class="btn btn-sm btn-outline-secondary ms-2">
+            <i class="fas fa-key me-1"></i>{% trans "تغيير كلمة المرور" %}
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row gx-4">
+    <!-- User Profile Card -->
+    <div class="col-lg-4 col-md-5 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-body text-center pt-4 pb-3">
+                <div class="position-relative mx-auto mb-3" style="width: 150px; height: 150px;">
+                    {% if user.profile_picture %}
+                        <img src="{{ user.profile_picture.url }}" alt="{{ user.get_full_name }}" 
+                             class="rounded-circle img-thumbnail" style="width: 150px; height: 150px; object-fit: cover;">
+                    {% else %}
+                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center mb-0" 
+                             style="width: 150px; height: 150px;">
+                            <i class="fas fa-user text-secondary" style="font-size: 80px;"></i>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <h4 class="fw-bold">{{ user.get_full_name|default:user.username }}</h4>
+                <p class="badge bg-primary rounded-pill px-3 py-2 mb-3">{{ user.get_role_display }}</p>
+                
+                <div class="d-grid">
+                    <button class="btn btn-outline-primary" onclick="document.getElementById('profilePictureInput').click()">
+                        <i class="fas fa-camera me-1"></i> {% trans "تغيير الصورة الشخصية" %}
+                    </button>
+                    <form action="{% url 'profile-picture-update' %}" method="post" enctype="multipart/form-data" id="profilePictureForm">
+                        {% csrf_token %}
+                        <input type="file" name="profile_picture" id="profilePictureInput" accept="image/*" class="d-none">
+                    </form>
+                </div>
+            </div>
+            
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span class="text-muted">{% trans "اسم المستخدم" %}</span>
+                    <span class="fw-bold">{{ user.username }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span class="text-muted">{% trans "البريد الإلكتروني" %}</span>
+                    <span class="fw-bold">{{ user.email|default:"—" }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span class="text-muted">{% trans "رقم الهاتف" %}</span>
+                    <span class="fw-bold">{{ user.phone_number|default:"—" }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span class="text-muted">{% trans "تاريخ الانضمام" %}</span>
+                    <span class="fw-bold format-date">{{ user.date_joined|date:"Y-m-d" }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span class="text-muted">{% trans "آخر تسجيل دخول" %}</span>
+                    <span class="fw-bold format-date">{{ user.last_login|date:"Y-m-d" }}</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- User Activity and Statistics -->
+    <div class="col-lg-8 col-md-7">
+        <!-- Activity Statistics Cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3 col-6">
+                <div class="card bg-primary bg-opacity-10 border-0 h-100">
+                    <div class="card-body text-center py-3">
+                        <div class="display-5 text-primary mb-2">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                        <h3 class="fs-2 fw-bold text-primary">{{ user.created_sales.count }}</h3>
+                        <p class="mb-0 text-muted small">{% trans "مبيعات مسجلة" %}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 col-6">
+                <div class="card bg-success bg-opacity-10 border-0 h-100">
+                    <div class="card-body text-center py-3">
+                        <div class="display-5 text-success mb-2">
+                            <i class="fas fa-truck"></i>
+                        </div>
+                        <h3 class="fs-2 fw-bold text-success">{{ user.created_purchases.count }}</h3>
+                        <p class="mb-0 text-muted small">{% trans "مشتريات مسجلة" %}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 col-6">
+                <div class="card bg-info bg-opacity-10 border-0 h-100">
+                    <div class="card-body text-center py-3">
+                        <div class="display-5 text-info mb-2">
+                            <i class="fas fa-box"></i>
+                        </div>
+                        <h3 class="fs-2 fw-bold text-info">{{ user.created_products.count }}</h3>
+                        <p class="mb-0 text-muted small">{% trans "منتجات مضافة" %}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 col-6">
+                <div class="card bg-warning bg-opacity-10 border-0 h-100">
+                    <div class="card-body text-center py-3">
+                        <div class="display-5 text-warning mb-2">
+                            <i class="fas fa-history"></i>
+                        </div>
+                        <h3 class="fs-2 fw-bold text-warning">{{ user.activity_logs.count }}</h3>
+                        <p class="mb-0 text-muted small">{% trans "إجمالي النشاطات" %}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Activity -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <h5 class="m-0 fw-bold text-primary">
+                    <i class="fas fa-history me-1"></i> {% trans "النشاطات الأخيرة" %}
+                </h5>
+                <a href="{% url 'activity-log' %}" class="btn btn-sm btn-outline-primary">
+                    {% trans "عرض الكل" %} <i class="fas fa-arrow-left ms-1"></i>
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>{% trans "النشاط" %}</th>
+                                <th>{% trans "القسم" %}</th>
+                                <th>{% trans "التاريخ والوقت" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for activity in activities %}
+                            <tr>
+                                <td>
+                                    {% if 'POST' in activity.action %}
+                                    <span class="badge bg-success me-1">{% trans "إضافة" %}</span>
+                                    {% elif 'PUT' in activity.action %}
+                                    <span class="badge bg-primary me-1">{% trans "تعديل" %}</span>
+                                    {% elif 'DELETE' in activity.action %}
+                                    <span class="badge bg-danger me-1">{% trans "حذف" %}</span>
+                                    {% endif %}
+                                    {{ activity.action }}
+                                </td>
+                                <td>
+                                    {% if activity.model == 'Product' %}
+                                    <span class="badge bg-info text-white">{% trans "المنتجات" %}</span>
+                                    {% elif activity.model == 'Sale' %}
+                                    <span class="badge bg-success text-white">{% trans "المبيعات" %}</span>
+                                    {% elif activity.model == 'Purchase' %}
+                                    <span class="badge bg-warning text-dark">{% trans "المشتريات" %}</span>
+                                    {% elif activity.model == 'Customer' %}
+                                    <span class="badge bg-primary text-white">{% trans "العملاء" %}</span>
+                                    {% elif activity.model == 'Supplier' %}
+                                    <span class="badge bg-secondary text-white">{% trans "الموردين" %}</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{{ activity.model }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ activity.timestamp|date:"Y-m-d H:i" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center py-4">
+                                    <div class="alert alert-info mb-0">
+                                        <i class="fas fa-info-circle me-1"></i> {% trans "لا توجد نشاطات مسجلة لك حتى الآن." %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Transactions -->
+        <div class="row">
+            <!-- Recent Sales -->
+            <div class="col-md-6 mb-4">
+                <div class="card shadow h-100">
+                    <div class="card-header bg-white">
+                        <h5 class="m-0 fw-bold text-success">
+                            <i class="fas fa-cash-register me-1"></i> {% trans "آخر المبيعات" %}
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush">
+                            {% for sale in user.created_sales.all|slice:":5" %}
+                            <a href="{% url 'sale-detail' sale.id %}" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">{{ sale.customer.name }}</h6>
+                                        <p class="mb-0 text-muted small">{{ sale.sale_date|date:"Y-m-d" }}</p>
+                                    </div>
+                                    <div class="text-end">
+                                        <h6 class="mb-1 text-success">{{ sale.total_price|floatformat:2 }} {% trans "ج.م" %}</h6>
+                                        {% if sale.status == 'paid' %}
+                                            <span class="badge bg-success">{% trans "مدفوع" %}</span>
+                                        {% elif sale.status == 'unpaid' %}
+                                            <span class="badge bg-danger">{% trans "غير مدفوع" %}</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">{% trans "مدفوع جزئياً" %}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </a>
+                            {% empty %}
+                            <div class="list-group-item text-center py-3">
+                                <p class="text-muted mb-0"><i class="fas fa-receipt me-1"></i> {% trans "لا توجد مبيعات مسجلة" %}</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% if user.created_sales.all|length > 5 %}
+                    <div class="card-footer bg-white border-top-0 text-center">
+                        <a href="{% url 'sale-list' %}?user={{ user.id }}" class="btn btn-sm btn-outline-success">
+                            {% trans "عرض جميع المبيعات" %} <i class="fas fa-arrow-left ms-1"></i>
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Recent Purchases -->
+            <div class="col-md-6 mb-4">
+                <div class="card shadow h-100">
+                    <div class="card-header bg-white">
+                        <h5 class="m-0 fw-bold text-primary">
+                            <i class="fas fa-shopping-cart me-1"></i> {% trans "آخر المشتريات" %}
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush">
+                            {% for purchase in user.created_purchases.all|slice:":5" %}
+                            <a href="{% url 'purchase-detail' purchase.id %}" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">{{ purchase.supplier.name }}</h6>
+                                        <p class="mb-0 text-muted small">{{ purchase.order_date|date:"Y-m-d" }}</p>
+                                    </div>
+                                    <div class="text-end">
+                                        <h6 class="mb-1 text-primary">{{ purchase.total_price|floatformat:2 }} {% trans "ج.م" %}</h6>
+                                        {% if purchase.status == 'completed' %}
+                                            <span class="badge bg-success">{% trans "مكتمل" %}</span>
+                                        {% elif purchase.status == 'pending' %}
+                                            <span class="badge bg-warning text-dark">{% trans "قيد الانتظار" %}</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">{% trans "ملغي" %}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </a>
+                            {% empty %}
+                            <div class="list-group-item text-center py-3">
+                                <p class="text-muted mb-0"><i class="fas fa-boxes me-1"></i> {% trans "لا توجد مشتريات مسجلة" %}</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% if user.created_purchases.all|length > 5 %}
+                    <div class="card-footer bg-white border-top-0 text-center">
+                        <a href="{% url 'purchase-list' %}?user={{ user.id }}" class="btn btn-sm btn-outline-primary">
+                            {% trans "عرض جميع المشتريات" %} <i class="fas fa-arrow-left ms-1"></i>
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-submit when profile picture is selected
+    document.getElementById('profilePictureInput').addEventListener('change', function() {
+        if (this.files.length > 0) {
+            document.getElementById('profilePictureForm').submit();
+        }
+    });
+    
+    // Format dates to Arabic locale
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.format-date').forEach(function(el) {
+            const dateStr = el.textContent;
+            if (dateStr && dateStr !== '—') {
+                el.textContent = formatDate(dateStr);
+            }
+        });
+    });
+</script>
+{% endblock %}

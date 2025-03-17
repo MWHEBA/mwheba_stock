@@ -1,0 +1,286 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}قائمة العملاء - MWHEBA Stock{% endblock %}
+
+{% block page_header %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-0 text-primary">
+                <i class="fas fa-users me-2"></i> العملاء
+            </h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">لوحة التحكم</a></li>
+                    <li class="breadcrumb-item active">العملاء</li>
+                </ol>
+            </nav>
+        </div>
+        <div>
+            <a href="{% url 'customer-create' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i> إضافة عميل جديد
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- بطاقة البحث والتصفية -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" id="filter-form">
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <div class="position-relative">
+                            <input type="text" name="search" class="form-control" placeholder="البحث بالاسم أو رقم الهاتف..." value="{{ request.GET.search|default:'' }}">
+                            <i class="fas fa-search position-absolute top-50 translate-middle-y" style="left: 15px;"></i>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <select name="debt_status" class="form-select">
+                                <option value="all" {% if request.GET.debt_status == 'all' %}selected{% endif %}>جميع العملاء</option>
+                                <option value="with_debts" {% if request.GET.debt_status == 'with_debts' %}selected{% endif %}>عملاء لديهم مديونية</option>
+                                <option value="no_debts" {% if request.GET.debt_status == 'no_debts' %}selected{% endif %}>عملاء بدون مديونية</option>
+                            </select>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-filter me-1"></i> تصفية
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- بطاقات إحصائيات العملاء -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <h3 class="display-4 text-primary fw-bold">{{ customers.count }}</h3>
+                    <p class="mb-0">إجمالي العملاء</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <h3 class="display-6 text-success fw-bold">{{ total_sales|floatformat:2 }}</h3>
+                    <p class="mb-0">إجمالي المبيعات (ج.م)</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <h3 class="display-6 text-danger fw-bold">{{ total_debt|floatformat:2 }}</h3>
+                    <p class="mb-0">إجمالي المديونيات (ج.م)</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <h3 class="display-6 text-info fw-bold">{{ active_customers }}</h3>
+                    <p class="mb-0">عملاء نشطين هذا الشهر</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- جدول العملاء -->
+    <div class="card">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">قائمة العملاء</h5>
+            <div>
+                <select id="show-entries" class="form-select form-select-sm d-inline-block" style="width: auto;">
+                    <option value="10" {% if page_size == 10 %}selected{% endif %}>10 صفوف</option>
+                    <option value="25" {% if page_size == 25 %}selected{% endif %}>25 صف</option>
+                    <option value="50" {% if page_size == 50 %}selected{% endif %}>50 صف</option>
+                    <option value="100" {% if page_size == 100 %}selected{% endif %}>100 صف</option>
+                </select>
+                <span class="badge bg-primary rounded-pill ms-2">{{ customers.count }}</span>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>الاسم</th>
+                            <th>رقم الهاتف</th>
+                            <th>البريد الإلكتروني</th>
+                            <th>العنوان</th>
+                            <th>عدد المعاملات</th>
+                            <th>إجمالي المبيعات</th>
+                            <th>المديونية</th>
+                            <th>آخر معاملة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for customer in customers %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'customer-detail' customer.id %}">{{ customer.name }}</a>
+                            </td>
+                            <td>{{ customer.phone|default:"--" }}</td>
+                            <td>{{ customer.email|default:"--" }}</td>
+                            <td>{{ customer.address|default:"--"|truncatechars:20 }}</td>
+                            <td>{{ customer.transactions_count }}</td>
+                            <td>{{ customer.total_sales|floatformat:2 }} ج.م</td>
+                            <td>
+                                {% if customer.debt > 0 %}
+                                    <span class="text-danger fw-bold">{{ customer.debt|floatformat:2 }} ج.م</span>
+                                {% else %}
+                                    <span class="text-success">0.00 ج.م</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if customer.last_transaction_date %}
+                                    {{ customer.last_transaction_date|date:"Y-m-d" }}
+                                {% else %}
+                                    --
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{% url 'customer-detail' customer.id %}" class="btn btn-sm btn-info text-white" title="عرض">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'customer-edit' customer.id %}" class="btn btn-sm btn-primary" title="تعديل">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'sale-create' %}?customer_id={{ customer.id }}" class="btn btn-sm btn-success" title="إنشاء فاتورة">
+                                        <i class="fas fa-receipt"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-danger" 
+                                            data-bs-toggle="modal" data-bs-target="#deleteCustomerModal"
+                                            data-id="{{ customer.id }}" data-name="{{ customer.name }}"
+                                            title="حذف">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center py-5">
+                                <div class="text-muted">
+                                    <i class="fas fa-users fa-3x mb-3"></i>
+                                    <h5>لا يوجد عملاء للعرض</h5>
+                                    <p>قم بإضافة عملاء جدد من خلال زر "إضافة عميل جديد"</p>
+                                    <a href="{% url 'customer-create' %}" class="btn btn-primary">
+                                        <i class="fas fa-plus me-1"></i> إضافة عميل جديد
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- ترقيم الصفحات -->
+        {% if is_paginated %}
+        <div class="card-footer bg-white">
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center mb-0">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">السابق</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">السابق</span>
+                        </li>
+                    {% endif %}
+                    
+                    {% for i in paginator.page_range %}
+                        {% if page_obj.number == i %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ i }}</span>
+                            </li>
+                        {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ i }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ i }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">التالي</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">التالي</span>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- مودال تأكيد الحذف -->
+<div class="modal fade" id="deleteCustomerModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تأكيد الحذف</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>هل أنت متأكد من حذف العميل <strong id="customer-name-to-delete"></strong>؟</p>
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i> تحذير: سيتم حذف جميع البيانات المرتبطة بهذا العميل، بما في ذلك سجل المبيعات والمدفوعات.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <form id="delete-customer-form" method="post">
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-danger">حذف</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // تغيير عدد العناصر المعروضة
+        const showEntriesSelect = document.getElementById('show-entries');
+        showEntriesSelect.addEventListener('change', function() {
+            const currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.set('page_size', this.value);
+            window.location.href = currentUrl;
+        });
+
+        // إعداد مودال حذف العميل
+        const deleteModal = document.getElementById('deleteCustomerModal');
+        deleteModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const customerId = button.getAttribute('data-id');
+            const customerName = button.getAttribute('data-name');
+            
+            document.getElementById('customer-name-to-delete').textContent = customerName;
+            document.getElementById('delete-customer-form').action = `/customers/${customerId}/delete/`;
+        });
+        
+        // تقديم نموذج التصفية عند تغيير حالة المديونية
+        document.querySelector('select[name="debt_status"]').addEventListener('change', function() {
+            document.getElementById('filter-form').submit();
+        });
+    });
+</script>
+{% endblock %}

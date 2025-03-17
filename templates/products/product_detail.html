@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{{ product.name }} - MWHEBA Stock{% endblock %}
+
+{% block page_header %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">لوحة التحكم</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'product-list' %}">المنتجات</a></li>
+                <li class="breadcrumb-item active">{{ product.name }}</li>
+            </ol>
+        </nav>
+        <div class="btn-group">
+            <a href="{% url 'product-edit' product.id %}" class="btn btn-primary">
+                <i class="fas fa-edit me-1"></i> تعديل
+            </a>
+            <button type="button" class="btn btn-danger btn-delete" data-url="{% url 'product-delete' product.id %}" data-bs-toggle="modal" data-bs-target="#deleteProductModal">
+                <i class="fas fa-trash me-1"></i> حذف
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">معلومات المنتج</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th class="text-muted">اسم المنتج:</th>
+                                    <td>{{ product.name }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">كود المنتج:</th>
+                                    <td>{{ product.sku }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">كود المورد:</th>
+                                    <td>{{ product.supplier_code|default:"غير متوفر" }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">المورد:</th>
+                                    <td>
+                                        {% if product.supplier %}
+                                            <a href="{% url 'supplier-detail' product.supplier.id %}">{{ product.supplier.name }}</a>
+                                        {% else %}
+                                            غير متوفر
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th class="text-muted">سعر الشراء:</th>
+                                    <td>{{ product.purchase_price|floatformat:2 }} ج.م</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">سعر البيع:</th>
+                                    <td>{{ product.sale_price|floatformat:2 }} ج.م</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">الربح:</th>
+                                    <td>{{ product.sale_price|sub:product.purchase_price|floatformat:2 }} ج.م</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">نسبة الربح:</th>
+                                    <td>{{ product.sale_price|sub:product.purchase_price|div:product.purchase_price|mul:100|floatformat:2 }}%</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="alert {% if product.status == 'available' %}alert-success{% elif product.status == 'low_stock' %}alert-warning{% else %}alert-danger{% endif %} mt-3">
+                        <div class="d-flex align-items-center">
+                            <div class="me-3 display-6">
+                                <i class="fas {% if product.status == 'available' %}fa-check-circle{% elif product.status == 'low_stock' %}fa-exclamation-triangle{% else %}fa-times-circle{% endif %}"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-1">المخزون: {{ product.quantity }} قطعة</h5>
+                                <span>
+                                    {% if product.status == 'available' %}
+                                        متوفر في المخزن
+                                    {% elif product.status == 'low_stock' %}
+                                        الكمية منخفضة
+                                    {% else %}
+                                        غير متوفر في المخزن
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">تاريخ أسعار الشراء</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>التاريخ</th>
+                                    <th>سعر الشراء</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for history in product.price_history.all %}
+                                <tr>
+                                    <td>{{ history.date_changed|date:"Y-m-d" }}</td>
+                                    <td>{{ history.purchase_price|floatformat:2 }} ج.م</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="2" class="text-center py-4 text-muted">
+                                        لا يوجد تاريخ للأسعار
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    {% if product.image %}
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="img-fluid rounded" style="max-height: 300px;">
+                    {% else %}
+                        <div class="bg-light d-flex align-items-center justify-content-center rounded" style="height: 200px;">
+                            <i class="fas fa-box fa-4x text-secondary"></i>
+                        </div>
+                        <p class="text-muted mt-3">لم يتم إضافة صورة للمنتج</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">معلومات إضافية</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <small class="text-muted">تاريخ الإضافة:</small>
+                        <p class="mb-0">{{ product.created_at|date:"Y-m-d H:i" }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted">آخر تحديث:</small>
+                        <p class="mb-0">{{ product.updated_at|date:"Y-m-d H:i" }}</p>
+                    </div>
+                    <div>
+                        <small class="text-muted">تمت الإضافة بواسطة:</small>
+                        <p class="mb-0">{{ product.created_by.get_full_name }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteProductModal" tabindex="-1" aria-labelledby="deleteProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteProductModalLabel">تأكيد الحذف</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                هل أنت متأكد من حذف المنتج "{{ product.name }}"؟
+                <div class="alert alert-danger mt-3">
+                    <i class="fas fa-exclamation-triangle me-2"></i> تحذير: لا يمكن التراجع عن هذا الإجراء!
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <form action="{% url 'product-delete' product.id %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">حذف</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

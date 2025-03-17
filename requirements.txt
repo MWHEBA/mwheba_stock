@@ -1,0 +1,14 @@
+asgiref==3.8.1
+crispy-bootstrap5==2024.10
+distlib==0.3.9
+Django==4.2.20
+django-crispy-forms==2.3
+filelock==3.17.0
+pillow==11.1.0
+platformdirs==4.3.6
+psycopg2==2.9.10
+psycopg2-binary==2.9.10
+sqlparse==0.5.3
+typing_extensions==4.12.2
+tzdata==2025.1
+virtualenv==20.29.3

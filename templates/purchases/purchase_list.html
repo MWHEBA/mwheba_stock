@@ -1,0 +1,284 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}قائمة المشتريات - MWHEBA Stock{% endblock %}
+
+{% block page_header %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-0 text-primary">
+                <i class="fas fa-truck-loading me-2"></i> المشتريات
+            </h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">لوحة التحكم</a></li>
+                    <li class="breadcrumb-item active">المشتريات</li>
+                </ol>
+            </nav>
+        </div>
+        <div>
+            <a href="{% url 'purchase-create' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i> أمر شراء جديد
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- بطاقة البحث والتصفية -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" id="filter-form">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <div class="position-relative">
+                            <input type="text" name="search" class="form-control" placeholder="بحث..." 
+                                   value="{{ request.GET.search|default:'' }}">
+                            <i class="fas fa-search position-absolute top-50 translate-middle-y" 
+                               style="left: a15px;"></i>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <select name="status" class="form-select">
+                            <option value="">كل الحالات</option>
+                            <option value="paid" {% if request.GET.status == 'paid' %}selected{% endif %}>مدفوع</option>
+                            <option value="partially_paid" {% if request.GET.status == 'partially_paid' %}selected{% endif %}>مدفوع جزئياً</option>
+                            <option value="unpaid" {% if request.GET.status == 'unpaid' %}selected{% endif %}>غير مدفوع</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select name="supplier" class="form-select">
+                            <option value="">كل الموردين</option>
+                            {% for supplier in suppliers %}
+                                <option value="{{ supplier.id }}" {% if request.GET.supplier|stringformat:"s" == supplier.id|stringformat:"s" %}selected{% endif %}>{{ supplier.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="input-group">
+                            <input type="date" name="date" class="form-control" value="{{ request.GET.date|default:'' }}">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-filter me-1"></i> تصفية
+                            </button>
+                            <a href="{% url 'purchase-list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-redo-alt"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ملخص المشتريات -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <h3 class="display-4 text-primary fw-bold">{{ purchases_count }}</h3>
+                    <p class="mb-0">إجمالي أوامر الشراء</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <h3 class="display-6 text-success fw-bold">{{ total_amount|floatformat:2 }}</h3>
+                    <p class="mb-0">إجمالي المشتريات (ج.م)</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <h3 class="display-6 text-warning fw-bold">{{ total_paid|floatformat:2 }}</h3>
+                    <p class="mb-0">إجمالي المدفوعات (ج.م)</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <h3 class="display-6 text-danger fw-bold">{{ total_unpaid|floatformat:2 }}</h3>
+                    <p class="mb-0">إجمالي المتبقي (ج.م)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- جدول المشتريات -->
+    <div class="card">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">قائمة أوامر الشراء</h5>
+            <span class="badge bg-primary rounded-pill">{{ purchases.count }}</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>رقم الأمر</th>
+                            <th>التاريخ</th>
+                            <th>المورد</th>
+                            <th>المبلغ</th>
+                            <th>المدفوع</th>
+                            <th>المتبقي</th>
+                            <th>الحالة</th>
+                            <th>المُعد بواسطة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for purchase in purchases %}
+                        <tr>
+                            <td>#{{ purchase.id }}</td>
+                            <td>{{ purchase.purchase_date|date:"Y-m-d" }}</td>
+                            <td>
+                                <a href="{% url 'supplier-detail' purchase.supplier.id %}">{{ purchase.supplier.name }}</a>
+                            </td>
+                            <td>{{ purchase.total_price|floatformat:2 }} ج.م</td>
+                            <td>{{ purchase.paid_amount|floatformat:2 }} ج.م</td>
+                            <td>{{ purchase.remaining_amount|floatformat:2 }} ج.م</td>
+                            <td>
+                                {% if purchase.status == 'paid' %}
+                                    <span class="badge bg-success">مدفوع بالكامل</span>
+                                {% elif purchase.status == 'partially_paid' %}
+                                    <span class="badge bg-warning">مدفوع جزئياً</span>
+                                {% else %}
+                                    <span class="badge bg-danger">غير مدفوع</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ purchase.created_by.get_full_name }}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{% url 'purchase-detail' purchase.id %}" class="btn btn-sm btn-primary" title="عرض">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'purchase-edit' purchase.id %}" class="btn btn-sm btn-info text-white" title="تعديل">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'purchase-print' purchase.id %}" class="btn btn-sm btn-secondary" target="_blank" title="طباعة">
+                                        <i class="fas fa-print"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-danger" 
+                                            data-bs-toggle="modal" data-bs-target="#deletePurchaseModal" 
+                                            data-id="{{ purchase.id }}" title="حذف">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center py-5">
+                                <div class="text-muted">
+                                    <i class="fas fa-truck-loading fa-3x mb-3"></i>
+                                    <h5>لا توجد أوامر شراء</h5>
+                                    <p>قم بإضافة أوامر شراء جديدة لعرضها هنا</p>
+                                    <a href="{% url 'purchase-create' %}" class="btn btn-primary">
+                                        <i class="fas fa-plus me-1"></i> إضافة أمر شراء جديد
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- ترقيم الصفحات -->
+        {% if is_paginated %}
+        <div class="card-footer bg-white">
+            <nav>
+                <ul class="pagination justify-content-center mb-0">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">السابق</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">السابق</span>
+                        </li>
+                    {% endif %}
+                    
+                    {% for i in paginator.page_range %}
+                        {% if page_obj.number == i %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ i }}</span>
+                            </li>
+                        {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ i }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ i }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">التالي</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">التالي</span>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- مودال تأكيد الحذف -->
+<div class="modal fade" id="deletePurchaseModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تأكيد الحذف</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>هل أنت متأكد من حذف أمر الشراء هذا؟</p>
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i> تحذير: لا يمكن التراجع عن هذا الإجراء! سيتم تخفيض المنتجات من المخزون.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <form id="delete-form" method="post">
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-danger">حذف</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // تعيين مسار الحذف في النموذج
+        const deleteModal = document.getElementById('deletePurchaseModal');
+        if (deleteModal) {
+            deleteModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                const purchaseId = button.dataset.id;
+                document.getElementById('delete-form').action = `/purchases/${purchaseId}/delete/`;
+            });
+        }
+
+        // تقديم النموذج عند تغيير التصفية
+        const filterSelects = document.querySelectorAll('#filter-form select');
+        filterSelects.forEach(select => {
+            select.addEventListener('change', function() {
+                document.getElementById('filter-form').submit();
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,309 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+    {% if product %}تعديل منتج - {{ product.name }}{% else %}إضافة منتج جديد{% endif %} - MWHEBA Stock
+{% endblock %}
+
+{% block page_header %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">لوحة التحكم</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'product-list' %}">المنتجات</a></li>
+                <li class="breadcrumb-item active">
+                    {% if product %}تعديل {{ product.name }}{% else %}إضافة منتج جديد{% endif %}
+                </li>
+            </ol>
+        </nav>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-10 col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas {% if product %}fa-edit text-secondary{% else %}fa-plus text-primary{% endif %} me-2"></i>
+                        {% if product %}تعديل منتج{% else %}إضافة منتج جديد{% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" novalidate>
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.name.id_for_label }}" class="form-label">{{ form.name.label }} <span class="text-danger">*</span></label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.name.errors }}</div>
+                                {% endif %}
+                                <div class="form-text">أدخل اسم المنتج الكامل</div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.sku.id_for_label }}" class="form-label">{{ form.sku.label }} <span class="text-danger">*</span></label>
+                                {{ form.sku }}
+                                {% if form.sku.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.sku.errors }}</div>
+                                {% endif %}
+                                <div class="form-text">كود تعريفي فريد للمنتج</div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.supplier.id_for_label }}" class="form-label">{{ form.supplier.label }}</label>
+                                {{ form.supplier }}
+                                {% if form.supplier.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.supplier.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.supplier_code.id_for_label }}" class="form-label">{{ form.supplier_code.label }}</label>
+                                {{ form.supplier_code }}
+                                {% if form.supplier_code.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.supplier_code.errors }}</div>
+                                {% endif %}
+                                <div class="form-text">كود المنتج لدى المورد (اختياري)</div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.purchase_price.id_for_label }}" class="form-label">{{ form.purchase_price.label }} <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    {{ form.purchase_price }}
+                                    <span class="input-group-text">ج.م</span>
+                                </div>
+                                {% if form.purchase_price.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.purchase_price.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.sale_price.id_for_label }}" class="form-label">{{ form.sale_price.label }} <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    {{ form.sale_price }}
+                                    <span class="input-group-text">ج.م</span>
+                                </div>
+                                {% if form.sale_price.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.sale_price.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.quantity.id_for_label }}" class="form-label">{{ form.quantity.label }} <span class="text-danger">*</span></label>
+                                {{ form.quantity }}
+                                {% if form.quantity.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.quantity.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="{{ form.image.id_for_label }}" class="form-label">{{ form.image.label }}</label>
+                            {{ form.image }}
+                            {% if form.image.errors %}
+                                <div class="invalid-feedback d-block">{{ form.image.errors }}</div>
+                            {% endif %}
+                            <div class="form-text">الصورة اختيارية. يفضل أن تكون بدقة مناسبة وبخلفية بيضاء.</div>
+                            
+                            {% if product.image %}
+                                <div class="mt-2 text-center">
+                                    <label>الصورة الحالية:</label>
+                                    <div class="mt-2">
+                                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="img-thumbnail" style="max-height: 150px;">
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'product-list' %}" class="btn btn-light border">
+                                <i class="fas fa-times me-1"></i> إلغاء
+                            </a>
+                            
+                            <div>
+                                {% if product %}
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-1"></i> حفظ التغييرات
+                                    </button>
+                                {% else %}
+                                    <button type="submit" name="save_and_add_another" class="btn btn-secondary me-2">
+                                        <i class="fas fa-plus me-1"></i> حفظ وإضافة آخر
+                                    </button>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-1"></i> حفظ
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            {% if product %}
+                <!-- حركة المخزون للمنتج -->
+                <div class="card shadow-sm mt-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-exchange-alt text-secondary me-2"></i>
+                            حركة المخزون
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>التاريخ</th>
+                                        <th>العملية</th>
+                                        <th>الكمية</th>
+                                        <th>التفاصيل</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for movement in product_movements %}
+                                    <tr>
+                                        <td>{{ movement.date|date:"Y-m-d" }}</td>
+                                        <td>
+                                            {% if movement.movement_type == 'purchase' %}
+                                                <span class="badge bg-success">شراء</span>
+                                            {% elif movement.movement_type == 'sale' %}
+                                                <span class="badge bg-primary">بيع</span>
+                                            {% elif movement.movement_type == 'adjustment' %}
+                                                <span class="badge bg-warning">تعديل</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="{% if movement.quantity > 0 %}text-success{% else %}text-danger{% endif %}">
+                                            {{ movement.quantity }}
+                                        </td>
+                                        <td>{{ movement.description }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center py-4 text-muted">
+                                            لا توجد حركات مخزون لهذا المنتج
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // حساب الربح تلقائياً عند تغيير أي من سعر الشراء أو البيع
+        const purchasePriceInput = document.getElementById('{{ form.purchase_price.id_for_label }}');
+        const salePriceInput = document.getElementById('{{ form.sale_price.id_for_label }}');
+        
+        function calculateProfit() {
+            const purchasePrice = parseFloat(purchasePriceInput.value) || 0;
+            const salePrice = parseFloat(salePriceInput.value) || 0;
+            
+            if (purchasePrice > 0 && salePrice > 0) {
+                const profit = salePrice - purchasePrice;
+                const profitPercentage = (profit / purchasePrice) * 100;
+                
+                // عرض الربح في عنصر الواجهة
+                const profitDisplay = document.getElementById('profit-display');
+                
+                if (profitDisplay) {
+                    let profitClass = 'text-success';
+                    if (profit <= 0) profitClass = 'text-danger';
+                    
+                    profitDisplay.innerHTML = `
+                        <div class="alert alert-light border ${profitClass} mt-2">
+                            <div><strong>الربح:</strong> ${profit.toFixed(2)} ج.م</div>
+                            <div><strong>نسبة الربح:</strong> ${profitPercentage.toFixed(2)}%</div>
+                        </div>
+                    `;
+                } else {
+                    // إنشاء عنصر لعرض الربح إذا لم يكن موجوداً
+                    const container = document.createElement('div');
+                    container.id = 'profit-display';
+                    container.classList.add('col-md-4');
+                    let profitClass = 'text-success';
+                    if (profit <= 0) profitClass = 'text-danger';
+                    
+                    container.innerHTML = `
+                        <div class="alert alert-light border ${profitClass} mt-2">
+                            <div><strong>الربح:</strong> ${profit.toFixed(2)} ج.م</div>
+                            <div><strong>نسبة الربح:</strong> ${profitPercentage.toFixed(2)}%</div>
+                        </div>
+                    `;
+                    
+                    // إضافة العنصر بعد حقول الأسعار
+                    const priceRow = salePriceInput.closest('.row');
+                    priceRow.appendChild(container);
+                }
+            }
+        }
+        
+        // تفعيل الحساب التلقائي للربح
+        if (purchasePriceInput && salePriceInput) {
+            purchasePriceInput.addEventListener('input', calculateProfit);
+            salePriceInput.addEventListener('input', calculateProfit);
+            
+            // احسب الربح عند تحميل الصفحة
+            calculateProfit();
+        }
+        
+        // معاينة الصورة المختارة
+        const imageInput = document.getElementById('{{ form.image.id_for_label }}');
+        const previewContainer = document.createElement('div');
+        previewContainer.className = 'mt-2 text-center d-none';
+        previewContainer.id = 'image-preview-container';
+        
+        // أضف العنصر بعد حقل إدخال الصورة
+        if (imageInput) {
+            imageInput.parentNode.insertBefore(previewContainer, imageInput.nextSibling);
+            
+            imageInput.addEventListener('change', function() {
+                const file = this.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(e) {
+                        previewContainer.innerHTML = `
+                            <label>معاينة الصورة:</label>
+                            <div class="mt-2">
+                                <img src="${e.target.result}" class="img-thumbnail" style="max-height: 150px;">
+                            </div>
+                        `;
+                        previewContainer.classList.remove('d-none');
+                    };
+                    
+                    reader.readAsDataURL(file);
+                } else {
+                    previewContainer.classList.add('d-none');
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

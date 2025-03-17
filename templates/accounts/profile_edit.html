@@ -1,0 +1,166 @@
+<!-- filepath: c:\Users\UTD\MWHEBA_App\templates\accounts\profile_edit.html -->
+{% extends "base.html" %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% trans "تعديل البيانات الشخصية" %} | MWHEBA Stock{% endblock %}
+
+{% block page_header %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-user-edit me-2"></i>{% trans "تعديل البيانات الشخصية" %}
+    </h1>
+    <a href="{% url 'profile' %}" class="btn btn-outline-primary">
+        <i class="fas fa-arrow-right me-1"></i>{% trans "العودة للملف الشخصي" %}
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 col-md-10 mx-auto">
+        <div class="card shadow">
+            <div class="card-body p-4">
+                <form method="post" class="user-edit-form">
+                    {% csrf_token %}
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <label for="id_first_name" class="form-label fw-bold">{% trans "الاسم الأول" %}</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                {{ form.first_name }}
+                            </div>
+                            {% if form.first_name.errors %}
+                                <div class="text-danger small mt-1">{{ form.first_name.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="id_last_name" class="form-label fw-bold">{% trans "الاسم الأخير" %}</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                {{ form.last_name }}
+                            </div>
+                            {% if form.last_name.errors %}
+                                <div class="text-danger small mt-1">{{ form.last_name.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="id_email" class="form-label fw-bold">{% trans "البريد الإلكتروني" %}</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                            {{ form.email }}
+                        </div>
+                        {% if form.email.errors %}
+                            <div class="text-danger small mt-1">{{ form.email.errors }}</div>
+                        {% else %}
+                            <div class="text-muted small mt-1">{% trans "سيتم استخدام هذا البريد للتواصل معك وإرسال التنبيهات" %}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="id_phone_number" class="form-label fw-bold">{% trans "رقم الهاتف" %}</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                            {{ form.phone_number }}
+                        </div>
+                        {% if form.phone_number.errors %}
+                            <div class="text-danger small mt-1">{{ form.phone_number.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'profile' %}" class="btn btn-light me-md-2">
+                            <i class="fas fa-times me-1"></i>{% trans "إلغاء" %}
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>{% trans "حفظ التغييرات" %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Additional Card for Account Settings -->
+        <div class="card shadow mt-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-shield-alt me-1"></i> {% trans "إعدادات الأمان" %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h6 class="mb-1 fw-bold">{% trans "تغيير كلمة المرور" %}</h6>
+                        <p class="text-muted small">{% trans "كلمة المرور الخاصة بك يجب أن تكون آمنة وقوية ويجب عدم مشاركتها مع أي شخص" %}</p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <a href="{% url 'password-change' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-key me-1"></i>{% trans "تغيير كلمة المرور" %}
+                        </a>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="row">
+                    <div class="col-md-8">
+                        <h6 class="mb-1 fw-bold">{% trans "تحديث الصورة الشخصية" %}</h6>
+                        <p class="text-muted small">{% trans "قم بتحديث صورتك الشخصية التي تظهر في ملفك الشخصي وفي التعليقات" %}</p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <form id="uploadAvatarForm" action="{% url 'profile-picture-update' %}" method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <input type="file" name="profile_picture" id="profilePictureUpload" accept="image/*" class="d-none">
+                            <button type="button" class="btn btn-outline-success" onclick="document.getElementById('profilePictureUpload').click()">
+                                <i class="fas fa-camera me-1"></i>{% trans "تغيير الصورة" %}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                {% if user.is_staff %}
+                <hr>
+                
+                <div class="row">
+                    <div class="col-md-8">
+                        <h6 class="mb-1 fw-bold">{% trans "صلاحيات المستخدم" %}</h6>
+                        <p class="text-muted small">{% trans "لديك صلاحيات خاصة كمدير في النظام" %}</p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <span class="badge bg-primary">{{ user.get_role_display }}</span>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-submit when profile picture is selected
+    document.getElementById('profilePictureUpload').addEventListener('change', function() {
+        if (this.files.length > 0) {
+            document.getElementById('uploadAvatarForm').submit();
+        }
+    });
+    
+    // Form validation for phone numbers
+    document.addEventListener('DOMContentLoaded', function() {
+        const phoneInput = document.getElementById('id_phone_number');
+        if (phoneInput) {
+            phoneInput.addEventListener('input', function() {
+                // Allow only digits, +, and spaces
+                this.value = this.value.replace(/[^\d\s+]/g, '');
+            });
+        }
+    });
+</script>
+{% endblock %}

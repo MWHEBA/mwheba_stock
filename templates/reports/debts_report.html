@@ -1,0 +1,482 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}تقرير المديونيات - MWHEBA Stock{% endblock %}
+
+{% block page_header %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-0 text-primary">
+                <i class="fas fa-money-bill-wave me-2"></i> تقرير المديونيات
+            </h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">لوحة التحكم</a></li>
+                    <li class="breadcrumb-item active">تقرير المديونيات</li>
+                </ol>
+            </nav>
+        </div>
+        <div>
+            <button class="btn btn-outline-primary me-2" onclick="window.print()">
+                <i class="fas fa-print me-1"></i> طباعة
+            </button>
+            <button class="btn btn-outline-success" id="exportExcelBtn">
+                <i class="fas fa-file-excel me-1"></i> تصدير إكسيل
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- عناصر التصفية -->
+    <div class="card mb-4 no-print">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">
+                <i class="fas fa-filter me-1"></i> عوامل التصفية
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="get" action="{% url 'debts-report' %}" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">نوع المديونية</label>
+                    <select name="debt_type" class="form-select">
+                        <option value="all" {% if request.GET.debt_type == 'all' %}selected{% endif %}>الكل</option>
+                        <option value="customers" {% if request.GET.debt_type == 'customers' %}selected{% endif %}>مديونيات العملاء</option>
+                        <option value="suppliers" {% if request.GET.debt_type == 'suppliers' %}selected{% endif %}>مديونيات الموردين</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">الحالة</label>
+                    <select name="status" class="form-select">
+                        <option value="all" {% if request.GET.status == 'all' %}selected{% endif %}>الكل</option>
+                        <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>نشطة</option>
+                        <option value="overdue" {% if request.GET.status == 'overdue' %}selected{% endif %}>متأخرة</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">ترتيب حسب</label>
+                    <div class="d-flex">
+                        <select name="order_by" class="form-select me-2">
+                            <option value="date" {% if request.GET.order_by == 'date' %}selected{% endif %}>التاريخ</option>
+                            <option value="amount" {% if request.GET.order_by == 'amount' %}selected{% endif %}>المبلغ</option>
+                            <option value="name" {% if request.GET.order_by == 'name' %}selected{% endif %}>الإسم</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-filter me-1"></i> تصفية
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- بطاقات إحصائية -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3 class="display-6 text-primary fw-bold">{{ total_debts|floatformat:2 }}</h3>
+                    <p class="mb-0">إجمالي المديونيات (ج.م)</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3 class="display-6 text-danger fw-bold">{{ customer_debts|floatformat:2 }}</h3>
+                    <p class="mb-0">مديونيات العملاء (ج.م)</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3 class="display-6 text-warning fw-bold">{{ supplier_debts|floatformat:2 }}</h3>
+                    <p class="mb-0">مديونيات الموردين (ج.م)</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3 class="display-6 text-success fw-bold">{{ net_balance|floatformat:2 }}</h3>
+                    <p class="mb-0">صافي الميزان (ج.م)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- رسم بياني للمديونيات -->
+    <div class="card mb-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">
+                <i class="fas fa-chart-pie me-1"></i> توزيع المديونيات
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <canvas id="debtTypeChart" height="250"></canvas>
+                </div>
+                <div class="col-md-6">
+                    <canvas id="debtTrendChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- جدول مديونيات العملاء -->
+    <div class="card mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="fas fa-users me-1"></i> مديونيات العملاء
+            </h5>
+            <span class="badge bg-danger rounded-pill">{{ customer_debts_count }}</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>العميل</th>
+                            <th>رقم الهاتف</th>
+                            <th>عدد الفواتير</th>
+                            <th>إجمالي المبيعات</th>
+                            <th>المدفوع</th>
+                            <th>المتبقي</th>
+                            <th>آخر دفعة</th>
+                            <th>الإجراء</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for customer in customers_with_debts %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'customer-detail' customer.id %}">{{ customer.name }}</a>
+                            </td>
+                            <td>{{ customer.phone }}</td>
+                            <td>{{ customer.invoices_count }}</td>
+                            <td>{{ customer.total_sales|floatformat:2 }} ج.م</td>
+                            <td>{{ customer.total_paid|floatformat:2 }} ج.م</td>
+                            <td class="fw-bold text-danger">{{ customer.debt|floatformat:2 }} ج.م</td>
+                            <td>
+                                {% if customer.last_payment %}
+                                    {{ customer.last_payment|date:"Y-m-d" }}
+                                {% else %}
+                                    --
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'customer-detail' customer.id %}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-eye me-1"></i> عرض
+                                </a>
+                                <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" 
+                                        data-bs-target="#addPaymentModal" 
+                                        data-type="customer"
+                                        data-id="{{ customer.id }}" 
+                                        data-name="{{ customer.name }}"
+                                        data-debt="{{ customer.debt }}">
+                                    <i class="fas fa-hand-holding-usd me-1"></i> دفع
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4 text-muted">لا توجد مديونيات للعملاء</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr>
+                            <th colspan="5" class="text-end">الإجمالي:</th>
+                            <th class="text-danger">{{ customer_debts|floatformat:2 }} ج.م</th>
+                            <th colspan="2"></th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- جدول مديونيات الموردين -->
+    <div class="card mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="fas fa-truck me-1"></i> مديونيات الموردين
+            </h5>
+            <span class="badge bg-warning rounded-pill">{{ supplier_debts_count }}</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>المورد</th>
+                            <th>رقم الهاتف</th>
+                            <th>عدد أوامر الشراء</th>
+                            <th>إجمالي المشتريات</th>
+                            <th>المدفوع</th>
+                            <th>المتبقي</th>
+                            <th>آخر دفعة</th>
+                            <th>الإجراء</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for supplier in suppliers_with_debts %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'supplier-detail' supplier.id %}">{{ supplier.name }}</a>
+                            </td>
+                            <td>{{ supplier.phone }}</td>
+                            <td>{{ supplier.purchases_count }}</td>
+                            <td>{{ supplier.total_purchases|floatformat:2 }} ج.م</td>
+                            <td>{{ supplier.total_paid|floatformat:2 }} ج.م</td>
+                            <td class="fw-bold text-warning">{{ supplier.debt|floatformat:2 }} ج.م</td>
+                            <td>
+                                {% if supplier.last_payment %}
+                                    {{ supplier.last_payment|date:"Y-m-d" }}
+                                {% else %}
+                                    --
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'supplier-detail' supplier.id %}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-eye me-1"></i> عرض
+                                </a>
+                                <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" 
+                                        data-bs-target="#addPaymentModal"
+                                        data-type="supplier" 
+                                        data-id="{{ supplier.id }}" 
+                                        data-name="{{ supplier.name }}"
+                                        data-debt="{{ supplier.debt }}">
+                                    <i class="fas fa-hand-holding-usd me-1"></i> دفع
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4 text-muted">لا توجد مديونيات للموردين</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr>
+                            <th colspan="5" class="text-end">الإجمالي:</th>
+                            <th class="text-warning">{{ supplier_debts|floatformat:2 }} ج.م</th>
+                            <th colspan="2"></th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- مودال إضافة دفعة -->
+<div class="modal fade" id="addPaymentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تسجيل دفعة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="paymentForm" method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <input type="hidden" name="entity_type" id="payment-entity-type">
+                    <input type="hidden" name="entity_id" id="payment-entity-id">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">الجهة</label>
+                        <input type="text" class="form-control" id="payment-entity-name" readonly>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">المبلغ <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <input type="number" name="amount" id="payment-amount" class="form-control" step="0.01" min="0.01" required>
+                            <span class="input-group-text">ج.م</span>
+                        </div>
+                        <div id="payment-debt-info" class="form-text">المديونية الحالية: <span id="current-debt">0.00</span> ج.م</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">طريقة الدفع <span class="text-danger">*</span></label>
+                        <select name="payment_method" class="form-select" required>
+                            <option value="cash" selected>نقدي</option>
+                            <option value="credit_card">بطاقة ائتمان</option>
+                            <option value="bank_transfer">تحويل بنكي</option>
+                            <option value="check">شيك</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">ملاحظات</label>
+                        <textarea name="notes" class="form-control" rows="2" placeholder="تفاصيل إضافية عن الدفعة"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">تسجيل الدفعة</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // رسم بياني للمديونيات حسب النوع
+        const ctxType = document.getElementById('debtTypeChart').getContext('2d');
+        new Chart(ctxType, {
+            type: 'doughnut',
+            data: {
+                labels: ['مديونيات العملاء', 'مديونيات الموردين'],
+                datasets: [{
+                    data: [{{ customer_debts }}, {{ supplier_debts }}],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.7)',
+                        'rgba(255, 205, 86, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgb(255, 99, 132)',
+                        'rgb(255, 205, 86)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    title: {
+                        display: true,
+                        text: 'توزيع المديونيات حسب النوع',
+                        font: {
+                            size: 16
+                        }
+                    }
+                }
+            }
+        });
+        
+        // رسم بياني لاتجاه المديونيات
+        const ctxTrend = document.getElementById('debtTrendChart').getContext('2d');
+        new Chart(ctxTrend, {
+            type: 'line',
+            data: {
+                labels: {{ debt_trend_labels|safe }},
+                datasets: [{
+                    label: 'مديونيات العملاء',
+                    data: {{ customer_debt_trend|safe }},
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }, {
+                    label: 'مديونيات الموردين',
+                    data: {{ supplier_debt_trend|safe }},
+                    borderColor: 'rgba(255, 205, 86, 1)',
+                    backgroundColor: 'rgba(255, 205, 86, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    title: {
+                        display: true,
+                        text: 'اتجاه المديونيات خلال الأشهر الستة الماضية',
+                        font: {
+                            size: 16
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        
+        // إعداد نموذج الدفع
+        const paymentModal = document.getElementById('addPaymentModal');
+        paymentModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const entityType = button.dataset.type;
+            const entityId = button.dataset.id;
+            const entityName = button.dataset.name;
+            const entityDebt = parseFloat(button.dataset.debt) || 0;
+            
+            document.getElementById('payment-entity-type').value = entityType;
+            document.getElementById('payment-entity-id').value = entityId;
+            document.getElementById('payment-entity-name').value = entityName;
+            document.getElementById('payment-amount').value = entityDebt.toFixed(2);
+            document.getElementById('payment-amount').max = entityDebt;
+            document.getElementById('current-debt').textContent = entityDebt.toFixed(2);
+            
+            const form = document.getElementById('paymentForm');
+            if (entityType === 'customer') {
+                form.action = "/customers/" + entityId + "/payment/";
+            } else {
+                form.action = "/suppliers/" + entityId + "/payment/";
+            }
+        });
+        
+        // تصدير إلى Excel
+        document.getElementById('exportExcelBtn').addEventListener('click', function() {
+            alert('جاري تصدير البيانات إلى ملف Excel...');
+        });
+        
+        // إضافة أنماط الطباعة
+        const style = document.createElement('style');
+        style.type = 'text/css';
+        style.media = 'print';
+        style.innerHTML = `
+            @media print {
+                .no-print, .modal, .btn-group, .btn, button {
+                    display: none !important;
+                }
+                body {
+                    font-size: 12pt;
+                }
+                .card {
+                    border: none !important;
+                    box-shadow: none !important;
+                }
+                .table {
+                    border-collapse: collapse;
+                }
+                .table th, .table td {
+                    border: 1px solid #ddd !important;
+                }
+                a {
+                    text-decoration: none !important;
+                    color: #000 !important;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // تغيير فلاتر التقرير آليًا عند تغيير القيمة
+        document.querySelectorAll('form select').forEach(select => {
+            select.addEventListener('change', function() {
+                this.form.submit();
+            });
+        });
+    });
+</script>
+{% endblock %}

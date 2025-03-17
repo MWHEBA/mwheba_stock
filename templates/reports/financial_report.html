@@ -1,0 +1,406 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}التقرير المالي - MWHEBA Stock{% endblock %}
+
+{% block page_header %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-0 text-primary">
+                <i class="fas fa-file-invoice-dollar me-2"></i> التقرير المالي
+            </h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">لوحة التحكم</a></li>
+                    <li class="breadcrumb-item active">التقرير المالي</li>
+                </ol>
+            </nav>
+        </div>
+        <div>
+            <button class="btn btn-outline-primary me-2" onclick="window.print()">
+                <i class="fas fa-print me-1"></i> طباعة
+            </button>
+            <button class="btn btn-outline-success" id="exportExcelBtn">
+                <i class="fas fa-file-excel me-1"></i> تصدير إكسيل
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- عناصر التصفية -->
+    <div class="card mb-4 no-print">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">
+                <i class="fas fa-filter me-1"></i> الفترة المالية
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="get" action="{% url 'financial-report' %}" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">الفترة</label>
+                    <select name="period" class="form-select" id="period-select">
+                        <option value="this_month" {% if request.GET.period == 'this_month' %}selected{% endif %}>الشهر الحالي</option>
+                        <option value="last_month" {% if request.GET.period == 'last_month' %}selected{% endif %}>الشهر السابق</option>
+                        <option value="last_3_months" {% if request.GET.period == 'last_3_months' %}selected{% endif %}>آخر 3 أشهر</option>
+                        <option value="this_year" {% if request.GET.period == 'this_year' %}selected{% endif %}>السنة الحالية</option>
+                        <option value="last_year" {% if request.GET.period == 'last_year' %}selected{% endif %}>السنة الماضية</option>
+                        <option value="custom" {% if request.GET.period == 'custom' %}selected{% endif %}>فترة مخصصة</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-6 custom-date-range" {% if request.GET.period != 'custom' %}style="display: none;"{% endif %}>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">من تاريخ</label>
+                            <input type="date" name="start_date" class="form-control" value="{{ request.GET.start_date|default:'' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">إلى تاريخ</label>
+                            <input type="date" name="end_date" class="form-control" value="{{ request.GET.end_date|default:'' }}">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">عرض التقرير</label>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search me-1"></i> تحديث البيانات
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- معلومات الفترة المالية -->
+    <div class="alert alert-info mb-4">
+        <div class="row align-items-center">
+            <div class="col-auto">
+                <i class="fas fa-calendar-alt fa-2x"></i>
+            </div>
+            <div class="col">
+                <h5 class="alert-heading mb-0">ملخص الفترة المالية</h5>
+                <p class="mb-0">{{ period_label }}: من {{ start_date|date:"Y-m-d" }} إلى {{ end_date|date:"Y-m-d" }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- بطاقة ملخص مالي -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3 class="display-6 text-success fw-bold">{{ total_income|floatformat:2 }}</h3>
+                    <p class="mb-0">إجمالي الإيرادات (ج.م)</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3 class="display-6 text-danger fw-bold">{{ total_expenses|floatformat:2 }}</h3>
+                    <p class="mb-0">إجمالي المصروفات (ج.م)</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3 class="display-6 {% if net_profit >= 0 %}text-primary{% else %}text-danger{% endif %} fw-bold">{{ net_profit|floatformat:2 }}</h3>
+                    <p class="mb-0">صافي الربح (ج.م)</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3 class="display-6 text-warning fw-bold">{{ cash_flow|floatformat:2 }}</h3>
+                    <p class="mb-0">التدفق النقدي (ج.م)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- الرسم البياني -->
+    <div class="card mb-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">
+                <i class="fas fa-chart-line me-1"></i> تحليل الإيرادات والمصروفات
+            </h5>
+        </div>
+        <div class="card-body">
+            <canvas id="financialChart" height="300"></canvas>
+        </div>
+    </div>
+
+    <!-- قسم الإيرادات والمصروفات -->
+    <div class="row">
+        <!-- الإيرادات -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 text-success">
+                        <i class="fas fa-plus-circle me-1"></i> الإيرادات
+                    </h5>
+                    <span class="badge bg-success rounded-pill">{{ total_income|floatformat:2 }} ج.م</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>البند</th>
+                                    <th>المبلغ</th>
+                                    <th>النسبة</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in income_items %}
+                                <tr>
+                                    <td>{{ item.category }}</td>
+                                    <td>{{ item.amount|floatformat:2 }} ج.م</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="progress flex-grow-1 me-2" style="height: 8px;">
+                                                <div class="progress-bar bg-success" role="progressbar" 
+                                                    style="width: {{ item.percentage }}%;" 
+                                                    aria-valuenow="{{ item.percentage }}" 
+                                                    aria-valuemin="0" 
+                                                    aria-valuemax="100"></div>
+                                            </div>
+                                            <span>{{ item.percentage|floatformat:1 }}%</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center py-3 text-muted">لا توجد بيانات إيرادات للعرض</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- المصروفات -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 text-danger">
+                        <i class="fas fa-minus-circle me-1"></i> المصروفات
+                    </h5>
+                    <span class="badge bg-danger rounded-pill">{{ total_expenses|floatformat:2 }} ج.م</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>البند</th>
+                                    <th>المبلغ</th>
+                                    <th>النسبة</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in expense_items %}
+                                <tr>
+                                    <td>{{ item.category }}</td>
+                                    <td>{{ item.amount|floatformat:2 }} ج.م</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="progress flex-grow-1 me-2" style="height: 8px;">
+                                                <div class="progress-bar bg-danger" role="progressbar" 
+                                                    style="width: {{ item.percentage }}%;" 
+                                                    aria-valuenow="{{ item.percentage }}" 
+                                                    aria-valuemin="0" 
+                                                    aria-valuemax="100"></div>
+                                            </div>
+                                            <span>{{ item.percentage|floatformat:1 }}%</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center py-3 text-muted">لا توجد بيانات مصروفات للعرض</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- قائمة الدخل -->
+    <div class="card mb-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">
+                <i class="fas fa-file-invoice me-2"></i> قائمة الدخل
+            </h5>
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered">
+                <tbody>
+                    <tr>
+                        <th class="table-light" style="width: 40%">الإيرادات</th>
+                        <td class="text-end">{{ total_income|floatformat:2 }} ج.م</td>
+                    </tr>
+                    <tr>
+                        <th class="table-light">تكلفة البضاعة المباعة</th>
+                        <td class="text-end">{{ cost_of_goods_sold|floatformat:2 }} ج.م</td>
+                    </tr>
+                    <tr class="table-success">
+                        <th>إجمالي الربح</th>
+                        <td class="text-end fw-bold">{{ gross_profit|floatformat:2 }} ج.م</td>
+                    </tr>
+                    <tr>
+                        <th class="table-light">المصروفات التشغيلية</th>
+                        <td class="text-end">{{ operating_expenses|floatformat:2 }} ج.م</td>
+                    </tr>
+                    <tr class="table-primary">
+                        <th>صافي الدخل التشغيلي</th>
+                        <td class="text-end fw-bold">{{ operating_income|floatformat:2 }} ج.م</td>
+                    </tr>
+                    <tr>
+                        <th class="table-light">مصروفات أخرى</th>
+                        <td class="text-end">{{ other_expenses|floatformat:2 }} ج.م</td>
+                    </tr>
+                    <tr class="{% if net_profit >= 0 %}table-success{% else %}table-danger{% endif %}">
+                        <th>صافي الربح</th>
+                        <td class="text-end fw-bold">{{ net_profit|floatformat:2 }} ج.م</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // التعامل مع اختيار الفترة
+        const periodSelect = document.getElementById('period-select');
+        const customDateRange = document.querySelector('.custom-date-range');
+        
+        periodSelect.addEventListener('change', function() {
+            if (this.value === 'custom') {
+                customDateRange.style.display = 'block';
+            } else {
+                customDateRange.style.display = 'none';
+            }
+        });
+        
+        // تصدير إلى Excel
+        document.getElementById('exportExcelBtn').addEventListener('click', function() {
+            alert('جاري تصدير البيانات إلى ملف Excel...');
+        });
+
+        // رسم بياني للإيرادات والمصروفات
+        const ctx = document.getElementById('financialChart').getContext('2d');
+        
+        const chartData = {
+            labels: {{ chart_labels|safe }},
+            datasets: [
+                {
+                    label: 'الإيرادات',
+                    data: {{ income_data|safe }},
+                    backgroundColor: 'rgba(40, 167, 69, 0.2)',
+                    borderColor: 'rgba(40, 167, 69, 1)',
+                    borderWidth: 2,
+                    tension: 0.1
+                },
+                {
+                    label: 'المصروفات',
+                    data: {{ expense_data|safe }},
+                    backgroundColor: 'rgba(220, 53, 69, 0.2)',
+                    borderColor: 'rgba(220, 53, 69, 1)',
+                    borderWidth: 2,
+                    tension: 0.1
+                },
+                {
+                    label: 'صافي الربح',
+                    data: {{ profit_data|safe }},
+                    backgroundColor: 'rgba(13, 110, 253, 0.2)',
+                    borderColor: 'rgba(13, 110, 253, 1)',
+                    borderWidth: 2,
+                    tension: 0.1
+                }
+            ]
+        };
+        
+        new Chart(ctx, {
+            type: 'line',
+            data: chartData,
+            options: {
+                responsive: true,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'تحليل الإيرادات والمصروفات خلال الفترة',
+                        font: {
+                            size: 16
+                        }
+                    },
+                    legend: {
+                        position: 'bottom'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        
+        // إضافة أنماط CSS للطباعة
+        const style = document.createElement('style');
+        style.type = 'text/css';
+        style.media = 'print';
+        style.innerHTML = `
+            @media print {
+                .no-print {
+                    display: none !important;
+                }
+                body {
+                    font-size: 12pt;
+                    color: #000;
+                    background-color: #fff;
+                }
+                .table {
+                    width: 100%;
+                    border-collapse: collapse;
+                }
+                .table th, .table td {
+                    border: 1px solid #ddd !important;
+                }
+                .card {
+                    border: none !important;
+                    box-shadow: none !important;
+                }
+                .progress {
+                    display: none !important;
+                }
+                .container-fluid {
+                    padding: 0 !important;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    });
+</script>
+{% endblock %}

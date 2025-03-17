@@ -1,0 +1,573 @@
+/* Main styles for MWHEBA Stock */
+
+:root {
+    --primary-color: #0d6efd;
+    --secondary-color: #6c757d;
+    --success-color: #198754;
+    --info-color: #0dcaf0;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+    --light-color: #f8f9fa;
+    --dark-color: #212529;
+}
+
+/* Set Cairo as the default font for the entire app */
+html, body {
+    height: 100%;
+    font-family: 'Cairo', sans-serif;
+    overflow-x: hidden; /* منع التمرير الأفقي */
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: #f8f9fa;
+}
+
+/* Make main content take available space */
+main {
+    flex: 1 0 auto;
+    max-width: 100%; /* منع تجاوز عرض الشاشة */
+    overflow-x: hidden; /* منع التمرير الأفقي في المحتوى الرئيسي */
+}
+
+/* التذييل السفلي */
+footer {
+    flex-shrink: 0;
+}
+
+/* هيكل التطبيق */
+.container-fluid {
+    padding-right: 1rem;
+    padding-left: 1rem;
+    max-width: 100%;
+}
+
+/* إصلاح مشكلة الجداول */
+.table-responsive {
+    overflow-x: auto; /* ضمان التمرير للجداول الطويلة */
+    max-width: 100%;
+}
+
+table {
+    width: 100% !important;
+    max-width: 100%;
+    table-layout: fixed; /* تثبيت عرض الجدول */
+}
+
+/* منع الكسر في العناصر */
+img, svg, canvas, video, object {
+    max-width: 100%;
+    height: auto;
+}
+
+/* عناصر النموذج */
+input, select, textarea {
+    max-width: 100%;
+}
+
+/* Custom navbar styling */
+.navbar {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-brand {
+    font-weight: 700;
+}
+
+/* Custom styles for sidebar-based layout */
+.text-xs {
+    font-size: 0.7rem;
+}
+
+.text-small {
+    font-size: 0.85rem;
+}
+
+/* Custom scrollbar for sidebar */
+#sidebar {
+    scrollbar-width: thin;
+    scrollbar-color: #888 #f1f1f1;
+    width: 280px;
+    background-color: #212529;
+    color: white;
+    transition: all 0.3s;
+    position: fixed;
+    height: 100vh;
+    right: 0;
+    z-index: 999;
+    overflow-y: auto;
+}
+
+#sidebar::-webkit-scrollbar {
+    width: 5px;
+}
+
+#sidebar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+#sidebar::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
+}
+
+#sidebar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Card styling */
+.card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    margin-bottom: 1.5rem;
+    border-radius: 0.5rem;
+    overflow: hidden; /* منع محتوى البطاقة من تجاوز الحدود */
+    margin-bottom: 1rem;
+    height: auto;
+}
+
+.card-header {
+    background-color: rgba(0, 0, 0, 0.03);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    padding: 1rem 1.25rem;
+    font-weight: 600;
+}
+
+.card-body {
+    overflow: auto; /* إضافة تمرير إذا كان المحتوى كبيرًا جدًا */
+    max-height: 80vh; /* حد أقصى للارتفاع */
+}
+
+/* Dashboard widgets */
+.dashboard-widget {
+    transition: transform 0.2s;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.dashboard-widget:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.dashboard-widget .card-body {
+    padding: 1.5rem;
+}
+
+.dashboard-widget .icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Status badges */
+.badge-available {
+    background-color: #28a745;
+    color: white;
+}
+
+.badge-low-stock {
+    background-color: #ffc107;
+    color: black;
+}
+
+.badge-out-of-stock {
+    background-color: #dc3545;
+    color: white;
+}
+
+/* Tables */
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.075);
+}
+
+/* Custom form styling */
+.form-control:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Search controls */
+.search-box {
+    position: relative;
+}
+
+.search-box .form-control {
+    padding-right: 2.5rem;
+}
+
+.search-box .search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+}
+
+/* Page titles */
+.page-title {
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 0.5rem;
+}
+
+/* RTL specific adjustments */
+.dropdown-menu-end {
+    right: auto;
+    left: 0;
+}
+
+/* Responsive fixes */
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+}
+
+/* Animation for sidebar submenu */
+.sub-menu {
+    transition: all 0.15s ease !important; /* تقليل وقت الانتقال من 0.3s إلى 0.15s */
+}
+
+/* Sidebar toggle button */
+.sidebar-toggle {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6 !important;
+    border-radius: 4px;
+    color: #212529;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-right: 0;
+    padding: 0;
+}
+
+.sidebar-toggle:hover {
+    background-color: #e9ecef;
+    color: #0d6efd;
+}
+
+.sidebar-toggle:focus {
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    outline: none;
+}
+
+/* Print styles */
+@media print {
+    #sidebar, .top-navbar, .footer, .no-print {
+        display: none !important;
+    }
+    
+    #content {
+        margin-right: 0 !important;
+        width: 100% !important;
+    }
+    
+    body {
+        background-color: #fff;
+        font-size: 12pt;
+    }
+    
+    .container, .container-fluid {
+        padding: 0;
+        margin: 0;
+        max-width: 100%;
+        width: 100%;
+    }
+    
+    .card {
+        border: none;
+        box-shadow: none;
+        border: none !important;
+        box-shadow: none !important;
+    }
+}
+
+#content {
+    width: calc(100% - 280px);
+    margin-right: 280px;
+    transition: all 0.3s;
+    min-height: 100vh;
+}
+
+/* تعديل سلوك القائمة على الشاشات الصغيرة */
+@media (max-width: 768px) {
+    #sidebar {
+        right: -280px;
+        z-index: 1050;
+        box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+        transition: right 0.3s ease;
+    }
+    
+    #sidebar.active {
+        right: 0;
+    }
+    
+    #content {
+        width: 100%;
+        margin-right: 0;
+        transition: margin-right 0.3s ease;
+    }
+}
+
+/* إضافة طبقة للخلفية عند فتح القائمة على الأجهزة المحمولة */
+.sidebar-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 998;
+}
+
+@media (max-width: 768px) {
+    #sidebar.active + .sidebar-backdrop {
+        display: block;
+    }
+}
+
+/* تحسين سرعة ظهور القوائم الفرعية */
+.sidebar-menu .sub-menu {
+    padding-right: 15px;
+    background-color: rgba(0, 0, 0, 0.15);
+    display: none;
+}
+
+/* إزالة التأخير تماماً للقوائم الفرعية */
+.collapse {
+    transition-duration: 0.15s !important;
+}
+
+/* تحسينات القوائم الفرعية */
+.sidebar-menu .dropdown-toggle:after {
+    float: left;
+    margin-top: 8px;
+}
+
+.sidebar-menu .sub-menu {
+    padding-right: 15px;
+    background-color: rgba(0, 0, 0, 0.15);
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.2s ease-in-out;
+}
+
+.sidebar-menu .sub-menu.show {
+    max-height: 1000px; /* قيمة كبيرة لاستيعاب أي عدد من العناصر */
+    display: block;
+}
+
+/* تمييز الزر النشط للقائمة المنسدلة */
+.sidebar-menu .dropdown-toggle.active-toggle {
+    color: var(--pure-white);
+    background: rgba(2, 169, 247, 0.15);
+    border-right-color: var(--secondary);
+}
+
+/* داشبورد - بطاقة الإحصائيات */
+.dashboard-stat-card {
+    border: none;
+    border-radius: 0.75rem;
+    transition: transform 0.3s;
+    overflow: hidden; /* منع تجاوز المحتوى */
+}
+.dashboard-stat-card:hover {
+    transform: translateY(-5px);
+}
+.dashboard-stat-card .icon {
+    opacity: 0.8;
+}
+.dashboard-stat-card .counter {
+    font-size: 1.75rem;
+    font-weight: 600;
+}
+
+/* تنسيق الصور الشخصية */
+.user-avatar {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    overflow: hidden; /* منع تجاوز المحتوى */
+}
+
+.user-avatar-lg {
+    width: 80px;
+    height: 80px;
+    font-size: 2rem;
+}
+
+/* الإشعارات */
+.notification-badge {
+    position: absolute;
+    top: 0;
+    left: 5px;
+    font-size: 0.5rem;
+}
+
+.notifications-dropdown {
+    max-height: 350px;
+    overflow-y: auto;
+}
+
+.notification-item {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.notification-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+/* تحسين عناصر الواجهة للهواتف */
+@media (max-width: 576px) {
+    .container-fluid {
+        padding-right: 0.5rem;
+        padding-left: 0.5rem;
+    }
+    
+    .card-body {
+        padding: 0.75rem;
+    }
+    
+    .btn {
+        padding: 0.375rem 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .dashboard-stat-card .counter {
+        font-size: 1.5rem;
+    }
+    
+    .table th, .table td {
+        padding: 0.5rem;
+    }
+}
+
+/* مؤثر عند النقر على الأزرار */
+.btn {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn:after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.5);
+    opacity: 0;
+    border-radius: 100%;
+    transform: scale(1, 1) translate(-50%, -50%);
+    transform-origin: 50% 50%;
+}
+
+.btn:focus:after {
+    animation: ripple 1s ease-out;
+}
+
+@keyframes ripple {
+    0% {
+        transform: scale(0, 0);
+        opacity: 0.5;
+    }
+    20% {
+        transform: scale(25, 25);
+        opacity: 0.3;
+    }
+    100% {
+        opacity: 0;
+        transform: scale(40, 40);
+    }
+}
+
+/* سكرول بار مخصص */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #0d6efd;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #0b5ed7;
+}
+
+/* إصلاح شاشة التحميل - منع تجاوز المحتوى */
+#loading-overlay {
+    z-index: 9999;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* ضبط حجم خطوط التقارير للطباعة */
+@media print {
+    body {
+        font-size: 12pt;
+    }
+    
+    .container-fluid {
+        width: 100%;
+        padding: 0;
+    }
+    
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+}
+
+/* تنسيق النص */
+h1, h2, h3, h4, h5, h6 {
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+p, span, a, div {
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+/* الرسومات البيانية */
+canvas {
+    max-width: 100%;
+    max-height: 80vh !important; /* تحديد أقصى ارتفاع للرسوم البيانية */
+}
+
+/* معالجة أخطاء الفيديو والإطارات */
+iframe, video, embed, object {
+    max-width: 100%;
+    max-height: 80vh;
+}

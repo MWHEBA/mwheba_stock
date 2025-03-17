@@ -1,0 +1,284 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}إدارة فئات المنتجات - MWHEBA Stock{% endblock %}
+
+{% block page_header %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-0 text-primary">
+                <i class="fas fa-tags me-2"></i> إدارة فئات المنتجات
+            </h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">لوحة التحكم</a></li>
+                    <li class="breadcrumb-item active">إدارة فئات المنتجات</li>
+                </ol>
+            </nav>
+        </div>
+        <div>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                <i class="fas fa-plus me-1"></i> إضافة فئة جديدة
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- قائمة الإعدادات الجانبية -->
+        <div class="col-md-3 mb-4">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">الإعدادات</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="{% url 'general-settings' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-store me-2"></i> إعدادات الشركة
+                    </a>
+                    <a href="{% url 'system-settings' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-sliders-h me-2"></i> إعدادات النظام
+                    </a>
+                    <a href="{% url 'users-list' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-users-cog me-2"></i> إدارة المستخدمين
+                    </a>
+                    <a href="{% url 'categories' %}" class="list-group-item list-group-item-action active">
+                        <i class="fas fa-tags me-2"></i> الفئات
+                    </a>
+                    <a href="{% url 'tax-settings' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-percentage me-2"></i> إعدادات الضرائب
+                    </a>
+                    <a href="{% url 'backup-restore' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-database me-2"></i> النسخ الاحتياطي والاستعادة
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- قائمة الفئات -->
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tags me-2"></i> فئات المنتجات
+                    </h5>
+                    <span class="badge bg-primary rounded-pill">{{ categories.count }}</span>
+                </div>
+                <div class="card-body p-0">
+                    {% if categories %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>اسم الفئة</th>
+                                    <th>الوصف</th>
+                                    <th>عدد المنتجات</th>
+                                    <th>تاريخ الإنشاء</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for category in categories %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <span class="color-indicator me-2" style="background-color: {{ category.color|default:'#6c757d' }}"></span>
+                                            {{ category.name }}
+                                        </div>
+                                    </td>
+                                    <td>{{ category.description|default:"-" }}</td>
+                                    <td>
+                                        <a href="{% url 'products-by-category' category.id %}">
+                                            {{ category.product_count }} منتج
+                                        </a>
+                                    </td>
+                                    <td>{{ category.created_at|date:"Y-m-d" }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-primary" title="تعديل"
+                                                    data-bs-toggle="modal" data-bs-target="#editCategoryModal"
+                                                    data-id="{{ category.id }}"
+                                                    data-name="{{ category.name }}"
+                                                    data-description="{{ category.description }}"
+                                                    data-color="{{ category.color|default:'#6c757d' }}">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            {% if category.product_count == 0 %}
+                                            <button class="btn btn-sm btn-danger" title="حذف"
+                                                    data-bs-toggle="modal" data-bs-target="#deleteCategoryModal"
+                                                    data-id="{{ category.id }}" data-name="{{ category.name }}">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                            {% else %}
+                                            <button class="btn btn-sm btn-secondary" title="لا يمكن الحذف - يحتوي على منتجات" disabled>
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <div class="text-muted">
+                            <i class="fas fa-tags fa-3x mb-3"></i>
+                            <h5>لا توجد فئات منتجات</h5>
+                            <p>أضف فئات جديدة لتصنيف منتجاتك</p>
+                            <button class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                                <i class="fas fa-plus me-1"></i> إضافة فئة جديدة
+                            </button>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- مودال إضافة فئة جديدة -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">إضافة فئة جديدة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{% url 'category-create' %}" method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">اسم الفئة <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">الوصف</label>
+                        <textarea name="description" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">اللون</label>
+                        <input type="color" name="color" class="form-control form-control-color" value="#6c757d">
+                        <div class="form-text">اختر لوناً لتمييز الفئة</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">حفظ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- مودال تعديل الفئة -->
+<div class="modal fade" id="editCategoryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تعديل الفئة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="edit-category-form" method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">اسم الفئة <span class="text-danger">*</span></label>
+                        <input type="text" name="name" id="edit-name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">الوصف</label>
+                        <textarea name="description" id="edit-description" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">اللون</label>
+                        <input type="color" name="color" id="edit-color" class="form-control form-control-color">
+                        <div class="form-text">اختر لوناً لتمييز الفئة</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">حفظ التغييرات</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- مودال حذف الفئة -->
+<div class="modal fade" id="deleteCategoryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">حذف الفئة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>هل أنت متأكد من حذف الفئة <strong id="category-name-to-delete"></strong>؟</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i> لا يمكن حذف الفئات التي تحتوي على منتجات.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <form id="delete-category-form" method="post">
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-danger">حذف</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // إعداد مودال التعديل
+        const editModal = document.getElementById('editCategoryModal');
+        editModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const categoryId = button.getAttribute('data-id');
+            const categoryName = button.getAttribute('data-name');
+            const categoryDescription = button.getAttribute('data-description');
+            const categoryColor = button.getAttribute('data-color');
+            
+            document.getElementById('edit-name').value = categoryName;
+            document.getElementById('edit-description').value = categoryDescription || '';
+            document.getElementById('edit-color').value = categoryColor;
+            
+            document.getElementById('edit-category-form').action = `/settings/categories/${categoryId}/edit/`;
+        });
+        
+        // إعداد مودال الحذف
+        const deleteModal = document.getElementById('deleteCategoryModal');
+        deleteModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const categoryId = button.getAttribute('data-id');
+            const categoryName = button.getAttribute('data-name');
+            
+            document.getElementById('category-name-to-delete').textContent = categoryName;
+            document.getElementById('delete-category-form').action = `/settings/categories/${categoryId}/delete/`;
+        });
+        
+        // تنسيق CSS إضافي
+        const style = document.createElement('style');
+        style.textContent = `
+            .color-indicator {
+                display: inline-block;
+                width: 16px;
+                height: 16px;
+                border-radius: 50%;
+            }
+        `;
+        document.head.appendChild(style);
+    });
+</script>
+{% endblock %}

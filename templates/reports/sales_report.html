@@ -1,0 +1,294 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}تقرير المبيعات - MWHEBA Stock{% endblock %}
+
+{% block page_header %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-0 text-primary">
+                <i class="fas fa-chart-bar me-2"></i> تقرير المبيعات
+            </h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">لوحة التحكم</a></li>
+                    <li class="breadcrumb-item active">تقرير المبيعات</li>
+                </ol>
+            </nav>
+        </div>
+        <div>
+            <button class="btn btn-outline-primary me-2" onclick="window.print()">
+                <i class="fas fa-print me-1"></i> طباعة
+            </button>
+            <button class="btn btn-outline-success" id="exportExcelBtn">
+                <i class="fas fa-file-excel me-1"></i> تصدير إكسيل
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- عناصر التصفية -->
+    <div class="card mb-4 no-print">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">
+                <i class="fas fa-filter me-1"></i> عوامل التصفية
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="get" action="{% url 'sales-report' %}" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">الفترة</label>
+                    <select name="period" class="form-select" id="period-select">
+                        <option value="today" {% if request.GET.period == 'today' %}selected{% endif %}>اليوم</option>
+                        <option value="yesterday" {% if request.GET.period == 'yesterday' %}selected{% endif %}>البارحة</option>
+                        <option value="this_week" {% if request.GET.period == 'this_week' %}selected{% endif %}>هذا الأسبوع</option>
+                        <option value="this_month" {% if request.GET.period == 'this_month' %}selected{% endif %}>هذا الشهر</option>
+                        <option value="last_month" {% if request.GET.period == 'last_month' %}selected{% endif %}>الشهر الماضي</option>
+                        <option value="this_year" {% if request.GET.period == 'this_year' %}selected{% endif %}>هذا العام</option>
+                        <option value="custom" {% if request.GET.period == 'custom' %}selected{% endif %}>فترة مخصصة</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-6 custom-date-range" {% if request.GET.period != 'custom' %}style="display: none;"{% endif %}>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">من تاريخ</label>
+                            <input type="date" name="start_date" class="form-control" value="{{ request.GET.start_date|default:'' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">إلى تاريخ</label>
+                            <input type="date" name="end_date" class="form-control" value="{{ request.GET.end_date|default:'' }}">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <label class="form-label">تصنيف حسب</label>
+                    <div class="d-flex">
+                        <select name="group_by" class="form-select me-2">
+                            <option value="day" {% if request.GET.group_by == 'day' %}selected{% endif %}>اليوم</option>
+                            <option value="week" {% if request.GET.group_by == 'week' %}selected{% endif %}>الأسبوع</option>
+                            <option value="month" {% if request.GET.group_by == 'month' %}selected{% endif %}>الشهر</option>
+                            <option value="category" {% if request.GET.group_by == 'category' %}selected{% endif %}>الفئة</option>
+                            <option value="customer" {% if request.GET.group_by == 'customer' %}selected{% endif %}>العميل</option>
+                            <option value="user" {% if request.GET.group_by == 'user' %}selected{% endif %}>المستخدم</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search me-1"></i> عرض
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ملخص المبيعات -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3 class="display-6 text-primary fw-bold">{{ total_sales_count }}</h3>
+                    <p class="mb-0">إجمالي عمليات البيع</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3 class="display-6 text-success fw-bold">{{ total_revenue|floatformat:2 }}</h3>
+                    <p class="mb-0">إجمالي المبيعات (ج.م)</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3 class="display-6 text-info fw-bold">{{ avg_sale_value|floatformat:2 }}</h3>
+                    <p class="mb-0">متوسط قيمة المبيعات (ج.م)</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3 class="display-6 text-warning fw-bold">{{ total_items_sold }}</h3>
+                    <p class="mb-0">إجمالي المنتجات المباعة</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- الرسم البياني -->
+    <div class="card mb-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">
+                <i class="fas fa-chart-line me-1"></i> تحليل المبيعات
+            </h5>
+        </div>
+        <div class="card-body">
+            <canvas id="salesChart" height="300"></canvas>
+        </div>
+    </div>
+
+    <!-- جدول المبيعات -->
+    <div class="card">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">تفاصيل المبيعات {% if group_by_label %}حسب {{ group_by_label }}{% endif %}</h5>
+            <span class="badge bg-primary rounded-pill">{{ sales_data|length }}</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>{% if group_by == 'customer' %}العميل{% elif group_by == 'category' %}الفئة{% elif group_by == 'user' %}المستخدم{% else %}التاريخ{% endif %}</th>
+                            <th>عدد المبيعات</th>
+                            <th>عدد المنتجات</th>
+                            <th>إجمالي المبيعات</th>
+                            <th>الخصم</th>
+                            <th>الصافي</th>
+                            <th>النسبة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in sales_data %}
+                        <tr>
+                            <td>{{ item.group_value }}</td>
+                            <td>{{ item.sales_count }}</td>
+                            <td>{{ item.items_count }}</td>
+                            <td>{{ item.total_sales|floatformat:2 }} ج.م</td>
+                            <td>{{ item.total_discount|floatformat:2 }} ج.م</td>
+                            <td>{{ item.net_sales|floatformat:2 }} ج.م</td>
+                            <td>{{ item.percentage|floatformat:1 }}%</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5">
+                                <div class="text-muted">
+                                    <i class="fas fa-chart-bar fa-3x mb-3"></i>
+                                    <h5>لا توجد بيانات للعرض</h5>
+                                    <p>قم بتعديل معايير البحث أو تسجيل مبيعات جديدة</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr class="fw-bold">
+                            <td>الإجمالي</td>
+                            <td>{{ total_sales_count }}</td>
+                            <td>{{ total_items_sold }}</td>
+                            <td>{{ total_revenue|floatformat:2 }} ج.م</td>
+                            <td>{{ total_discount|floatformat:2 }} ج.م</td>
+                            <td>{{ net_revenue|floatformat:2 }} ج.م</td>
+                            <td>100%</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // إظهار/إخفاء حقول التاريخ المخصص
+        const periodSelect = document.querySelector('select[name="period"]');
+        const customDateRange = document.querySelector('.custom-date-range');
+        
+        if (periodSelect) {
+            periodSelect.addEventListener('change', function() {
+                if (this.value === 'custom') {
+                    customDateRange.style.display = 'block';
+                } else {
+                    customDateRange.style.display = 'none';
+                }
+            });
+        }
+        
+        // تصدير البيانات إلى ملف Excel
+        document.getElementById('exportExcelBtn').addEventListener('click', function() {
+            alert('سيتم تصدير البيانات إلى ملف Excel');
+        });
+        
+        // رسم بياني للمبيعات
+        const ctx = document.getElementById('salesChart').getContext('2d');
+        
+        const chartData = {
+            labels: {{ chart_labels|safe }},
+            datasets: [{
+                label: 'المبيعات (ج.م)',
+                data: {{ chart_data|safe }},
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 2,
+                tension: 0.1
+            }]
+        };
+        
+        new Chart(ctx, {
+            type: {% if request.GET.group_by == 'category' or request.GET.group_by == 'customer' or request.GET.group_by == 'user' %}'bar'{% else %}'line'{% endif %},
+            data: chartData,
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: 'تحليل المبيعات {% if time_range %}({{ time_range }}){% endif %}',
+                        font: {
+                            size: 16
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        
+        // إضافة أنماط CSS للطباعة
+        const style = document.createElement('style');
+        style.type = 'text/css';
+        style.media = 'print';
+        style.innerHTML = `
+            @media print {
+                .no-print {
+                    display: none !important;
+                }
+                body {
+                    font-size: 12pt;
+                    color: #000;
+                    background-color: #fff;
+                }
+                .table {
+                    width: 100%;
+                    border-collapse: collapse;
+                }
+                .table th, .table td {
+                    border: 1px solid #000 !important;
+                }
+                .card {
+                    border: none !important;
+                    box-shadow: none !important;
+                }
+                h2, h5 {
+                    color: #000 !important;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,166 @@
+<!-- filepath: c:\Users\UTD\MWHEBA_App\templates\accounts\activity_log.html -->
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "سجل النشاط" %} | MWHEBA Stock{% endblock %}
+
+{% block page_header %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-history me-2"></i>{% trans "سجل النشاط" %}
+    </h1>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card shadow">
+    <div class="card-body">
+        <!-- Search and filter controls -->
+        <div class="row mb-4">
+            <div class="col-md-6 mb-3 mb-md-0">
+                <div class="search-box">
+                    <input type="text" class="form-control live-search" placeholder="{% trans 'بحث...' %}" 
+                           data-search-target="activityTable">
+                    <i class="fas fa-search search-icon"></i>
+                </div>
+            </div>
+            <div class="col-md-6 d-flex justify-content-md-end">
+                <div class="input-group" style="max-width: 300px">
+                    <span class="input-group-text">{% trans "تصفية حسب" %}</span>
+                    <select class="form-select" id="filterType">
+                        <option value="all">{% trans "الكل" %}</option>
+                        <option value="Product">{% trans "المنتجات" %}</option>
+                        <option value="Sale">{% trans "المبيعات" %}</option>
+                        <option value="Purchase">{% trans "المشتريات" %}</option>
+                        <option value="Customer">{% trans "العملاء" %}</option>
+                        <option value="Supplier">{% trans "الموردين" %}</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Activity Table -->
+        <div class="table-responsive">
+            <table class="table table-hover align-middle" id="activityTable">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>{% trans "النشاط" %}</th>
+                        <th>{% trans "القسم" %}</th>
+                        <th>{% trans "التاريخ والوقت" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for activity in activities %}
+                    <tr data-type="{{ activity.model }}">
+                        <td>{{ forloop.counter }}</td>
+                        <td>
+                            {% if 'POST' in activity.action %}
+                            <span class="badge bg-success me-1">{% trans "إضافة" %}</span>
+                            {% elif 'PUT' in activity.action %}
+                            <span class="badge bg-primary me-1">{% trans "تعديل" %}</span>
+                            {% elif 'DELETE' in activity.action %}
+                            <span class="badge bg-danger me-1">{% trans "حذف" %}</span>
+                            {% endif %}
+                            {{ activity.action }}
+                            {% if activity.object_id %}
+                            <span class="badge bg-light text-dark ms-1">#{{ activity.object_id }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if activity.model == 'Product' %}
+                            <span class="badge bg-info text-white">{% trans "المنتجات" %}</span>
+                            {% elif activity.model == 'Sale' %}
+                            <span class="badge bg-success text-white">{% trans "المبيعات" %}</span>
+                            {% elif activity.model == 'Purchase' %}
+                            <span class="badge bg-warning text-dark">{% trans "المشتريات" %}</span>
+                            {% elif activity.model == 'Customer' %}
+                            <span class="badge bg-primary text-white">{% trans "العملاء" %}</span>
+                            {% elif activity.model == 'Supplier' %}
+                            <span class="badge bg-secondary text-white">{% trans "الموردين" %}</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ activity.model }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ activity.timestamp|date:"Y-m-d H:i:s" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center py-4">
+                            <div class="alert alert-info mb-0">
+                                <i class="fas fa-info-circle me-1"></i> {% trans "لا توجد نشاطات مسجلة لك حتى الآن." %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if activities.has_other_pages %}
+        <nav aria-label="{% trans 'تنقل الصفحات' %}" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if activities.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ activities.previous_page_number }}">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link"><i class="fas fa-angle-right"></i></span>
+                </li>
+                {% endif %}
+                
+                {% for i in activities.paginator.page_range %}
+                    {% if activities.number == i %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ i }}</span>
+                    </li>
+                    {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ i }}">{{ i }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if activities.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ activities.next_page_number }}">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link"><i class="fas fa-angle-left"></i></span>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Filter by activity type
+    document.addEventListener('DOMContentLoaded', function() {
+        const filterSelect = document.getElementById('filterType');
+        
+        filterSelect.addEventListener('change', function() {
+            const filterValue = this.value;
+            const rows = document.querySelectorAll('#activityTable tbody tr');
+            
+            rows.forEach(row => {
+                if (filterValue === 'all' || row.dataset.type === filterValue) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
