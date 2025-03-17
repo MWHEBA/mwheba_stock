@@ -20,6 +20,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
+    # Add crispy_forms before your custom apps
+    'crispy_forms',
+    'crispy_bootstrap5',
+    
+    # Your custom apps
     'accounts',
     'products',
     'customers',

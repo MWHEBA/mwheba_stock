@@ -12,7 +12,7 @@
     </div>
     <div class="card-body p-4">
         <div class="text-center mb-4">
-            <img src="/static/img/logo.png" alt="MWHEBA Stock" class="img-fluid" style="max-width: 150px;">
+            <img src="/static/img/logoo.png" alt="MWHEBA Stock" class="img-fluid" style="max-width: 150px;">
         </div>
 
         {% if form.errors %}
@@ -50,4 +50,27 @@
         </form>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --bs-primary: #01578a;
+        --bs-primary-rgb: 1, 87, 138;
+    }
+    
+    .btn-primary {
+        background-color: #01578a;
+        border-color: #01578a;
+    }
+    
+    .btn-primary:hover {
+        background-color: #014a75;
+        border-color: #014a75;
+    }
+    
+    .bg-primary {
+        background-color: #01578a !important;
+    }
+</style>
 {% endblock %}

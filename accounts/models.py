@@ -5,7 +5,7 @@ import random
 
 class User(AbstractUser):
     phone_number = models.CharField(_("رقم الهاتف"), max_length=20, blank=True, null=True)
-    address = models.TextField(_("العنوان"), blank=True, null=True)
+    address = models.CharField(max_length=255, blank=True)  # Add this line
     position = models.CharField(_("المسمى الوظيفي"), max_length=100, blank=True, null=True)
     image = models.ImageField(_("الصورة الشخصية"), upload_to='users/', blank=True, null=True)
     last_activity = models.DateTimeField(_("آخر نشاط"), blank=True, null=True)
@@ -38,7 +38,8 @@ class User(AbstractUser):
         verbose_name_plural = _("المستخدمين")
 
 
-class UserActivity(models.Model):
+class ActivityLog(models.Model):
+    """Log for user activities in the system"""
     ACTIVITY_CHOICES = (
         ('login', _('تسجيل دخول')),
         ('logout', _('تسجيل خروج')),
@@ -51,7 +52,7 @@ class UserActivity(models.Model):
     )
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_("المستخدم"))
-    activity_type = models.CharField(_("نوع النشاط"), max_length=20, choices=ACTIVITY_CHOICES)
+    activity_type = models.CharField(_("نوع النشاط"), max_length=20, choices=ACTIVITY_CHOICES, default='other')
     description = models.TextField(_("الوصف"))
     model_name = models.CharField(_("اسم الموديل"), max_length=100, blank=True, null=True)
     object_id = models.PositiveIntegerField(_("معرف الكائن"), blank=True, null=True)
@@ -63,8 +64,8 @@ class UserActivity(models.Model):
         return f"{self.user.username} - {self.get_activity_type_display()} - {self.timestamp}"
 
     class Meta:
-        verbose_name = _("نشاط المستخدم")
-        verbose_name_plural = _("أنشطة المستخدمين")
+        verbose_name = _("سجل النشاط")
+        verbose_name_plural = _("سجلات النشاط")
         ordering = ['-timestamp']
 
 

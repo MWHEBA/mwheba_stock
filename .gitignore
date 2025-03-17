@@ -5,6 +5,7 @@
 *.pyo
 __pycache__/
 local_settings.py
+*.sqlite3
 db.sqlite3
 db.sqlite3-journal
 *.db
