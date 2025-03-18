@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from django.utils.translation import gettext_lazy as _  # Add this import
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -94,17 +95,18 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # Internationalization
-LANGUAGE_CODE = 'en-us'  # Default language is English for system messages and admin
-TIME_ZONE = 'Africa/Cairo'  # Egyptian timezone
+LANGUAGE_CODE = 'en'  # Set default language to English for backend/admin
+TIME_ZONE = 'Africa/Cairo'
 USE_I18N = True
-USE_L10N = True  # Format dates, numbers, etc. according to locale
+USE_L10N = True
 USE_TZ = True
 
+# Define available languages
 LANGUAGES = [
-    ('en', 'English'),  # First language is the default for system
-    ('ar', 'Arabic'),   # Second language for UI translations
+    ('en', _('English')),  # Single language configuration keeps things simple
 ]
 
+# Location of translation files
 LOCALE_PATHS = [os.path.join(BASE_DIR, 'locale')]
 
 # Static files (CSS, JavaScript, Images)
