@@ -1,6 +1,7 @@
 <!-- filepath: c:\Users\UTD\MWHEBA_App\templates\dashboard\index.html -->
 {% extends 'base.html' %}
 {% load i18n %}
+{% load static %}
 
 {% block title %}لوحة التحكم - MWHEBA Stock{% endblock %}
 
@@ -280,6 +281,7 @@
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{% static 'js/dashboard.js' %}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // بيانات الرسم البياني - مصفوفات آمنة لضمان عدم حدوث أخطاء

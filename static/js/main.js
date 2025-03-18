@@ -4,10 +4,23 @@
 
 // Wait for DOM to be loaded
 document.addEventListener("DOMContentLoaded", function() {
+    // Initialize Bootstrap dropdowns
+    var dropdownElementList = [].slice.call(document.querySelectorAll('[data-bs-toggle="dropdown"]'))
+    var dropdownList = dropdownElementList.map(function (dropdownToggleEl) {
+        return new bootstrap.Dropdown(dropdownToggleEl)
+    });
+
     // Initialize tooltips
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Ensure all header dropdowns work properly
+    document.querySelectorAll('.header-right .dropdown-toggle').forEach(function(dropdown) {
+        dropdown.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
     });
     
     // Auto-hide alerts after 5 seconds
@@ -18,15 +31,6 @@ document.addEventListener("DOMContentLoaded", function() {
             bsAlert.close();
         });
     }, 5000);
-    
-    // Add confirmation to delete buttons
-    document.querySelectorAll('.btn-delete').forEach(button => {
-        button.addEventListener('click', function(e) {
-            if (!confirm('هل أنت متأكد أنك تريد حذف هذا العنصر؟')) {
-                e.preventDefault();
-            }
-        });
-    });
     
     // Handle live search inputs
     const searchInputs = document.querySelectorAll('.live-search');
@@ -56,6 +60,17 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         });
     });
+    
+    // Special handling for quick actions dropdown
+    const quickActionsDropdown = document.getElementById('quickActionsDropdown');
+    if (quickActionsDropdown) {
+        quickActionsDropdown.addEventListener('click', function(e) {
+            const dropdown = bootstrap.Dropdown.getInstance(quickActionsDropdown);
+            if (!dropdown) {
+                new bootstrap.Dropdown(quickActionsDropdown).toggle();
+            }
+        });
+    }
 });
 
 /**
