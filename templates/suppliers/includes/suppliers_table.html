@@ -1,0 +1,169 @@
+<!-- جدول الموردين -->
+<div class="card shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+        <h5 class="mb-0">
+            <i class="fas fa-truck text-primary me-2"></i>قائمة الموردين
+            <span class="badge bg-primary rounded-pill ms-2">{{ suppliers.count }}</span>
+        </h5>
+        <div class="d-flex align-items-center">
+            <label class="me-2 text-muted">عرض:</label>
+            <select id="show-entries" class="form-select form-select-sm" style="width: auto;">
+                <option value="10" {% if page_size == 10 %}selected{% endif %}>10</option>
+                <option value="25" {% if page_size == 25 %}selected{% endif %}>25</option>
+                <option value="50" {% if page_size == 50 %}selected{% endif %}>50</option>
+                <option value="100" {% if page_size == 100 %}selected{% endif %}>100</option>
+            </select>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-borderless align-middle">
+                <thead class="table-light text-secondary small">
+                    <tr>
+                        <th class="ps-4">المورد</th>
+                        <th>رقم الهاتف</th>
+                        <th>البريد الإلكتروني</th>
+                        <th>تصنيف</th>
+                        <th>المستحقات</th>
+                        <th class="text-center">الحالة</th>
+                        <th class="text-center">الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for supplier in suppliers %}
+                    <tr class="{% if forloop.counter|divisibleby:2 %}bg-light{% endif %}">
+                        <td class="ps-4">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <div class="avatar bg-{{ supplier.get_status_display_class }} text-white" style="width: 40px; height: 40px; font-size: 16px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                        {{ supplier.name|slice:":1"|upper }}
+                                    </div>
+                                </div>
+                                <div>
+                                    <a href="#" class="text-decoration-none fw-medium d-block view-supplier-btn" data-id="{{ supplier.id }}">
+                                        {{ supplier.name }}
+                                    </a>
+                                    <small class="text-muted">{{ supplier.code }}</small>
+                                </div>
+                                {% if supplier.is_preferred %}
+                                    <span class="ms-2 badge bg-warning text-dark"><i class="fas fa-star"></i></span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td dir="ltr" class="text-start">{{ supplier.phone|default:"--" }}</td>
+                        <td>
+                            {% if supplier.email %}
+                                <a href="mailto:{{ supplier.email }}" class="text-decoration-none text-muted">{{ supplier.email }}</a>
+                            {% else %}
+                                <span class="text-muted">--</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if supplier.category %}
+                                <span class="badge bg-{{ supplier.category.color_code }} px-2 py-1">{{ supplier.category.name }}</span>
+                            {% else %}
+                                <span class="text-muted">--</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if supplier.balance > 0 %}
+                                <span class="fw-bold text-danger">{{ supplier.balance|floatformat:2 }} ج.م</span>
+                            {% else %}
+                                <span class="text-success">0.00 ج.م</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if supplier.status == 'active' %}
+                                <span class="badge bg-success rounded-pill px-3">نشط</span>
+                            {% elif supplier.status == 'inactive' %}
+                                <span class="badge bg-warning text-dark rounded-pill px-3">غير نشط</span>
+                            {% else %}
+                                <span class="badge bg-danger rounded-pill px-3">محظور</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button type="button" class="btn btn-info view-supplier-btn" 
+                                    data-id="{{ supplier.id }}" title="عرض التفاصيل">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button type="button" class="btn btn-warning edit-supplier-btn" 
+                                    data-id="{{ supplier.id }}" title="تعديل">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button type="button" class="btn btn-danger" 
+                                    data-bs-toggle="modal" data-bs-target="#deleteSupplierModal"
+                                    data-id="{{ supplier.id }}" data-name="{{ supplier.name }}" title="حذف">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <div class="text-muted">
+                                <i class="fas fa-truck fa-3x mb-3 text-light"></i>
+                                <h5>لا يوجد موردين للعرض</h5>
+                                <p>قم بإضافة موردين جدد من خلال زر "إضافة مورد جديد"</p>
+                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSupplierModal">
+                                    <i class="fas fa-plus me-1"></i> إضافة مورد جديد
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- ترقيم الصفحات -->
+    {% if is_paginated %}
+    <div class="card-footer bg-white">
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center mb-0">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            <i class="fas fa-chevron-right me-1"></i> السابق
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">
+                            <i class="fas fa-chevron-right me-1"></i> السابق
+                        </span>
+                    </li>
+                {% endif %}
+                
+                {% for i in paginator.page_range %}
+                    {% if page_obj.number == i %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ i }}</span>
+                        </li>
+                    {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ i }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ i }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            التالي <i class="fas fa-chevron-left ms-1"></i>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">
+                            التالي <i class="fas fa-chevron-left ms-1"></i>
+                        </span>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>

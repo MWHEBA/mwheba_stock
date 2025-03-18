@@ -1,0 +1,64 @@
+<!-- مودال تسجيل دفعة للمورد -->
+<div class="modal fade" id="recordPaymentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="fas fa-hand-holding-usd me-2"></i> تسجيل دفعة للمورد</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form action="{% url 'supplier-payment' supplier.id %}" method="post" id="supplier-payment-form">
+                    {% csrf_token %}
+                    <div class="alert alert-info">
+                        <div class="d-flex">
+                            <div class="me-2"><i class="fas fa-info-circle"></i></div>
+                            <div>تستطيع تسجيل دفعة بمبلغ حتى {{ supplier.balance|floatformat:2 }} ج.م</div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">المبلغ <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <input type="number" name="amount" class="form-control" step="0.01" min="0.01" max="{{ supplier.balance }}" value="{{ supplier.balance }}" required>
+                            <span class="input-group-text">ج.م</span>
+                        </div>
+                        <div class="form-text">يمكنك تغيير المبلغ إذا كانت الدفعة جزئية</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">طريقة الدفع <span class="text-danger">*</span></label>
+                        <select name="payment_method" class="form-select" required>
+                            <option value="cash" selected>نقدي</option>
+                            <option value="bank_transfer">تحويل بنكي</option>
+                            <option value="check">شيك</option>
+                            <option value="electronic">دفع إلكتروني</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">أمر الشراء المرتبط</label>
+                        <select name="purchase_id" class="form-select">
+                            <option value="">-- غير مرتبط بأمر شراء محدد --</option>
+                            {% for purchase in unpaid_purchases %}
+                                <option value="{{ purchase.id }}">#{{ purchase.id }} ({{ purchase.purchase_date|date:"Y-m-d" }}) - المتبقي: {{ purchase.due_amount|floatformat:2 }} ج.م</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">رقم المرجع</label>
+                        <input type="text" name="reference_number" class="form-control" placeholder="رقم الشيك، التحويل البنكي، الخ">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">ملاحظات</label>
+                        <textarea name="notes" class="form-control" rows="2" placeholder="تفاصيل إضافية عن الدفعة"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i> إلغاء
+                </button>
+                <button type="submit" form="supplier-payment-form" class="btn btn-success">
+                    <i class="fas fa-save me-1"></i> تسجيل الدفعة
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

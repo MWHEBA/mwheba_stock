@@ -1,0 +1,38 @@
+<!-- مودال حذف المورد -->
+<div class="modal fade" id="deleteSupplierModal" tabindex="-1" aria-labelledby="deleteSupplierModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteSupplierModalLabel">
+                    <i class="fas fa-trash me-2"></i> حذف مورد
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="text-center mb-4">
+                    <i class="fas fa-exclamation-triangle text-danger fa-4x mb-3"></i>
+                    <h4 class="text-danger">هل أنت متأكد من حذف هذا المورد؟</h4>
+                    <p class="text-muted">سيتم حذف "<span id="supplierNameToDelete" class="fw-bold"></span>" نهائياً مع كل البيانات المرتبطة به.</p>
+                </div>
+                
+                <div class="alert alert-warning">
+                    <i class="fas fa-info-circle me-2"></i> 
+                    <strong>تحذير:</strong> لا يمكن استرجاع البيانات بعد الحذف!
+                </div>
+                
+                <form id="deleteSupplierForm" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="supplier_id" id="supplierIdToDelete">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i> إلغاء
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteSupplier">
+                    <i class="fas fa-trash-alt me-1"></i> حذف
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

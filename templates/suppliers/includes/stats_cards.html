@@ -1,0 +1,55 @@
+<!-- بطاقات إحصائيات الموردين -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card shadow-sm h-100 border-primary" style="background-color: #01578a1f !important;">
+            <div class="card-body text-center">
+                <div class="d-flex align-items-center justify-content-center mb-2">
+                    <div class="rounded-circle bg-opacity-10 p-2" style="background-color: #0157891a !important;">
+                        <i class="fas fa-truck fs-4 text-primary"></i>
+                    </div>
+                </div>
+                <h3 class="fs-3 fw-bold text-primary">{{ total_suppliers }}</h3>
+                <p class="mb-0 text-muted small">إجمالي الموردين</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card shadow-sm h-100 border-success">
+            <div class="card-body text-center">
+                <div class="d-flex align-items-center justify-content-center mb-2">
+                    <div class="rounded-circle bg-success bg-opacity-10 p-2">
+                        <i class="fas fa-check-circle fs-4 text-success"></i>
+                    </div>
+                </div>
+                <h3 class="fs-3 fw-bold text-success">{{ active_suppliers }}</h3>
+                <p class="mb-0 text-muted small">موردين نشطين</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card shadow-sm h-100 border-info">
+            <div class="card-body text-center">
+                <div class="d-flex align-items-center justify-content-center mb-2">
+                    <div class="rounded-circle bg-info bg-opacity-10 p-2">
+                        <i class="fas fa-shopping-basket fs-4 text-info"></i>
+                    </div>
+                </div>
+                <h3 class="fs-3 fw-bold text-info">{{ total_purchases|floatformat:0 }}</h3>
+                <p class="mb-0 text-muted small">إجمالي المشتريات (ج.م)</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card shadow-sm h-100 border-danger">
+            <div class="card-body text-center">
+                <div class="d-flex align-items-center justify-content-center mb-2">
+                    <div class="rounded-circle bg-danger bg-opacity-10 p-2">
+                        <i class="fas fa-money-bill-wave fs-4 text-danger"></i>
+                    </div>
+                </div>
+                <h3 class="fs-3 fw-bold text-danger">{{ total_balance|floatformat:0 }}</h3>
+                <p class="mb-0 text-muted small">مستحقات الموردين (ج.م)</p>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,326 @@
+{% load custom_filters %}
+
+<!-- بطاقة تفاصيل المورد -->
+<div class="modal-header bg-white px-4 py-3 border-0">
+    <div class="d-flex align-items-center">
+        <div class="avatar bg-{{ supplier.get_status_display_class }}-subtle rounded-3 text-{{ supplier.get_status_display_class }} me-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 24px;">
+            <i class="fas fa-truck"></i>
+        </div>
+        <div>
+            <h5 class="modal-title fw-bold mb-1">
+                {{ supplier.name }}
+                {% if supplier.is_preferred %}
+                    <span class="badge bg-warning text-dark rounded-pill ms-2">
+                        <i class="fas fa-star me-1"></i> مورد مفضل
+                    </span>
+                {% endif %}
+            </h5>
+            <p class="text-muted mb-0 small">{{ supplier.code }}</p>
+        </div>
+    </div>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+
+<div class="modal-body px-4 py-3">
+    <div class="row g-4">
+        <!-- بطاقة تصنيف المورد -->
+        <div class="col-12">
+            <div class="d-flex flex-wrap">
+                {% if supplier.status == 'active' %}
+                    <span class="badge bg-success-subtle text-success rounded-pill px-3 py-2 me-2 mb-2">
+                        <i class="fas fa-check-circle me-1"></i> نشط
+                    </span>
+                {% elif supplier.status == 'inactive' %}
+                    <span class="badge bg-warning-subtle text-warning rounded-pill px-3 py-2 me-2 mb-2">
+                        <i class="fas fa-exclamation-circle me-1"></i> غير نشط
+                    </span>
+                {% else %}
+                    <span class="badge bg-danger-subtle text-danger rounded-pill px-3 py-2 me-2 mb-2">
+                        <i class="fas fa-ban me-1"></i> محظور
+                    </span>
+                {% endif %}
+                
+                {% if supplier.category %}
+                    <span class="badge bg-{{ supplier.category.color_code }}-subtle text-{{ supplier.category.color_code }} rounded-pill px-3 py-2 me-2 mb-2">
+                        <i class="fas fa-tag me-1"></i> {{ supplier.category.name }}
+                    </span>
+                {% endif %}
+                
+                {% if supplier.last_purchase_date %}
+                    <span class="badge bg-info-subtle text-info rounded-pill px-3 py-2 me-2 mb-2">
+                        <i class="fas fa-calendar-alt me-1"></i> آخر معاملة: {{ supplier.last_purchase_date|date:"Y-m-d" }}
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- بطاقة المعلومات الأساسية -->
+        <div class="col-md-6">
+            <div class="card border-0 h-100 shadow-sm">
+                <div class="card-header bg-light py-3">
+                    <h6 class="card-title mb-0 fw-semibold">
+                        <i class="fas fa-info-circle text-primary me-2"></i> معلومات المورد
+                    </h6>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item border-0 py-3 px-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-phone text-primary me-3"></i>
+                                    <span>رقم الهاتف</span>
+                                </div>
+                                <div dir="ltr">
+                                    {% if supplier.phone %}
+                                        <a href="tel:{{ supplier.phone }}" class="text-decoration-none">
+                                            {{ supplier.phone }}
+                                        </a>
+                                    {% else %}
+                                        <span class="text-muted">--</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </li>
+                        <li class="list-group-item border-0 py-3 px-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-envelope text-primary me-3"></i>
+                                    <span>البريد الإلكتروني</span>
+                                </div>
+                                <div>
+                                    {% if supplier.email %}
+                                        <a href="mailto:{{ supplier.email }}" class="text-decoration-none">{{ supplier.email }}</a>
+                                    {% else %}
+                                        <span class="text-muted">--</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </li>
+                        <li class="list-group-item border-0 py-3 px-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-map-marker-alt text-primary me-3"></i>
+                                    <span>العنوان</span>
+                                </div>
+                                <div>{{ supplier.address|default:"--" }}</div>
+                            </div>
+                        </li>
+                        {% if supplier.tax_number %}
+                        <li class="list-group-item border-0 py-3 px-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-file-invoice text-primary me-3"></i>
+                                    <span>الرقم الضريبي</span>
+                                </div>
+                                <div>{{ supplier.tax_number }}</div>
+                            </div>
+                        </li>
+                        {% endif %}
+                        <li class="list-group-item border-0 py-3 px-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-calendar-plus text-primary me-3"></i>
+                                    <span>تاريخ الإضافة</span>
+                                </div>
+                                <div>{{ supplier.created_at|date:"Y-m-d" }}</div>
+                            </div>
+                        </li>
+                        {% if supplier.payment_terms %}
+                        <li class="list-group-item border-0 py-3 px-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-money-check-alt text-primary me-3"></i>
+                                    <span>شروط الدفع</span>
+                                </div>
+                                <div>{{ supplier.payment_terms }}</div>
+                            </div>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- بطاقة الملخص المالي -->
+        <div class="col-md-6">
+            <div class="card border-0 h-100 shadow-sm">
+                <div class="card-header bg-light py-3">
+                    <h6 class="card-title mb-0 fw-semibold">
+                        <i class="fas fa-money-check-alt text-success me-2"></i> الملخص المالي
+                    </h6>
+                </div>
+                <div class="card-body p-0">
+                    <!-- المستحقات وحد الائتمان -->
+                    <div class="px-4 pt-4 pb-3 border-bottom">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted">المستحقات للمورد</span>
+                            <span class="fw-bold fs-5 {% if supplier.balance > 0 %}text-danger{% else %}text-success{% endif %}">
+                                {{ supplier.balance|floatformat:2 }} ج.م
+                            </span>
+                        </div>
+                        {% if supplier.credit_limit > 0 %}
+                        <div class="d-flex justify-content-between align-items-center mb-2 small">
+                            <span class="text-muted">حد الائتمان</span>
+                            <span>{{ supplier.credit_limit|floatformat:2 }} ج.م</span>
+                        </div>
+                        <div class="progress mb-2" style="height: 8px;">
+                            <div class="progress-bar
+                                {% if supplier.balance > supplier.credit_limit %}
+                                    bg-danger
+                                {% elif supplier.balance > supplier.credit_limit|multiply:0.8 %}
+                                    bg-warning
+                                {% else %}
+                                    bg-success
+                                {% endif %}" 
+                                 role="progressbar" 
+                                 style="width: {% if supplier.balance > supplier.credit_limit %}100{% else %}{{ supplier.balance|percentage:supplier.credit_limit|floatformat:0 }}{% endif %}%" 
+                                 aria-valuenow="{{ supplier.balance }}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="{{ supplier.credit_limit }}">
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between small">
+                            <span class="text-muted">0</span>
+                            <span class="text-muted">{{ supplier.credit_limit|floatformat:2 }} ج.م</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- بيانات مالية إضافية -->
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item border-0 py-3 px-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-chart-line text-success me-3"></i>
+                                    <span>إجمالي المشتريات</span>
+                                </div>
+                                <div class="fw-semibold">{{ supplier.total_purchases|floatformat:2 }} ج.م</div>
+                            </div>
+                        </li>
+                        <li class="list-group-item border-0 py-3 px-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-shopping-cart text-primary me-3"></i>
+                                    <span>عدد أوامر الشراء</span>
+                                </div>
+                                <div>{{ purchases_count|default:"0" }}</div>
+                            </div>
+                        </li>
+                        <li class="list-group-item border-0 py-3 px-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-box text-primary me-3"></i>
+                                    <span>عدد الأصناف المختلفة</span>
+                                </div>
+                                <div>{{ unique_products|default:"0" }}</div>
+                            </div>
+                        </li>
+                        <li class="list-group-item border-0 py-3 px-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-calendar-day text-primary me-3"></i>
+                                    <span>متوسط مدة التوريد</span>
+                                </div>
+                                <div>{{ delivery_time|default:"--" }} يوم</div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                {% if supplier.balance > 0 %}
+                <div class="card-footer bg-white">
+                    <button type="button" class="btn btn-success w-100" data-bs-toggle="modal" data-bs-target="#recordPaymentModal">
+                        <i class="fas fa-hand-holding-usd me-1"></i> تسجيل دفعة جديدة
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- آخر المشتريات -->
+        {% if purchases %}
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light py-3">
+                    <h6 class="card-title mb-0 fw-semibold">
+                        <i class="fas fa-shopping-basket text-primary me-2"></i> آخر المشتريات
+                    </h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>رقم الطلب</th>
+                                    <th>التاريخ</th>
+                                    <th>المبلغ</th>
+                                    <th>المدفوع</th>
+                                    <th>المستحق</th>
+                                    <th>الحالة</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for purchase in purchases|slice:":3" %}
+                                    <tr>
+                                        <td class="fw-medium">#{{ purchase.id }}</td>
+                                        <td>{{ purchase.purchase_date|date:"Y-m-d" }}</td>
+                                        <td>{{ purchase.total_amount|floatformat:2 }} ج.م</td>
+                                        <td>{{ purchase.paid_amount|floatformat:2 }} ج.م</td>
+                                        <td class="{% if purchase.due_amount > 0 %}text-danger{% else %}text-success{% endif %} fw-medium">
+                                            {{ purchase.due_amount|floatformat:2 }} ج.م
+                                        </td>
+                                        <td>
+                                            {% if purchase.status == 'completed' %}
+                                                <span class="badge bg-success">مكتمل</span>
+                                            {% elif purchase.status == 'pending' %}
+                                                <span class="badge bg-warning text-dark">قيد الانتظار</span>
+                                            {% elif purchase.status == 'cancelled' %}
+                                                <span class="badge bg-danger">ملغي</span>
+                                            {% else %}
+                                                <span class="badge bg-info">قيد التنفيذ</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- ملاحظات المورد -->
+        {% if supplier.notes %}
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light py-3">
+                    <h6 class="card-title mb-0 fw-semibold">
+                        <i class="fas fa-sticky-note text-warning me-2"></i> ملاحظات
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="p-3 bg-light rounded">
+                        {{ supplier.notes|linebreaks }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="modal-footer px-4 py-3 border-0">
+    <div class="d-flex flex-wrap justify-content-between w-100">
+        <div>
+            <a href="{% url 'supplier-detail' supplier.id %}" class="btn btn-primary">
+                <i class="fas fa-external-link-alt me-1"></i> فتح في صفحة كاملة
+            </a>
+            {% if supplier.balance > 0 %}
+            <button type="button" class="btn btn-success" id="recordPaymentBtn" data-id="{{ supplier.id }}">
+                <i class="fas fa-hand-holding-usd me-1"></i> تسجيل دفعة
+            </button>
+            {% endif %}
+        </div>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">إغلاق</button>
+    </div>
+</div>

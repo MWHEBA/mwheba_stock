@@ -1,4 +1,4 @@
-<!-- بطاقة البحث والتصفية -->
+<!-- قسم البحث والتصفية -->
 <div class="collapse mb-3 {% if search_query or category or status %}show{% endif %}" id="searchCollapse">
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-white py-3">
@@ -36,9 +36,9 @@
                 <div class="col-md-4">
                     <label for="payment-status" class="form-label">حالة السداد</label>
                     <select name="payment_status" id="payment-status" class="form-select">
-                        <option value="">جميع العملاء</option>
-                        <option value="with_debts" {% if payment_status == 'with_debts' %}selected{% endif %}>عليهم مديونية</option>
-                        <option value="no_debts" {% if payment_status == 'no_debts' %}selected{% endif %}>بدون مديونية</option>
+                        <option value="">جميع الموردين</option>
+                        <option value="with_debts" {% if payment_status == 'with_debts' %}selected{% endif %}>لهم مستحقات</option>
+                        <option value="no_debts" {% if payment_status == 'no_debts' %}selected{% endif %}>بدون مستحقات</option>
                     </select>
                 </div>
                 
@@ -49,8 +49,8 @@
                         <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>الأقدم أولاً</option>
                         <option value="name" {% if sort_by == 'name' %}selected{% endif %}>الاسم (أ-ي)</option>
                         <option value="-name" {% if sort_by == '-name' %}selected{% endif %}>الاسم (ي-أ)</option>
-                        <option value="-total_sales" {% if sort_by == '-total_sales' %}selected{% endif %}>الأكثر مبيعات</option>
-                        <option value="-debt" {% if sort_by == '-debt' %}selected{% endif %}>الأعلى مديونية</option>
+                        <option value="-total_purchases" {% if sort_by == '-total_purchases' %}selected{% endif %}>الأكثر مشتريات</option>
+                        <option value="-balance" {% if sort_by == '-balance' %}selected{% endif %}>الأعلى مستحقات</option>
                     </select>
                 </div>
                 
@@ -59,7 +59,7 @@
                         <button type="submit" class="btn btn-primary me-md-2">
                             <i class="fas fa-search me-1"></i> بحث
                         </button>
-                        <a href="{% url 'customer-list' %}" class="btn btn-outline-secondary">
+                        <a href="{% url 'supplier-list' %}" class="btn btn-outline-secondary">
                             <i class="fas fa-times me-1"></i> إلغاء التصفية
                         </a>
                     </div>
