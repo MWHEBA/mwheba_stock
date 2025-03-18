@@ -15,7 +15,7 @@ urlpatterns = [
     path('categories/<int:pk>/delete/', views.customer_category_delete, name='customer-category-delete'),
     
     # إعادة إضافة المسار لعمل AJAX
-    path('categories/create-ajax/', views.customer_category_create, name='category-create-ajax'),
+    path('categories/create-ajax/', views.category_create_ajax, name='category-create-ajax'),
     
     # مسارات إضافية للمودالات
     path('<int:pk>/get-data/', views.get_customer_data, name='get-customer-data'),

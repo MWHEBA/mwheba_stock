@@ -1,155 +1,134 @@
 <!-- filepath: c:\Users\UTD\MWHEBA_App\templates\customers\includes\modals\add_modal.html -->
 <!-- مودال إضافة عميل جديد -->
 <div class="modal fade" id="addCustomerModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content border-0 shadow">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0">
             <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title d-flex align-items-center">
+                <h5 class="modal-title" id="addCustomerModalLabel">
                     <i class="fas fa-plus-circle me-2"></i> إضافة عميل جديد
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
-                <form id="addCustomerForm" action="{% url 'customer-create' %}" method="post" class="needs-validation" novalidate>
+                <form id="addCustomerForm" method="post" action="{% url 'customer-create' %}">
                     {% csrf_token %}
                     <input type="hidden" name="is_ajax" value="1">
                     
-                    <div class="alert alert-info mb-4">
-                        <div class="d-flex">
-                            <div class="me-3">
-                                <i class="fas fa-info-circle fs-4 text-info mt-1"></i>
-                            </div>
-                            <div>
-                                <p class="mb-0">قم بإدخال بيانات العميل بشكل صحيح، البيانات المميزة بـ <span class="text-danger">*</span> مطلوبة.</p>
-                            </div>
+                    <!-- القسم الأول: بيانات العميل الأساسية -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="id_name" class="form-label">اسم العميل <span class="text-danger">*</span></label>
+                            <input type="text" name="name" id="id_name" class="form-control" required>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="id_phone" class="form-label">رقم الهاتف</label>
+                            <input type="tel" name="phone" id="id_phone" class="form-control" dir="ltr">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="id_email" class="form-label">البريد الإلكتروني</label>
+                            <input type="email" name="email" id="id_email" class="form-control" dir="ltr">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="id_address" class="form-label">العنوان</label>
+                            <input type="text" name="address" id="id_address" class="form-control">
                         </div>
                     </div>
                     
-                    <div class="row g-3">
-                        <!-- اسم العميل -->
+                    <!-- القسم الثاني: معلومات إضافية -->
+                    <div class="row mt-3">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label fw-medium">اسم العميل <span class="text-danger">*</span></label>
+                            <label for="id_category" class="form-label">التصنيف</label>
                             <div class="input-group">
-                                <span class="input-group-text bg-light"><i class="fas fa-user text-primary"></i></span>
-                                <input type="text" name="name" class="form-control" placeholder="أدخل اسم العميل" required>
-                            </div>
-                            <div class="invalid-feedback">يرجى إدخال اسم العميل</div>
-                        </div>
-                        
-                        <!-- كود العميل -->
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-medium">كود العميل</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light"><i class="fas fa-barcode text-primary"></i></span>
-                                <input type="text" name="code" class="form-control" placeholder="سيتم توليده تلقائياً إذا تركته فارغاً">
-                            </div>
-                            <div class="form-text small">يمكنك تخصيص كود العميل أو تركه فارغاً ليتم توليده تلقائياً</div>
-                        </div>
-                        
-                        <!-- رقم الهاتف -->
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-medium">رقم الهاتف <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light"><i class="fas fa-phone text-primary"></i></span>
-                                <input type="text" name="phone" class="form-control phone-input" placeholder="مثال: 01234567890" dir="ltr" required>
-                            </div>
-                            <div class="invalid-feedback">يرجى إدخال رقم هاتف صحيح</div>
-                        </div>
-                        
-                        <!-- البريد الإلكتروني -->
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-medium">البريد الإلكتروني</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light"><i class="fas fa-envelope text-primary"></i></span>
-                                <input type="email" name="email" class="form-control" placeholder="example@domain.com" dir="ltr">
-                            </div>
-                            <div class="form-text">اختياري: أدخل البريد الإلكتروني للعميل إذا كان متاحًا</div>
-                        </div>
-                        
-                        <!-- العنوان -->
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-medium">العنوان</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light"><i class="fas fa-map-marker-alt text-primary"></i></span>
-                                <input type="text" name="address" class="form-control" placeholder="أدخل عنوان العميل">
-                            </div>
-                        </div>
-                        
-                        <div class="col-12"><hr class="text-muted my-2"></div>
-                        
-                        <!-- حد الائتمان -->
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-medium">حد الائتمان</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light"><i class="fas fa-credit-card text-primary"></i></span>
-                                <input type="number" name="credit_limit" class="form-control" value="0" min="0" step="0.01">
-                                <span class="input-group-text">ج.م</span>
-                            </div>
-                            <div class="form-text">القيمة 0 تعني أن حد الائتمان غير محدود</div>
-                        </div>
-                        
-                        <!-- تصنيف العميل -->
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-medium">تصنيف العميل</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light"><i class="fas fa-tag text-primary"></i></span>
-                                <select name="category" class="form-select">
-                                    <option value="">-- بدون تصنيف --</option>
+                                <select name="category" id="id_category" class="form-select">
+                                    <option value="">بدون تصنيف</option>
                                     {% for category in categories %}
-                                    <option value="{{ category.id }}">{{ category.name }}</option>
+                                        <option value="{{ category.id }}">{{ category.name }}</option>
                                     {% endfor %}
                                 </select>
-                                <button type="button" class="btn btn-outline-secondary" title="إضافة تصنيف جديد">
+                                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
                                     <i class="fas fa-plus"></i>
                                 </button>
                             </div>
                         </div>
                         
-                        <!-- حالة العميل -->
                         <div class="col-md-6 mb-3">
-                            <label class="form-label fw-medium">حالة العميل <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light"><i class="fas fa-toggle-on text-primary"></i></span>
-                                <select name="status" class="form-select" required>
-                                    <option value="active" selected>نشط</option>
-                                    <option value="inactive">غير نشط</option>
-                                    <option value="blocked">محظور</option>
-                                </select>
-                            </div>
-                            <div class="invalid-feedback">يرجى اختيار حالة العميل</div>
+                            <label for="id_status" class="form-label">الحالة</label>
+                            <select name="status" id="id_status" class="form-select">
+                                <option value="active" selected>نشط</option>
+                                <option value="inactive">غير نشط</option>
+                                <option value="blocked">محظور</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="id_credit_limit" class="form-label">حد الائتمان (ج.م)</label>
+                            <input type="number" name="credit_limit" id="id_credit_limit" class="form-control" min="0" step="0.01" value="0">
+                            <div class="form-text">0 = غير محدود</div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="id_tax_number" class="form-label">الرقم الضريبي</label>
+                            <input type="text" name="tax_number" id="id_tax_number" class="form-control">
+                        </div>
+                        
+                        <div class="col-12 mb-3">
+                            <label for="id_notes" class="form-label">ملاحظات</label>
+                            <textarea name="notes" id="id_notes" rows="3" class="form-control"></textarea>
                         </div>
                     </div>
                 </form>
             </div>
-            <div class="modal-footer bg-light">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-1"></i> إلغاء
-                </button>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
                 <button type="button" class="btn btn-primary" id="saveCustomerBtn">
-                    <i class="fas fa-save me-1"></i> حفظ البيانات
+                    <i class="fas fa-save me-1"></i> حفظ
                 </button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- ابحث عن أي استدعاء للمسار category-create-ajax واستبدله بـ customer-category-create -->
-<script>
-    // مثال على التغيير الذي قد تحتاج إلى إجرائه:
-    // من:
-    // url: "{% url 'category-create-ajax' %}"
-    // إلى:
-    url: "{% url 'customer-category-create' %}"
-</script>
-
-
-
-
-
-
-
-{% endfor %}  {% endif %}    // استخدام "in" الإنجليزية وليس "في" العربية  {% if field.name in required_fields %}{% for field in form %}// تغيير أي عبارات تستخدم كلمة "في" العربية إلى "in" الإنجليزية
-<!-- تأكد من استخدام in بدلاً من في -->
-{% if field_name in fields %}
-  // محتوى الشرط  
-{% endif %}
+<!-- مودال إضافة تصنيف جديد -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-tag me-2"></i> إضافة تصنيف جديد
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="addCategoryForm">
+                    <div class="mb-3">
+                        <label for="category_name" class="form-label">اسم التصنيف <span class="text-danger">*</span></label>
+                        <input type="text" id="category_name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="category_color" class="form-label">اللون</label>
+                        <select id="category_color" class="form-select">
+                            <option value="primary">أزرق</option>
+                            <option value="success">أخضر</option>
+                            <option value="danger">أحمر</option>
+                            <option value="warning">برتقالي</option>
+                            <option value="info">سماوي</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="category_description" class="form-label">الوصف</label>
+                        <textarea id="category_description" class="form-control" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" id="saveCategoryBtn">
+                    <i class="fas fa-save me-1"></i> حفظ
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

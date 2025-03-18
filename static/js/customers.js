@@ -391,3 +391,10 @@ function updatePaymentSummary() {
 // const url = '/customers/categories/create-ajax/';
 // إلى:
 const url = '/customers/categories/create/';
+
+// استبدال مسار category-create-ajax بالمسار customer-category-create
+// تأكد من تحويل هذا الجزء من الكود 
+
+fetch('{% url "customer-category-create" %}', {
+    // ... كود موجود
+})

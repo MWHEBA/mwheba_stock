@@ -1,9 +1,14 @@
 {% extends 'base.html' %}
 {% load i18n %}
 {% load crispy_forms_tags %}
+{% load static %}
 
 {% block title %}
     {% if customer %}تعديل عميل - {{ customer.name }}{% else %}إضافة عميل جديد{% endif %} - MWHEBA Stock
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/form-wizard.css' %}">
 {% endblock %}
 
 {% block page_header %}
@@ -246,11 +251,11 @@
                             <i class="fas fa-check-circle text-success mt-1 me-2"></i>
                             <div>استخدم رقم هاتف دقيق وصحيح للتواصل مع العميل.</div>
                         </li>
-                        <li class="mb-2 د-flex">
+                        <li class="mb-2 d-flex">
                             <i class="fas fa-check-circle text-success mt-1 me-2"></i>
                             <div>يمكنك تعيين حد ائتمان للعميل لمراقبة المديونية.</div>
                         </li>
-                        <li class="mb-2 د-flex">
+                        <li class="mb-2 d-flex">
                             <i class="fas fa-check-circle text-success mt-1 me-2"></i>
                             <div>استخدم خانة الملاحظات لتسجيل أي معلومات خاصة بالعميل.</div>
                         </li>
@@ -272,17 +277,17 @@
                             <span>إجمالي المبيعات:</span>
                             <span class="fw-bold text-success">{{ customer.total_sales|floatformat:2 }} ج.م</span>
                         </li>
-                        <li class="list-group-item د-flex justify-content-between px-0">
+                        <li class="list-group-item d-flex justify-content-between px-0">
                             <span>المديونية الحالية:</span>
                             <span class="fw-bold {% if customer.debt > 0 %}text-danger{% else %}text-success{% endif %}">
                                 {{ customer.debt|floatformat:2 }} ج.م
                             </span>
                         </li>
-                        <li class="list-group-item د-flex justify-content-between px-0">
+                        <li class="list-group-item d-flex justify-content-between px-0">
                             <span>نقاط الولاء:</span>
                             <span class="fw-bold">{{ customer.points }}</span>
                         </li>
-                        <li class="list-group-item د-flex justify-content-between px-0">
+                        <li class="list-group-item d-flex justify-content-between px-0">
                             <span>آخر معاملة:</span>
                             <span>{{ customer.last_purchase_date|date:"Y-m-d"|default:"--" }}</span>
                         </li>

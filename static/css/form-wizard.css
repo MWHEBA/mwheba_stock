@@ -1,0 +1,113 @@
+/* نظام المعالج متعدد الخطوات */
+.form-wizard-steps {
+    display: flex;
+    padding: 0;
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+.form-wizard-steps::before {
+    content: '';
+    position: absolute;
+    top: 24px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: #dee2e6;
+    z-index: 0;
+}
+
+.form-wizard-steps-list {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+.form-wizard-step {
+    flex: 1;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+}
+
+.form-wizard-step-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: #f8f9fa;
+    border: 2px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 10px;
+    font-size: 1.25rem;
+    transition: all 0.3s ease;
+}
+
+.form-wizard-step-text {
+    font-size: 14px;
+    color: #6c757d;
+    transition: all 0.3s ease;
+}
+
+.form-wizard-step.active .form-wizard-step-icon {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    color: white;
+}
+
+.form-wizard-step.active .form-wizard-step-text {
+    color: #0d6efd;
+    font-weight: 600;
+}
+
+.form-wizard-step.completed .form-wizard-step-icon {
+    background-color: #198754;
+    border-color: #198754;
+    color: white;
+}
+
+.form-wizard-step.completed .form-wizard-step-text {
+    color: #198754;
+}
+
+.form-wizard-panel {
+    display: none;
+}
+
+.form-wizard-panel.active {
+    display: block;
+}
+
+.wizard-panel-header {
+    margin-bottom: 1.5rem;
+}
+
+/* تنسيق اختيار اللون */
+.color-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.color-label {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 2px solid transparent;
+}
+
+.form-check-input:checked + .color-label {
+    transform: scale(1.2);
+    border-color: #fff;
+    box-shadow: 0 0 0 2px #0d6efd;
+}
+
+.form-check-input[type="radio"] {
+    display: none;
+}

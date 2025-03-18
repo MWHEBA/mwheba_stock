@@ -15,9 +15,9 @@
                     <label for="category-select" class="form-label">التصنيف</label>
                     <select name="category" id="category-select" class="form-select">
                         <option value="">جميع التصنيفات</option>
-                        {% for category in categories %}
-                            <option value="{{ category.id }}" {% if category.id|stringformat:"i" == category_id %}selected{% endif %}>
-                                {{ category.name }}
+                        {% for category_item in categories %}
+                            <option value="{{ category_item.id }}" {% if category_item.id|stringformat:"i" == category_id %}selected{% endif %}>
+                                {{ category_item.name }}
                             </option>
                         {% endfor %}
                     </select>

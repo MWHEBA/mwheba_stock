@@ -45,6 +45,31 @@
     font-size: 16px;
 }
 
+/* تنسيق الأفاتار الدائرية */
+.avatar-circle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+/* تنسيق الأفاتار بألوان مختلفة حسب حالة العميل */
+.bg-active {
+    background-color: #28a745;
+}
+
+.bg-inactive {
+    background-color: #ffc107;
+}
+
+.bg-blocked {
+    background-color: #dc3545;
+}
+
 /* تحسين مظهر رسائل النظام */
 .alert {
     border-radius: 8px;

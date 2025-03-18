@@ -2,6 +2,7 @@
 {% load i18n %}
 {% load static %}
 {% load custom_filters %}
+{% load pagination_tags %}
 
 {% block title %}قائمة العملاء - MWHEBA Stock{% endblock %}
 
@@ -51,24 +52,10 @@
 </div>
 
 <!-- المودالات -->
-<div class="modal fade" id="viewCustomerModal" tabindex="-1" aria-labelledby="viewCustomerModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content border-0">
-            <!-- محتوى المودال سيتم تحميله بشكل دايناميكي -->
-            <div class="modal-body p-0">
-                <div class="d-flex justify-content-center p-5">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">جاري التحميل...</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
 {% include 'customers/includes/modals/add_modal.html' %}
-{% include 'customers/includes/modals/edit_modal.html' %}
 {% include 'customers/includes/modals/delete_modal.html' %}
+{% include 'customers/includes/modals/view_modal.html' %}
+{% include 'customers/includes/modals/edit_modal.html' %}
 
 <!-- مودال تسجيل دفعة جديدة (يتم تحميله ديناميكياً) -->
 <div class="modal fade" id="recordPaymentModal" tabindex="-1" aria-hidden="true">
@@ -88,7 +75,6 @@
         </div>
     </div>
 </div>
-
 {% endblock %}
 
 {% block extra_js %}

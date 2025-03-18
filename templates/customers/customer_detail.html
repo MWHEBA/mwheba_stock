@@ -248,7 +248,7 @@
                                         {{ customer.debt|floatformat:2 }} ج.م
                                     </span>
                                 </div>
-                                <div class="d-flex justify-content بين align-items-center mb-2">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
                                     <span>حد الائتمان:</span>
                                     <span>{{ customer.credit_limit|floatformat:2 }} ج.م</span>
                                 </div>
@@ -277,22 +277,22 @@
                             </div>
                             <ul class="list-group list-group-flush">
                                 <!-- إجمالي المبيعات -->
-                                <li class="list-group-item d-flex justify-content بين px-0">
+                                <li class="list-group-item d-flex justify-content-between px-0">
                                     <span><i class="fas fa-chart-line text-success me-2"></i> إجمالي المبيعات:</span>
                                     <span class="text-success fw-medium">{{ customer.total_sales|floatformat:2 }} ج.م</span>
                                 </li>
                                 <!-- عدد المبيعات -->
-                                <li class="list-group-item d-flex justify-content بين px-0">
+                                <li class="list-group-item d-flex justify-content-between px-0">
                                     <span><i class="fas fa-shopping-cart text-primary me-2"></i> عدد الفواتير:</span>
                                     <span>{{ sales_count }}</span>
                                 </li>
                                 <!-- عدد المنتجات المشتراة -->
-                                <li class="list-group-item d-flex justify-content بين px-0">
+                                <li class="list-group-item d-flex justify-content-between px-0">
                                     <span><i class="fas fa-box text-primary me-2"></i> عدد المنتجات المشتراة:</span>
                                     <span>{{ sales_items_count|default:"0" }}</span>
                                 </li>
                                 <!-- نقاط الولاء -->
-                                <li class="list-group-item d-flex justify-content بين px-0">
+                                <li class="list-group-item d-flex justify-content-between px-0">
                                     <span><i class="fas fa-trophy text-warning me-2"></i> نقاط الولاء:</span>
                                     <span class="fw-medium">{{ customer.points }}</span>
                                 </li>
@@ -310,7 +310,7 @@
                 <!-- آخر المبيعات -->
                 <div class="col-lg-12 mb-4">
                     <div class="card border-0 shadow-sm">
-                        <div class="card-header bg-white d-flex justify-content بين align-items-center">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
                             <h5 class="card-title mb-0">
                                 <i class="fas fa-shopping-cart text-primary me-2"></i> آخر المبيعات
                             </h5>
@@ -375,7 +375,7 @@
         <!-- تبويب المبيعات (عرض تفصيلي لكل المبيعات) -->
         <div class="tab-pane fade" id="sales-tab-pane" role="tabpanel" aria-labelledby="sales-tab">
             <div class="card shadow-sm mb-4">
-                <div class="card-header bg-white d-flex justify-content بين align-items-center py-3">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
                     <h5 class="mb-0">
                         <i class="fas fa-receipt text-primary me-2"></i> فواتير البيع 
                         <span class="badge bg-primary rounded-pill ms-2">{{ sales.count }}</span>
@@ -466,7 +466,7 @@
         <!-- تبويب المدفوعات -->
         <div class="tab-pane fade" id="payments-tab-pane" role="tabpanel" aria-labelledby="payments-tab">
             <div class="card shadow-sm mb-4">
-                <div class="card-header bg-white d-flex justify-content بين align-items-center py-3">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
                     <h5 class="mb-0">
                         <i class="fas fa-money-bill-wave text-success me-2"></i> سجل المدفوعات
                         {% if payments.count > 0 %}
