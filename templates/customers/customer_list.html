@@ -216,7 +216,12 @@
             </div>
         </div>
     </div>
-
+<!-- زر إضافة عميل جديد عائم -->
+<div style="margin-bottom: 3em;" class="position-fixed bottom-0 end-0 p-3" style="z-index: 999;">
+    <a href="{% url 'customer-create' %}" class="btn btn-primary btn-lg rounded-circle shadow" data-bs-toggle="tooltip" data-bs-placement="left" title="إضافة عميل جديد">
+        <i class="fas fa-plus"></i>
+    </a>
+</div>
     <!-- جدول العملاء (تصميم محسن) -->
     <div class="card shadow-sm">
         <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
@@ -460,7 +465,7 @@
         });
         
         // تفعيل التلميحات
-        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));ggle="tooltip"]'));
         tooltipTriggerList.map(function(tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl);
         });

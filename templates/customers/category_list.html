@@ -19,11 +19,7 @@
                 </ol>
             </nav>
         </div>
-        <div>
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
-                <i class="fas fa-plus me-1"></i> إضافة تصنيف
-            </button>
-        </div>
+
     </div>
 </div>
 {% endblock %}
@@ -34,7 +30,10 @@
         <div class="col-12">
             <div class="card shadow-sm">
                 <div class="card-header bg-white py-3">
-                    <h5 class="mb-0"><i class="fas fa-tags text-primary me-2"></i> قائمة تصنيفات العملاء</h5>
+                    <h5 style="display: contents;" class="mb-0"><i class="fas fa-tags text-primary me-2"></i> قائمة تصنيفات العملاء</h5>
+                        <button style="float: inline-end;" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                            <i class="fas fa-plus me-1"></i> إضافة تصنيف جديد
+                        </button>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
@@ -117,15 +116,15 @@
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">اسم التصنيف <span class="text-danger">*</span></label>
+                        <label class="form-label d-none">اسم التصنيف <span class="text-danger">*</span></label>
                         {{ form.name|as_crispy_field }}
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">اللون</label>
+                        <label class="form-label d-none">اللون</label>
                         {{ form.color_code|as_crispy_field }}
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">الوصف</label>
+                        <label class="form-label d-none">الوصف</label>
                         {{ form.description|as_crispy_field }}
                     </div>
                 </div>

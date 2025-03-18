@@ -420,6 +420,11 @@ def category_list(request):
             
         # التعامل مع حذف التصنيف
         elif 'delete_category' in request.POST:
+            category_id = request.POST.get('category_id')
+            category = get_object_or_404(CustomerCategory, id=category_id)
+            category.delete()
+            
+            messages.success(request, _('تم حذف التصنيف بنجاح'))
             return redirect('customer-categories')
             
         # التعامل مع إضافة تصنيف جديد
