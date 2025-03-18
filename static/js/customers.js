@@ -230,6 +230,257 @@ document.addEventListener('DOMContentLoaded', function() {
     if (paymentAmountInput) {
         paymentAmountInput.addEventListener('input', updatePaymentSummary);
     }
+
+    // حدث حفظ التصنيف الجديد
+    const saveNewCategoryBtn = document.getElementById('save-new-category');
+    const newCategoryForm = document.getElementById('addCategoryForm'); // Ensure the form is selected correctly
+
+    if (saveNewCategoryBtn && newCategoryForm) {
+        saveNewCategoryBtn.addEventListener('click', function () {
+            // Validate the form before proceeding
+            if (!newCategoryForm.checkValidity()) {
+                newCategoryForm.reportValidity();
+                return;
+            }
+
+            const categoryName = document.getElementById('new-category-name').value;
+            const categoryColor = document.getElementById('new-category-color').value;
+            const categoryDescription = document.getElementById('new-category-description').value;
+
+            // Get CSRF token
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+            // Send AJAX request to create a new category
+            fetch('/customers/categories/create-ajax/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({
+                    name: categoryName,
+                    color_code: categoryColor,
+                    description: categoryDescription
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Add the new category to the dropdown
+                    const categorySelect = document.getElementById('id_category');
+                    const newOption = new Option(categoryName, data.id);
+                    categorySelect.add(newOption);
+                    newOption.selected = true;
+
+                    // Close the modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('newCategoryModal'));
+                    modal.hide();
+
+                    // Clear the form fields
+                    newCategoryForm.reset();
+
+                    alert('تم إضافة التصنيف بنجاح');
+                } else {
+                    alert('حدث خطأ: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('حدث خطأ أثناء الاتصال بالخادم.');
+            });
+        });
+    }
+
+    // أزرار التنقل بين التبويبات
+    document.querySelectorAll('.next-tab').forEach(button => {
+        button.addEventListener('click', function () {
+            const nextTabId = this.getAttribute('data-next');
+            const nextTab = document.getElementById(nextTabId);
+            if (nextTab) {
+                const tab = new bootstrap.Tab(nextTab);
+                tab.show();
+            }
+        });
+    });
+
+    document.querySelectorAll('.prev-tab').forEach(button => {
+        button.addEventListener('click', function () {
+            const prevTabId = this.getAttribute('data-prev');
+            const prevTab = document.getElementById(prevTabId);
+            if (prevTab) {
+                const tab = new bootstrap.Tab(prevTab);
+                tab.show();
+            }
+        });
+    });
+
+    // زر حفظ
+    document.getElementById('saveCustomerBtn').addEventListener('click', function (e) {
+        e.preventDefault();
+        const form = document.getElementById('addCustomerForm');
+        const formData = new FormData(form);
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(`تم حفظ العميل: ${data.customer_name}`);
+                location.reload();
+            } else {
+                alert('حدث خطأ أثناء الحفظ.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('حدث خطأ أثناء الاتصال بالخادم.');
+        });
+    });
+
+    // زر معاينة
+    document.getElementById('previewCustomerBtn').addEventListener('click', function () {
+        const name = document.getElementById('id_name').value || '--';
+        const phone = document.getElementById('id_phone').value || '--';
+        const email = document.getElementById('id_email').value || '--';
+        const address = document.getElementById('id_address').value || '--';
+
+        document.getElementById('preview_name').textContent = name;
+        document.getElementById('preview_phone').textContent = phone;
+        document.getElementById('preview_email').textContent = email;
+        document.getElementById('preview_address').textContent = address;
+
+        document.getElementById('customerPreview').style.display = 'block';
+    });
+
+    // حدث زر حفظ التصنيف الجديد
+    const saveNewCategoryButtonEl = document.getElementById('save-new-category');
+    if (saveNewCategoryButtonEl && !saveNewCategoryButtonEl.hasAttribute('data-initialized')) {
+        saveNewCategoryButtonEl.setAttribute('data-initialized', 'true');
+        saveNewCategoryButtonEl.addEventListener('click', function() {
+            const categoryName = document.getElementById('new-category-name').value.trim();
+            if (!categoryName) {
+                alert('يرجى إدخال اسم التصنيف');
+                return;
+            }
+            
+            const categoryColor = document.getElementById('new-category-color').value;
+            const categoryDescription = document.getElementById('new-category-description').value.trim();
+            
+            // استخدام المتغير العالمي المعرف في القالب
+            const url = typeof categoryCreateAjaxUrl !== 'undefined' ? 
+                categoryCreateAjaxUrl : '/customers/categories/create-ajax/';
+            
+            // الحصول على CSRF token
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    name: categoryName,
+                    color_code: categoryColor,
+                    description: categoryDescription
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // إضافة التصنيف للقائمة
+                    const categorySelect = document.getElementById('id_category');
+                    const option = new Option(categoryName, data.id);
+                    categorySelect.add(option);
+                    option.selected = true;
+                    
+                    // إغلاق المودال
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('newCategoryModal'));
+                    modal.hide();
+                    
+                    // مسح الحقول
+                    document.getElementById('new-category-name').value = '';
+                    document.getElementById('new-category-description').value = '';
+                    
+                    alert('تم إضافة التصنيف بنجاح');
+                } else {
+                    alert('حدث خطأ: ' + (data.error || 'فشلت عملية الإضافة'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('حدث خطأ أثناء إنشاء التصنيف');
+            });
+        });
+    }
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+    const saveNewCategoryBtn = document.getElementById('save-new-category');
+
+    if (saveNewCategoryBtn) {
+        saveNewCategoryBtn.addEventListener('click', function () {
+            const categoryName = document.getElementById('new-category-name').value.trim();
+            const categoryColor = document.getElementById('new-category-color').value;
+            const categoryDescription = document.getElementById('new-category-description').value.trim();
+
+            if (!categoryName) {
+                alert('يرجى إدخال اسم التصنيف');
+                return;
+            }
+
+            // Get CSRF token
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+            // Use the dynamically passed URL
+            fetch(categoryCreateAjaxUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({
+                    name: categoryName,
+                    color_code: categoryColor,
+                    description: categoryDescription
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Add the new category to the dropdown
+                    const categorySelect = document.getElementById('id_category');
+                    const newOption = new Option(categoryName, data.id);
+                    categorySelect.add(newOption);
+                    newOption.selected = true;
+
+                    // Close the modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('newCategoryModal'));
+                    modal.hide();
+
+                    // Clear the form fields
+                    document.getElementById('new-category-name').value = '';
+                    document.getElementById('new-category-description').value = '';
+
+                    alert('تم إضافة التصنيف بنجاح');
+                } else {
+                    alert('حدث خطأ: ' + (data.error || 'تعذر إنشاء التصنيف'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('حدث خطأ أثناء الاتصال بالخادم.');
+            });
+        });
+    }
 });
 
 // وظائف مساعدة
@@ -277,7 +528,7 @@ function loadCustomerForEdit(customerId) {
     if (viewModal) {
         viewModal.hide();
     }
-    
+
     // إعداد رابط الإرسال
     document.getElementById('editCustomerForm').setAttribute('action', `/customers/${customerId}/edit/`);
     
@@ -287,7 +538,6 @@ function loadCustomerForEdit(customerId) {
         .then(data => {
             if (data.success) {
                 const customer = data.customer;
-                
                 // ملء النموذج
                 document.getElementById('edit-name').value = customer.name;
                 document.getElementById('edit-code').value = customer.code || ''; // إضافة كود العميل
@@ -330,7 +580,6 @@ function showToast(message, type = 'info') {
     toastEl.setAttribute('role', 'alert');
     toastEl.setAttribute('aria-live', 'assertive');
     toastEl.setAttribute('aria-atomic', 'true');
-    
     toastEl.innerHTML = `
         <div class="d-flex">
             <div class="toast-body">
@@ -352,8 +601,8 @@ function showToast(message, type = 'info') {
     });
 }
 
-// تحويل اسم الحقل التقني إلى اسم عربي مقروء
 function getFieldName(field) {
+    // تحويل اسم الحقل التقني إلى اسم عربي مقروء
     const fieldNames = {
         'name': 'الاسم',
         'phone': 'رقم الهاتف',
@@ -395,6 +644,53 @@ const url = '/customers/categories/create/';
 // استبدال مسار category-create-ajax بالمسار customer-category-create
 // تأكد من تحويل هذا الجزء من الكود 
 
-fetch('{% url "customer-category-create" %}', {
-    // ... كود موجود
-})
+fetch(categoryCreateAjaxUrl, {
+    // ...existing code...
+});
+
+// حدث إضافة تصنيف جديد (من زر إضافة التصنيف في مودال add_modal)
+document.addEventListener('DOMContentLoaded', function() {
+    const saveNewCategoryButtonEl = document.getElementById('save-new-category');
+    
+    if (saveNewCategoryButtonEl && !saveNewCategoryButtonEl.hasAttribute('data-initialized')) {
+        saveNewCategoryButtonEl.setAttribute('data-initialized', 'true');
+        saveNewCategoryButtonEl.addEventListener('click', function() {
+            const categoryName = document.getElementById('new-category-name').value.trim();
+            if (!categoryName) {
+                alert('يرجى إدخال اسم التصنيف');
+                return;
+            }
+            
+            const categoryColor = document.getElementById('new-category-color').value;
+            const categoryDescription = document.getElementById('new-category-description').value.trim();
+            
+            // استخدام متغير URL الذي تم تعريفه في القالب، أو استخدام مسار صريح كبديل
+            const url = typeof categoryCreateAjaxUrl !== 'undefined' ? 
+                categoryCreateAjaxUrl : '/customers/categories/create-ajax/';
+            
+            // الحصول على CSRF token
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    name: categoryName,
+                    color_code: categoryColor,
+                    description: categoryDescription
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // ...existing code...
+            })
+            .catch(error => {
+                // ...existing code...
+            });
+        });
+    }
+});

@@ -224,7 +224,7 @@ def customer_detail(request, pk):
     # Get customer payments
     payments = CustomerPayment.objects.filter(customer=customer).order_by('-payment_date')
     
-    # حساب إحصائيات العميل
+        # حساب إحصائيات العميل
     sales_count = sales.count()
     total_sales = sales.aggregate(total=Sum('total_price'))['total'] or 0
     sales_items_count = sales.aggregate(count=Sum('items__quantity'))['count'] or 0
@@ -420,43 +420,6 @@ def record_payment(request, pk):
     return redirect('customer-debts')
 
 @login_required
-def category_create_ajax(request):
-    """معالجة طلب إنشاء تصنيف جديد للعملاء عبر AJAX"""
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            name = data.get('name')
-            color_code = data.get('color_code', 'primary')
-            description = data.get('description', '')
-            
-            # التحقق من وجود الاسم
-            if not name:
-                return JsonResponse({'success': False, 'error': _('اسم التصنيف مطلوب')})
-                
-            # التحقق من عدم تكرار الاسم
-            if CustomerCategory.objects.filter(name=name).exists():
-                return JsonResponse({'success': False, 'error': _('يوجد تصنيف بهذا الاسم بالفعل')})
-                
-            # إنشاء التصنيف
-            category = CustomerCategory.objects.create(
-                name=name,
-                color_code=color_code,
-                description=description
-            )
-            
-            return JsonResponse({
-                'success': True, 
-                'id': category.id, 
-                'name': category.name,
-                'color': category.color_code
-            })
-            
-        except json.JSONDecodeError:
-            return JsonResponse({'success': False, 'error': _('بيانات غير صالحة')}, status=400)
-    
-    return JsonResponse({'success': False, 'error': _('طريقة الطلب غير مدعومة')}, status=405)
-
-@login_required
 def category_list(request):
     """عرض قائمة تصنيفات العملاء مع إمكانية الإضافة والتعديل والحذف"""
     categories = CustomerCategory.objects.all().annotate(
@@ -594,29 +557,41 @@ def customer_categories(request):
 
 @login_required
 def customer_category_create(request):
-    """إضافة تصنيف عميل جديد"""
+    """إضافة تصنيف عميل جديد (يدعم AJAX و HTTP العادي)"""
     if request.method == 'POST':
-        form = CustomerCategoryForm(request.POST)
-        if form.is_valid():
-            category = form.save()
+        # التعامل مع طلبات AJAX (عندما يكون المحتوى JSON)
+        if request.headers.get('Content-Type') == 'application/json':
+            import json
+            data = json.loads(request.body)
+            form = CustomerCategoryForm({
+                'name': data.get('name'),
+                'description': data.get('description'),
+                'color_code': data.get('color_code', 'primary')
+            })
             
-            # إذا كان طلب AJAX، إرجاع استجابة JSON
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            if form.is_valid():
+                category = form.save()
                 return JsonResponse({
                     'success': True,
-                    'category_id': category.id,
-                    'category_name': category.name
+                    'id': category.id,
+                    'name': category.name
                 })
-            
-            messages.success(request, _(f'تم إضافة التصنيف {category.name} بنجاح'))
-            return redirect('customer-categories')
+            else:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'بيانات غير صالحة',
+                    'errors': form.errors
+                })
+        
+        # التعامل مع طلبات HTTP العادية (النموذج)
         else:
-            # إذا كان طلب AJAX، إرجاع رسائل الخطأ
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                errors = {field: errors[0] for field, errors in form.errors.items()}
-                return JsonResponse({'success': False, 'errors': errors})
-            
-            messages.error(request, _('يرجى تصحيح الأخطاء الموجودة في النموذج.'))
+            form = CustomerCategoryForm(request.POST)
+            if form.is_valid():
+                category = form.save()
+                messages.success(request, _(f'تم إضافة التصنيف {category.name} بنجاح'))
+                return redirect('customer-categories')
+            else:
+                messages.error(request, _('يرجى تصحيح الأخطاء الموجودة في النموذج.'))
     else:
         form = CustomerCategoryForm()
     

@@ -78,5 +78,10 @@
 {% endblock %}
 
 {% block extra_js %}
+<script>
+    // تعريف متغيرات URL لاستخدامها في ملف JavaScript
+    // توحيد اسم المتغير مع الاسم المستخدم في urls.py
+    const categoryCreateAjaxUrl = "{% url 'customer-category-create' %}";
+</script>
 <script src="{% static 'js/customers.js' %}"></script>
 {% endblock %}

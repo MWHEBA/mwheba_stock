@@ -1,0 +1,38 @@
+<div class="modal fade" id="newCategoryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">إضافة تصنيف جديد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">اسم التصنيف <span class="text-danger">*</span></label>
+                    <input type="text" id="new-category-name" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">اللون</label>
+                    <select id="new-category-color" class="form-select">
+                        <option value="primary" class="text-primary">أزرق</option>
+                        <option value="success" class="text-success">أخضر</option>
+                        <option value="warning" class="text-warning">أصفر</option>
+                        <option value="danger" class="text-danger">أحمر</option>
+                        <option value="info" class="text-info">سماوي</option>
+                        <option value="secondary" class="text-secondary">رمادي</option>
+                        <option value="dark" class="text-dark">أسود</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">الوصف</label>
+                    <textarea id="new-category-description" class="form-control" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" id="save-new-category">
+                    <i class="fas fa-save me-1"></i> حفظ التصنيف
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

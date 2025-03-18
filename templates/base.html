@@ -2,6 +2,12 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 {% include "base_head.html" %}
+<head>
+    {% if debug %}
+    <meta name="debug-mode" content="true">
+    <script src="{% static 'js/debug-helper.js' %}"></script>
+    {% endif %}
+</head>
 <body>
     <!-- Sidebar -->
     <div class="sidebar-container">

@@ -5,130 +5,271 @@
         <div class="modal-content border-0">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="addCustomerModalLabel">
-                    <i class="fas fa-plus-circle me-2"></i> إضافة عميل جديد
+                    <i class="fas fa-user-plus me-2"></i> إضافة عميل جديد
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body p-4">
-                <form id="addCustomerForm" method="post" action="{% url 'customer-create' %}">
-                    {% csrf_token %}
-                    <input type="hidden" name="is_ajax" value="1">
+            
+            <form id="addCustomerForm" method="post" action="{% url 'customer-create' %}">
+                {% csrf_token %}
+                <input type="hidden" name="is_ajax" value="1">
+                
+                <div class="modal-body p-4">
+                    <!-- شريط ألسنة التبويب -->
+                    <ul class="nav nav-tabs nav-fill mb-4" id="customerTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic" type="button" role="tab" aria-controls="basic" aria-selected="true">
+                                <i class="fas fa-id-card me-2"></i> البيانات الأساسية
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="category-tab" data-bs-toggle="tab" data-bs-target="#category" type="button" role="tab" aria-controls="category" aria-selected="false">
+                                <i class="fas fa-tag me-2"></i> التصنيف والحالة
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="additional-tab" data-bs-toggle="tab" data-bs-target="#additional" type="button" role="tab" aria-controls="additional" aria-selected="false">
+                                <i class="fas fa-info-circle me-2"></i> معلومات إضافية
+                            </button>
+                        </li>
+                    </ul>
                     
-                    <!-- القسم الأول: بيانات العميل الأساسية -->
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="id_name" class="form-label">اسم العميل <span class="text-danger">*</span></label>
-                            <input type="text" name="name" id="id_name" class="form-control" required>
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <label for="id_phone" class="form-label">رقم الهاتف</label>
-                            <input type="tel" name="phone" id="id_phone" class="form-control" dir="ltr">
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <label for="id_email" class="form-label">البريد الإلكتروني</label>
-                            <input type="email" name="email" id="id_email" class="form-control" dir="ltr">
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <label for="id_address" class="form-label">العنوان</label>
-                            <input type="text" name="address" id="id_address" class="form-control">
-                        </div>
-                    </div>
-                    
-                    <!-- القسم الثاني: معلومات إضافية -->
-                    <div class="row mt-3">
-                        <div class="col-md-6 mb-3">
-                            <label for="id_category" class="form-label">التصنيف</label>
-                            <div class="input-group">
-                                <select name="category" id="id_category" class="form-select">
-                                    <option value="">بدون تصنيف</option>
-                                    {% for category in categories %}
-                                        <option value="{{ category.id }}">{{ category.name }}</option>
-                                    {% endfor %}
-                                </select>
-                                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
-                                    <i class="fas fa-plus"></i>
+                    <!-- محتوى ألسنة التبويب -->
+                    <div class="tab-content" id="customerTabsContent">
+                        <!-- 1. البيانات الأساسية -->
+                        <div class="tab-pane fade show active" id="basic" role="tabpanel" aria-labelledby="basic-tab">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="id_name" class="form-label fw-medium">اسم العميل <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light"><i class="fas fa-user"></i></span>
+                                        <input type="text" name="name" id="id_name" class="form-control" placeholder="أدخل اسم العميل" required data-bs-toggle="tooltip" data-bs-placement="top" title="أدخل الاسم الكامل للعميل">
+                                    </div>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="id_code" class="form-label fw-medium">الكود</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light"><i class="fas fa-barcode"></i></span>
+                                        <input type="text" name="code" id="id_code" class="form-control" placeholder="سيتم إنشاؤه تلقائياً" data-bs-toggle="tooltip" data-bs-placement="top" title="يمكنك تركه فارغاً ليتم إنشاؤه تلقائياً">
+                                    </div>
+                                    <div class="form-text small">اتركه فارغاً ليتم إنشاؤه تلقائياً</div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="id_phone" class="form-label fw-medium">رقم الهاتف</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light"><i class="fas fa-phone"></i></span>
+                                        <input type="tel" name="phone" id="id_phone" class="form-control phone-input" placeholder="+20..." dir="ltr" data-bs-toggle="tooltip" data-bs-placement="top" title="يمكن إدخال رقم الهاتف بالتنسيق الدولي">
+                                    </div>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="id_email" class="form-label fw-medium">البريد الإلكتروني</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light"><i class="fas fa-envelope"></i></span>
+                                        <input type="email" name="email" id="id_email" class="form-control" placeholder="example@domain.com" dir="ltr">
+                                    </div>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="id_alternative_phone" class="form-label fw-medium">رقم هاتف بديل</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light"><i class="fas fa-phone-alt"></i></span>
+                                        <input type="tel" name="alternative_phone" id="id_alternative_phone" class="form-control phone-input" placeholder="+20..." dir="ltr">
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="id_address" class="form-label fw-medium">العنوان</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light"><i class="fas fa-map-marker-alt"></i></span>
+                                        <input type="text" name="address" id="id_address" class="form-control" placeholder="عنوان العميل">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="text-end mt-3">
+                                <button type="button" class="btn btn-primary btn-sm next-tab" data-next="category-tab">
+                                    التالي <i class="fas fa-arrow-left ms-1"></i>
                                 </button>
                             </div>
                         </div>
                         
-                        <div class="col-md-6 mb-3">
-                            <label for="id_status" class="form-label">الحالة</label>
-                            <select name="status" id="id_status" class="form-select">
-                                <option value="active" selected>نشط</option>
-                                <option value="inactive">غير نشط</option>
-                                <option value="blocked">محظور</option>
-                            </select>
+                        <!-- 2. التصنيف والحالة -->
+                        <div class="tab-pane fade" id="category" role="tabpanel" aria-labelledby="category-tab">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="id_category" class="form-label fw-medium">التصنيف</label>
+                                    <div class="input-group">
+                                        <select name="category" id="id_category" class="form-select">
+                                            <option value="">بدون تصنيف</option>
+                                            {% for category in categories %}
+                                                <option value="{{ category.id }}">{{ category.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#newCategoryModal">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                    <div class="form-text small">اختر تصنيف أو أضف تصنيف جديد</div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="id_status" class="form-label fw-medium">الحالة</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light"><i class="fas fa-user-check"></i></span>
+                                        <select name="status" id="id_status" class="form-select">
+                                            <option value="active" selected>نشط</option>
+                                            <option value="inactive">غير نشط</option>
+                                            <option value="blocked">محظور</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="id_credit_limit" class="form-label fw-medium">حد الائتمان (ج.م)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light"><i class="fas fa-credit-card"></i></span>
+                                        <input type="number" name="credit_limit" id="id_credit_limit" class="form-control" min="0" step="0.01" value="0" data-bs-toggle="tooltip" data-bs-placement="top" title="0 = غير محدود">
+                                        <span class="input-group-text">ج.م</span>
+                                    </div>
+                                    <div class="form-text small">0 = غير محدود</div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="id_tax_number" class="form-label fw-medium">الرقم الضريبي</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light"><i class="fas fa-receipt"></i></span>
+                                        <input type="text" name="tax_number" id="id_tax_number" class="form-control" dir="ltr">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between mt-3">
+                                <button type="button" class="btn btn-outline-secondary btn-sm prev-tab" data-prev="basic-tab">
+                                    <i class="fas fa-arrow-right me-1"></i> السابق
+                                </button>
+                                <button type="button" class="btn btn-primary btn-sm next-tab" data-next="additional-tab">
+                                    التالي <i class="fas fa-arrow-left ms-1"></i>
+                                </button>
+                            </div>
                         </div>
                         
-                        <div class="col-md-6 mb-3">
-                            <label for="id_credit_limit" class="form-label">حد الائتمان (ج.م)</label>
-                            <input type="number" name="credit_limit" id="id_credit_limit" class="form-control" min="0" step="0.01" value="0">
-                            <div class="form-text">0 = غير محدود</div>
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <label for="id_tax_number" class="form-label">الرقم الضريبي</label>
-                            <input type="text" name="tax_number" id="id_tax_number" class="form-control">
-                        </div>
-                        
-                        <div class="col-12 mb-3">
-                            <label for="id_notes" class="form-label">ملاحظات</label>
-                            <textarea name="notes" id="id_notes" rows="3" class="form-control"></textarea>
+                        <!-- 3. معلومات إضافية -->
+                        <div class="tab-pane fade" id="additional" role="tabpanel" aria-labelledby="additional-tab">
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label for="id_notes" class="form-label fw-medium">ملاحظات</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light"><i class="fas fa-sticky-note"></i></span>
+                                        <textarea name="notes" id="id_notes" rows="4" class="form-control" placeholder="أي ملاحظات إضافية عن العميل..."></textarea>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-12">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="send_welcome" id="id_send_welcome" checked>
+                                        <label class="form-check-label" for="id_send_welcome">
+                                            إرسال رسالة ترحيب للعميل
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-12">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="is_vip" id="id_is_vip">
+                                        <label class="form-check-label" for="id_is_vip">
+                                            عميل VIP
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between mt-3">
+                                <button type="button" class="btn btn-outline-secondary btn-sm prev-tab" data-prev="category-tab">
+                                    <i class="fas fa-arrow-right me-1"></i> السابق
+                                </button>
+                                <button type="button" class="btn btn-success btn-sm" id="previewCustomerBtn">
+                                    <i class="fas fa-eye me-1"></i> معاينة البيانات
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                <button type="button" class="btn btn-primary" id="saveCustomerBtn">
-                    <i class="fas fa-save me-1"></i> حفظ
-                </button>
-            </div>
+                    
+                    <!-- ملخص المعاينة (مخفي افتراضياً) -->
+                    <div id="customerPreview" class="mt-4 p-3 border rounded bg-light" style="display: none;">
+                        <h6 class="border-bottom pb-2 mb-3"><i class="fas fa-clipboard-check me-2"></i> ملخص بيانات العميل</h6>
+                        <div class="row small">
+                            <div class="col-md-6 mb-2">
+                                <strong>الاسم:</strong> <span id="preview_name"></span>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <strong>رقم الهاتف:</strong> <span id="preview_phone" dir="ltr"></span>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <strong>البريد الإلكتروني:</strong> <span id="preview_email"></span>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <strong>العنوان:</strong> <span id="preview_address"></span>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <strong>التصنيف:</strong> <span id="preview_category"></span>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <strong>الحالة:</strong> <span id="preview_status"></span>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <strong>حد الائتمان:</strong> <span id="preview_credit_limit"></span> ج.م
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <strong>الرقم الضريبي:</strong> <span id="preview_tax_number"></span>
+                            </div>
+                        </div>
+                        <div class="text-end mt-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="editPreviewBtn">
+                                <i class="fas fa-edit me-1"></i> تعديل
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer bg-light">
+                    <div class="alert alert-info p-2 me-auto mb-0 d-flex align-items-center">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <small>الحقول المميزة بعلامة <span class="text-danger">*</span> إلزامية</small>
+                    </div>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i> إلغاء
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="saveCustomerBtn">
+                        <i class="fas fa-save me-1"></i> حفظ
+                    </button>
+                    <div class="dropdown">
+                        <button class="btn btn-success dropdown-toggle" type="button" id="saveMoreDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-save me-1"></i> حفظ و...
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="saveMoreDropdown">
+                            <li>
+                                <button type="submit" name="save_and_add_another" class="dropdown-item" id="saveAndAddAnotherBtn">
+                                    <i class="fas fa-plus me-1"></i> حفظ وإضافة آخر
+                                </button>
+                            </li>
+                            <li>
+                                <button type="submit" name="save_and_add_sale" class="dropdown-item" id="saveAndAddSaleBtn">
+                                    <i class="fas fa-receipt me-1"></i> حفظ وإضافة فاتورة
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
-<!-- مودال إضافة تصنيف جديد -->
-<div class="modal fade" id="addCategoryModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title">
-                    <i class="fas fa-tag me-2"></i> إضافة تصنيف جديد
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-4">
-                <form id="addCategoryForm">
-                    <div class="mb-3">
-                        <label for="category_name" class="form-label">اسم التصنيف <span class="text-danger">*</span></label>
-                        <input type="text" id="category_name" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="category_color" class="form-label">اللون</label>
-                        <select id="category_color" class="form-select">
-                            <option value="primary">أزرق</option>
-                            <option value="success">أخضر</option>
-                            <option value="danger">أحمر</option>
-                            <option value="warning">برتقالي</option>
-                            <option value="info">سماوي</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="category_description" class="form-label">الوصف</label>
-                        <textarea id="category_description" class="form-control" rows="2"></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                <button type="button" class="btn btn-primary" id="saveCategoryBtn">
-                    <i class="fas fa-save me-1"></i> حفظ
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
+<!-- استدعاء مودال إضافة تصنيف جديد -->
+{% include 'customers/includes/modals/add_category_modal.html' %}
