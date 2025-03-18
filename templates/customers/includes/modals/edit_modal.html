@@ -1,0 +1,81 @@
+<!-- مودال تعديل العميل -->
+<div class="modal fade" id="editCustomerModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i> تعديل بيانات العميل
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editCustomerForm" method="post" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    <div class="row">
+                        <!-- اسم العميل -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">اسم العميل <span class="text-danger">*</span></label>
+                            <input type="text" name="name" id="edit-name" class="form-control" required>
+                            <div class="invalid-feedback">يرجى إدخال اسم العميل</div>
+                        </div>
+                        
+                        <!-- رقم الهاتف -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">رقم الهاتف <span class="text-danger">*</span></label>
+                            <input type="text" name="phone" id="edit-phone" class="form-control phone-input" required>
+                            <div class="invalid-feedback">يرجى إدخال رقم هاتف صحيح</div>
+                        </div>
+                        
+                        <!-- البريد الإلكتروني -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">البريد الإلكتروني</label>
+                            <input type="email" name="email" id="edit-email" class="form-control">
+                        </div>
+                        
+                        <!-- العنوان -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">العنوان</label>
+                            <input type="text" name="address" id="edit-address" class="form-control">
+                        </div>
+                        
+                        <!-- حد الائتمان -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">حد الائتمان</label>
+                            <div class="input-group">
+                                <input type="number" name="credit_limit" id="edit-credit_limit" class="form-control" min="0" step="0.01">
+                                <span class="input-group-text">ج.م</span>
+                            </div>
+                        </div>
+                        
+                        <!-- تصنيف العميل -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">تصنيف العميل</label>
+                            <select name="category" id="edit-category" class="form-select">
+                                <option value="">-- بدون تصنيف --</option>
+                                {% for category in categories %}
+                                <option value="{{ category.id }}">{{ category.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- حالة العميل -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">حالة العميل</label>
+                            <select name="status" id="edit-status" class="form-select">
+                                <option value="active">نشط</option>
+                                <option value="inactive">غير نشط</option>
+                                <option value="blocked">محظور</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-warning" id="updateCustomerBtn">
+                    <i class="fas fa-save me-1"></i> حفظ التعديلات
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -153,6 +153,15 @@ def customer_create(request):
         form = CustomerForm(request.POST)
         if form.is_valid():
             customer = form.save()
+            
+            # إذا كان طلب AJAX، إرجاع استجابة JSON
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.POST.get('is_ajax') == '1':
+                return JsonResponse({
+                    'success': True,
+                    'customer_id': customer.id,
+                    'customer_name': customer.name
+                })
+            
             messages.success(request, _(f'تم إضافة العميل {customer.name} بنجاح'))
             
             # تحديد صفحة التحويل
@@ -162,6 +171,24 @@ def customer_create(request):
                 return redirect('sale-create')
             else:
                 return redirect('customer-detail', pk=customer.pk)
+        else:
+            # إذا كان طلب AJAX، إرجاع رسائل الخطأ بشكل أكثر تفصيلاً
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.POST.get('is_ajax') == '1':
+                # تحسين استرجاع الأخطاء
+                errors_dict = {}
+                for field, errors in form.errors.items():
+                    errors_dict[field] = [str(error) for error in errors]
+                
+                # إضافة معلومات تصحيح نصية للتشخيص
+                return JsonResponse({
+                    'success': False, 
+                    'errors': errors_dict,
+                    'status': 'form_invalid',
+                    'form_data': {k: v for k, v in request.POST.items() if k != 'csrfmiddlewaretoken'}
+                })
+            
+            # في حالة طلب عادي غير AJAX
+            messages.error(request, _('يرجى تصحيح الأخطاء في النموذج'))
     else:
         # القيم المبدئية إذا تم تمريرها في الـ URL
         initial_data = {}
@@ -218,6 +245,16 @@ def customer_detail(request, pk):
         'last_sale_days': last_sale_days,
     }
     
+    # إذا كان الطلب لعرض في المودال
+    if request.GET.get('format') == 'modal':
+        context = {
+            'customer': customer,
+            'sales': sales[:5],  # نعرض أحدث 5 مبيعات فقط
+            'payments': payments[:5],  # نعرض أحدث 5 دفعات فقط
+            'is_modal': True
+        }
+        return render(request, 'customers/customer_detail_modal.html', context)
+    
     return render(request, 'customers/customer_detail.html', context)
 
 @login_required
@@ -228,8 +265,22 @@ def customer_edit(request, pk):
         form = CustomerForm(request.POST, instance=customer)
         if form.is_valid():
             form.save()
+            
+            # إذا كان طلب AJAX، إرجاع استجابة JSON
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'customer_id': customer.id,
+                    'customer_name': customer.name
+                })
+            
             messages.success(request, _('تم تحديث بيانات العميل بنجاح.'))
             return redirect('customer-detail', pk=customer.pk)
+        else:
+            # إذا كان طلب AJAX، إرجاع رسائل الخطأ
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                errors = {field: errors[0] for field, errors in form.errors.items()}
+                return JsonResponse({'success': False, 'errors': errors})
     else:
         form = CustomerForm(instance=customer)
     
@@ -490,3 +541,26 @@ def category_create(request):
             return redirect('customer-categories')
             
     return render(request, 'customers/customer_category_create.html')
+
+@login_required
+def get_customer_data(request, pk):
+    """الحصول على بيانات العميل للتحرير في المودال"""
+    customer = get_object_or_404(Customer, pk=pk)
+    
+    data = {
+        'success': True,
+        'customer': {
+            'id': customer.id,
+            'name': customer.name,
+            'phone': customer.phone,
+            'email': customer.email,
+            'address': customer.address,
+            'status': customer.status,
+            'category_id': customer.category_id,
+            'credit_limit': float(customer.credit_limit),
+            'debt': float(customer.debt),
+            'total_sales': float(customer.total_sales),
+        }
+    }
+    
+    return JsonResponse(data)

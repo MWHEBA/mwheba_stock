@@ -1,0 +1,42 @@
+<!-- مودال تأكيد الحذف -->
+<div class="modal fade" id="deleteCustomerModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    تأكيد حذف العميل
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-center fs-5">هل أنت متأكد من حذف العميل <strong id="customer-name-to-delete"></strong>؟</p>
+                <div class="alert alert-warning">
+                    <div class="d-flex">
+                        <div class="me-2">
+                            <i class="fas fa-exclamation-triangle text-warning fs-3"></i>
+                        </div>
+                        <div>
+                            <p class="mb-1 fw-medium">تحذير: سيتم حذف جميع البيانات المرتبطة بهذا العميل، بما في ذلك:</p>
+                            <ul class="mb-0">
+                                <li>سجل المبيعات والفواتير المرتبطة بالعميل</li>
+                                <li>سجل المدفوعات والمعاملات المالية</li>
+                                <li>جميع الملاحظات والمعلومات الإضافية</li>
+                            </ul>
+                            <p class="mt-2 mb-0">هذا الإجراء <strong class="text-danger">لا يمكن التراجع عنه</strong>!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <form id="delete-customer-form" method="post">
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i> تأكيد الحذف
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

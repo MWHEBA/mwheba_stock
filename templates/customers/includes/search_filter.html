@@ -1,0 +1,116 @@
+<!-- بطاقة البحث والتصفية -->
+<div class="card mb-4 shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+        <h5 class="mb-0">
+            <i class="fas fa-search text-primary me-1"></i> بحث وتصفية
+        </h5>
+        <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#searchCollapse" aria-expanded="false">
+            <i class="fas fa-sliders-h me-1"></i> خيارات البحث
+        </button>
+    </div>
+    <div class="collapse" id="searchCollapse">
+        <div class="card-body">
+            <form method="get" id="filter-form" class="mb-0">
+                <!-- صف البحث الرئيسي -->
+                <div class="row g-3 mb-3">
+                    <div class="col-lg-5 col-md-6">
+                        <div class="input-group">
+                            <span class="input-group-text bg-light">
+                                <i class="fas fa-search"></i>
+                            </span>
+                            {{ form.search }}
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="fas fa-search me-1"></i> بحث
+                            </button>
+                        </div>
+                        <div class="form-text">
+                            البحث بالاسم، الهاتف، البريد الإلكتروني أو الكود
+                        </div>
+                    </div>
+                    <div class="col-lg-7 col-md-6">
+                        <div class="d-flex flex-wrap gap-2 h-100 align-items-center">
+                            {% if search_query or debt_status != '' or form.category.value or form.status.value %}
+                                <div class="d-flex flex-wrap gap-2">
+                                    {% if search_query %}
+                                        <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary py-2 px-3">
+                                            <i class="fas fa-search me-1"></i>
+                                            {{ search_query }}
+                                            <a href="?{% for key, value in request.GET.items %}{% if key != 'search' %}{{ key }}={{ value }}&{% endif %}{% endfor %}" class="ms-2 text-primary">
+                                                <i class="fas fa-times"></i>
+                                            </a>
+                                        </span>
+                                    {% endif %}
+
+                                    {% if debt_status != '' %}
+                                        <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary py-2 px-3">
+                                            <i class="fas fa-money-bill-wave me-1"></i>
+                                            {% if debt_status == 'with_debts' %}
+                                                عليهم مديونية
+                                            {% elif debt_status == 'no_debts' %}
+                                                بدون مديونية
+                                            {% elif debt_status == 'exceed_limit' %}
+                                                تجاوزوا حد الائتمان
+                                            {% endif %}
+                                            <a href="?{% for key, value in request.GET.items %}{% if key != 'debt_status' %}{{ key }}={{ value }}&{% endif %}{% endfor %}" class="ms-2 text-primary">
+                                                <i class="fas fa-times"></i>
+                                            </a>
+                                        </span>
+                                    {% endif %}
+
+                                    {% if form.category.value %}
+                                        {% for category in categories %}
+                                            {% if category.id|stringformat:"i" == form.category.value %}
+                                                <span class="badge rounded-pill bg-{{ category.color_code }} bg-opacity-10 text-{{ category.color_code }} py-2 px-3">
+                                                    <i class="fas fa-tag me-1"></i>
+                                                    {{ category.name }}
+                                                    <a href="?{% for key, value in request.GET.items %}{% if key != 'category' %}{{ key }}={{ value }}&{% endif %}{% endfor %}" class="ms-2 text-{{ category.color_code }}">
+                                                        <i class="fas fa-times"></i>
+                                                    </a>
+                                                </span>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endif %}
+
+                                    {% if form.status.value %}
+                                        <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary py-2 px-3">
+                                            <i class="fas fa-circle me-1"></i>
+                                            {% if form.status.value == 'active' %}نشط{% elif form.status.value == 'inactive' %}غير نشط{% else %}محظور{% endif %}
+                                            <a href="?{% for key, value in request.GET.items %}{% if key != 'status' %}{{ key }}={{ value }}&{% endif %}{% endfor %}" class="ms-2 text-primary">
+                                                <i class="fas fa-times"></i>
+                                            </a>
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                <a href="{% url 'customer-list' %}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-redo-alt me-1"></i> إلغاء التصفية
+                                </a>
+                            {% else %}
+                                <span class="text-muted">يمكنك استخدام خيارات البحث والتصفية للعثور على العملاء</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- خيارات متقدمة (تصنيف، حالة، مديونية، ترتيب) -->
+                <div class="row g-2">
+                    <div class="col-lg-3 col-md-6">
+                        <label class="form-label small text-muted mb-1">تصنيف العميل</label>
+                        {{ form.category }}
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <label class="form-label small text-muted mb-1">حالة العميل</label>
+                        {{ form.status }}
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <label class="form-label small text-muted mb-1">حالة المديونية</label>
+                        {{ form.debt_status }}
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <label class="form-label small text-muted mb-1">ترتيب حسب</label>
+                        {{ form.sort_by }}
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

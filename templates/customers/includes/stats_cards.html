@@ -1,0 +1,55 @@
+<!-- بطاقات إحصائيات العملاء -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card shadow-sm h-100 border-primary" style="background-color: #01578a1f !important;">
+            <div class="card-body text-center">
+                <div class="d-flex align-items-center justify-content-center mb-2">
+                    <div class="rounded-circle bg-opacity-10 p-2" style="background-color: #0157891a !important;">
+                        <i class="fas fa-users fs-4 text-primary"></i>
+                    </div>
+                </div>
+                <h3 class="fs-3 fw-bold text-primary">{{ total_customers }}</h3>
+                <p class="mb-0 text-muted small">إجمالي العملاء</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card shadow-sm h-100 border-success">
+            <div class="card-body text-center">
+                <div class="d-flex align-items-center justify-content-center mb-2">
+                    <div class="rounded-circle bg-success bg-opacity-10 p-2">
+                        <i class="fas fa-chart-line fs-4 text-success"></i>
+                    </div>
+                </div>
+                <h3 class="fs-3 fw-bold text-success">{{ total_sales|floatformat:0 }}</h3>
+                <p class="mb-0 text-muted small">إجمالي المبيعات (ج.م)</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card shadow-sm h-100 border-danger">
+            <div class="card-body text-center">
+                <div class="d-flex align-items-center justify-content-center mb-2">
+                    <div class="rounded-circle bg-danger bg-opacity-10 p-2">
+                        <i class="fas fa-hand-holding-usd fs-4 text-danger"></i>
+                    </div>
+                </div>
+                <h3 class="fs-3 fw-bold text-danger">{{ total_debt|floatformat:0 }}</h3>
+                <p class="mb-0 text-muted small">إجمالي المديونيات (ج.م)</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card shadow-sm h-100 border-info">
+            <div class="card-body text-center">
+                <div class="d-flex align-items-center justify-content-center mb-2">
+                    <div class="rounded-circle bg-info bg-opacity-10 p-2">
+                        <i class="fas fa-user-check fs-4 text-info"></i>
+                    </div>
+                </div>
+                <h3 class="fs-3 fw-bold text-info">{{ recent_customers }}</h3>
+                <p class="mb-0 text-muted small">عملاء نشطين آخر 30 يوم</p>
+            </div>
+        </div>
+    </div>
+</div>

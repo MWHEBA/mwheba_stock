@@ -1,0 +1,84 @@
+<!-- مودال إضافة عميل جديد -->
+<div class="modal fade" id="addCustomerModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i> إضافة عميل جديد
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addCustomerForm" action="{% url 'customer-create' %}" method="post" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    <input type="hidden" name="is_ajax" value="1">
+                    <div class="row">
+                        <!-- اسم العميل -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">اسم العميل <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control" required>
+                            <div class="invalid-feedback">يرجى إدخال اسم العميل</div>
+                        </div>
+                        
+                        <!-- رقم الهاتف -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">رقم الهاتف <span class="text-danger">*</span></label>
+                            <input type="text" name="phone" class="form-control phone-input" required>
+                            <div class="invalid-feedback">يرجى إدخال رقم هاتف صحيح</div>
+                        </div>
+                        
+                        <!-- البريد الإلكتروني -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">البريد الإلكتروني</label>
+                            <input type="email" name="email" class="form-control">
+                        </div>
+                        
+                        <!-- العنوان -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">العنوان</label>
+                            <input type="text" name="address" class="form-control">
+                        </div>
+                        
+                        <!-- حد الائتمان -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">حد الائتمان</label>
+                            <div class="input-group">
+                                <input type="number" name="credit_limit" class="form-control" value="0" min="0" step="0.01">
+                                <span class="input-group-text">ج.م</span>
+                            </div>
+                            <div class="form-text">حد الائتمان المسموح به للعميل (0 يعني غير محدود)</div>
+                        </div>
+                        
+                        <!-- تصنيف العميل -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">تصنيف العميل</label>
+                            <select name="category" class="form-select">
+                                <option value="">-- بدون تصنيف --</option>
+                                {% for category in categories %}
+                                <option value="{{ category.id }}">{{ category.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- حالة العميل (مضاف حديثًا) -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">حالة العميل <span class="text-danger">*</span></label>
+                            <select name="status" class="form-select" required>
+                                <option value="active" selected>نشط</option>
+                                <option value="inactive">غير نشط</option>
+                                <option value="blocked">محظور</option>
+                            </select>
+                            <div class="invalid-feedback">يرجى اختيار حالة العميل</div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" id="saveCustomerBtn">
+                    <i class="fas fa-save me-1"></i> حفظ
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
