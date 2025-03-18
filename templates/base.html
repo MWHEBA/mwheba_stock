@@ -1,449 +1,464 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="MWHEBA Stock - نظام إدارة المخزون والمبيعات المتكامل">
-    <meta name="author" content="MWHEBA">
-    <title>{% block title %}MWHEBA Stock{% endblock %}</title>
-    
-    <!-- Favicon -->
-    <link rel="shortcut icon" href="/static/img/favicon.ico" type="image/x-icon">
-    
-    <!-- Bootstrap RTL CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css" integrity="sha384-nU14brUcp6StFntEOOEBvcJm4huWjB0OcIeQ3fltAfSmuZFrkAif0T+UtNGlKKQv" crossorigin="anonymous">
-    
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==" crossorigin="anonymous" referrerpolicy="no-referrer">
-    
-    <!-- Google Font: Cairo -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="/static/css/main.css">
-    
-    <style>
-        :root {
-            --bs-primary: #01578a;
-            --bs-primary-rgb: 1, 87, 138;
-            --bs-link-color: #01578a;
-            --bs-link-hover-color: #014a75;
-        }
-        
-        .btn-primary {
-            background-color: #01578a;
-            border-color: #01578a;
-        }
-        
-        .btn-primary:hover {
-            background-color: #014a75;
-            border-color: #014a75;
-        }
-        
-        .btn-outline-primary {
-            color: #01578a;
-            border-color: #01578a;
-        }
-        
-        .btn-outline-primary:hover {
-            background-color: #01578a;
-            border-color: #01578a;
-        }
-        
-        .bg-primary {
-            background-color: #01578a !important;
-        }
-        
-        .text-primary {
-            color: #01578a !important;
-        }
-        
-        .border-primary {
-            border-color: #01578a !important;
-        }
-        
-        .navbar-dark.bg-primary {
-            background-color: #01578a !important;
-        }
-        
-        .page-link {
-            color: #01578a;
-        }
-        
-        .active>.page-link {
-            background-color: #01578a;
-            border-color: #01578a;
-        }
-
-        body {
-            font-family: 'Cairo', sans-serif;
-            background-color: #f8f9fa;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .navbar-brand img {
-            transition: transform 0.3s ease;
-        }
-        
-        .navbar-brand:hover img {
-            transform: scale(1.05);
-        }
-        
-        main {
-            flex: 1 0 auto;
-        }
-        
-        footer {
-            margin-top: auto;
-        }
-        
-        .user-avatar {
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-        }
-        
-        .user-avatar-lg {
-            width: 80px;
-            height: 80px;
-            font-size: 2rem;
-        }
-        
-        .notification-badge {
-            position: absolute;
-            top: 0;
-            left: 5px;
-            font-size: 0.5rem;
-        }
-        
-        .notifications-dropdown {
-            max-height: 350px;
-            overflow-y: auto;
-        }
-        
-        .notification-item {
-            padding: 0.75rem 1rem;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        
-        .notification-item:hover {
-            background-color: #f8f9fa;
-        }
-        
-        .notification-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-        }
-        
-        .notification-icon.bg-primary { background-color: var(--bs-primary); }
-        .notification-icon.bg-success { background-color: var(--bs-success); }
-        .notification-icon.bg-danger { background-color: var(--bs-danger); }
-        .notification-icon.bg-warning { background-color: var(--bs-warning); }
-        .notification-icon.bg-info { background-color: var(--bs-info); }
-        
-        /* Dropdown on hover for desktop */
-        @media (min-width: 992px) {
-            .dropdown:hover > .dropdown-menu {
-                display: block;
-                margin-top: 0;
-            }
-        }
-        
-        /* Active nav items */
-        .navbar-nav .nav-item .nav-link.active {
-            font-weight: bold;
-            background-color: rgba(255, 255, 255, 0.1);
-            border-radius: 0.25rem;
-        }
-        
-        /* Page transitions */
-        .page-transition {
-            animation: fadeIn 0.3s ease-in-out;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: #0d6efd;
-            border-radius: 10px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: #0b5ed7;
-        }
-    </style>
-    
-    {% block extra_css %}{% endblock %}
-</head>
+{% include "base_head.html" %}
 <body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
-        <div class="container-fluid">
-            <a class="navbar-brand d-flex align-items-center" href="{% url 'dashboard' %}">
-                <img src="/static/img/logo.png" alt="MWHEBA Stock" height="36" class="me-2">
-                <span class="fw-bold d-none d-sm-inline">MWHEBA Stock</span>
-            </a>
-            
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            
-            <div class="collapse navbar-collapse" id="navbarMain">
-                {% if user.is_authenticated %}
-                <!-- Main Navigation -->
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
-                            <i class="fas fa-tachometer-alt me-1"></i> لوحة التحكم
-                        </a>
-                    </li>
-                    
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle {% if 'sales' in request.path %}active{% endif %}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-shopping-cart me-1"></i> المبيعات
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{% url 'sale-create' %}"><i class="fas fa-plus-circle me-2"></i>فاتورة بيع جديدة</a></li>
-                            <li><a class="dropdown-item" href="{% url 'sale-list' %}"><i class="fas fa-list-alt me-2"></i>قائمة المبيعات</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{% url 'sales-report' %}"><i class="fas fa-chart-line me-2"></i>تقرير المبيعات</a></li>
-                        </ul>
-                    </li>
-                    
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle {% if 'purchases' in request.path %}active{% endif %}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-truck-loading me-1"></i> المشتريات
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{% url 'purchase-create' %}"><i class="fas fa-plus-circle me-2"></i>أمر شراء جديد</a></li>
-                            <li><a class="dropdown-item" href="{% url 'purchase-list' %}"><i class="fas fa-list-alt me-2"></i>قائمة المشتريات</a></li>
-                        </ul>
-                    </li>
-                    
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle {% if 'products' in request.path %}active{% endif %}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-box me-1"></i> المنتجات
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{% url 'product-create' %}"><i class="fas fa-plus-circle me-2"></i>إضافة منتج جديد</a></li>
-                            <li><a class="dropdown-item" href="{% url 'product-list' %}"><i class="fas fa-list me-2"></i>قائمة المنتجات</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{% url 'inventory-report' %}"><i class="fas fa-boxes me-2"></i>تقرير المخزون</a></li>
-                        </ul>
-                    </li>
-                    
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle {% if 'customers' in request.path %}active{% endif %}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-users me-1"></i> العملاء
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{% url 'customer-create' %}"><i class="fas fa-user-plus me-2"></i>إضافة عميل جديد</a></li>
-                            <li><a class="dropdown-item" href="{% url 'customer-list' %}"><i class="fas fa-user-friends me-2"></i>قائمة العملاء</a></li>
-                        </ul>
-                    </li>
-                    
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle {% if 'suppliers' in request.path %}active{% endif %}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-truck me-1"></i> الموردين
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{% url 'supplier-create' %}"><i class="fas fa-user-plus me-2"></i>إضافة مورد جديد</a></li>
-                            <li><a class="dropdown-item" href="{% url 'supplier-list' %}"><i class="fas fa-address-book me-2"></i>قائمة الموردين</a></li>
-                        </ul>
-                    </li>
-                    
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle {% if 'reports' in request.path %}active{% endif %}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-chart-bar me-1"></i> التقارير
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{% url 'financial-report' %}"><i class="fas fa-file-invoice-dollar me-2"></i>التقرير المالي</a></li>
-                            <li><a class="dropdown-item" href="{% url 'profit-report' %}"><i class="fas fa-chart-line me-2"></i>تقرير الأرباح</a></li>
-                            <li><a class="dropdown-item" href="{% url 'inventory-analysis' %}"><i class="fas fa-chart-pie me-2"></i>تحليل المخزون</a></li>
-                            <li><a class="dropdown-item" href="{% url 'debts-report' %}"><i class="fas fa-money-bill-wave me-2"></i>تقرير المديونيات</a></li>
-                        </ul>
-                    </li>
-                </ul>
-                
-                <!-- Right-aligned Items (Notifications & User Menu) -->
-                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-                    <!-- Notifications Dropdown -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle position-relative" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-bell"></i>
-                            {% if notifications_count > 0 %}
-                                <span class="badge rounded-pill bg-danger notification-badge">{{ notifications_count }}</span>
-                            {% endif %}
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end notifications-dropdown">
-                            <li>
-                                <div class="d-flex justify-content-between align-items-center px-3 py-2 bg-light border-bottom">
-                                    <h6 class="mb-0 fw-bold">الإشعارات</h6>
-                                    <a href="{% url 'dashboard' %}" class="text-muted text-decoration-none small">
-                                        <i class="fas fa-cog"></i>
-                                    </a>
-                                </div>
-                            </li>
-                            
-                            {% if notifications %}
-                                {% for notification in notifications %}
-                                <li>
-                                    <a class="dropdown-item notification-item p-2" href="{{ notification.url }}">
-                                        <div class="d-flex align-items-center">
-                                            <div class="notification-icon {{ notification.icon_class }} me-3">
-                                                <i class="{{ notification.icon }}"></i>
-                                            </div>
-                                            <div class="flex-grow-1">
-                                                <div class="fw-bold text-truncate">{{ notification.title }}</div>
-                                                <div class="text-muted small">{{ notification.text|truncatechars:50 }}</div>
-                                                <div class="text-muted small mt-1">{{ notification.time }}</div>
-                                            </div>
-                                            <div class="ms-2">
-                                                {% if not notification.is_read %}
-                                                    <span class="badge rounded-pill bg-primary">جديد</span>
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                    </a>
-                                </li>
-                                {% endfor %}
-                            {% else %}
-                                <li>
-                                    <div class="text-center py-4">
-                                        <i class="fas fa-bell-slash text-muted mb-2"></i>
-                                        <p class="mb-0 text-muted small">لا توجد إشعارات جديدة</p>
-                                    </div>
-                                </li>
-                            {% endif %}
-                            
-                            <li><hr class="dropdown-divider m-0"></li>
-                            <li>
-                                <a class="dropdown-item text-center py-2" href="{% url 'dashboard' %}">
-                                    عرض كل الإشعارات
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-                    
-                    <!-- User Dropdown -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <div class="user-avatar bg-white text-primary me-2">
-                                {{ user.get_initials|default:"U" }}
-                            </div>
-                            <span class="d-none d-lg-inline">{{ user.get_full_name|default:user.username }}</span>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li>
-                                <div class="dropdown-item-text">
-                                    <div class="fw-bold">{{ user.get_full_name|default:user.username }}</div>
-                                    <div class="text-muted small">{{ user.email|default:"" }}</div>
-                                </div>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item" href="{% url 'dashboard' %}">
-                                    <i class="fas fa-user me-2 text-primary"></i> الملف الشخصي
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{% url 'general-settings' %}">
-                                    <i class="fas fa-cog me-2 text-secondary"></i> الإعدادات
-                                </a>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item" href="{% url 'logout' %}">
-                                    <i class="fas fa-sign-out-alt me-2 text-danger"></i> تسجيل الخروج
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-                </ul>
-                {% endif %}
+    <!-- Sidebar -->
+    <div class="sidebar-container">
+        <div class="sidebar">
+            <!-- Sidebar header with logo -->
+            <div class="sidebar-header">
+                <a href="{% url 'dashboard' %}" class="sidebar-brand">
+                    <img src="/static/img/logo.png" alt="MWHEBA Stock">
+                    <span>MWHEBA Stock</span>
+                </a>
+                <button id="sidebar-toggle" class="sidebar-toggle-btn">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
             </div>
+            
+            <!-- User profile section -->
+            {% if user.is_authenticated %}
+            <div class="sidebar-user">
+                <div class="user-avatar bg-primary text-white">
+                    {{ user.get_initials|default:"U" }}
+                </div>
+                <div class="user-info">
+                    <h6 class="mb-0">{{ user.get_full_name|default:user.username }}</h6>
+                    <div class="text-muted small">{{ user.position|default:"" }}</div>
+                </div>
+            </div>
+            
+            <!-- Sidebar navigation -->
+            <nav class="sidebar-nav">
+                <ul class="nav-menu">
+                    <li class="nav-item">
+                        <a href="{% url 'dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>لوحة التحكم</span>
+                        </a>
+                        <span class="nav-tooltip">لوحة التحكم</span>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a href="javascript:void(0);" class="nav-link submenu-toggle {% if 'sales' in request.path %}active{% endif %}">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>المبيعات</span>
+                            <i class="fas fa-chevron-left submenu-indicator"></i>
+                        </a>
+                        <span class="nav-tooltip">المبيعات</span>
+                        <ul class="submenu">
+                            <li><a href="{% url 'sale-create' %}" class="{% if 'sale-create' in request.path %}active{% endif %}">
+                                <i class="fas fa-plus-circle"></i> فاتورة بيع جديدة
+                            </a></li>
+                            <li><a href="{% url 'sale-list' %}" class="{% if 'sale-list' in request.path %}active{% endif %}">
+                                <i class="fas fa-list-alt"></i> قائمة المبيعات
+                            </a></li>
+                            <li><a href="{% url 'sales-report' %}" class="{% if 'sales-report' in request.path %}active{% endif %}">
+                                <i class="fas fa-chart-line"></i> تقرير المبيعات
+                            </a></li>
+                        </ul>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a href="javascript:void(0);" class="nav-link submenu-toggle {% if 'purchases' in request.path %}active{% endif %}">
+                            <i class="fas fa-truck-loading"></i>
+                            <span>المشتريات</span>
+                            <i class="fas fa-chevron-left submenu-indicator"></i>
+                        </a>
+                        <span class="nav-tooltip">المشتريات</span>
+                        <ul class="submenu">
+                            <li><a href="{% url 'purchase-create' %}" class="{% if 'purchase-create' in request.path %}active{% endif %}">
+                                <i class="fas fa-plus-circle"></i> أمر شراء جديد
+                            </a></li>
+                            <li><a href="{% url 'purchase-list' %}" class="{% if 'purchase-list' in request.path %}active{% endif %}">
+                                <i class="fas fa-list-alt"></i> قائمة المشتريات
+                            </a></li>
+                        </ul>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a href="javascript:void(0);" class="nav-link submenu-toggle {% if 'products' in request.path %}active{% endif %}">
+                            <i class="fas fa-box"></i>
+                            <span>المنتجات</span>
+                            <i class="fas fa-chevron-left submenu-indicator"></i>
+                        </a>
+                        <span class="nav-tooltip">المنتجات</span>
+                        <ul class="submenu">
+                            <li><a href="{% url 'product-create' %}" class="{% if 'product-create' in request.path %}active{% endif %}">
+                                <i class="fas fa-plus-circle"></i> إضافة منتج جديد
+                            </a></li>
+                            <li><a href="{% url 'product-list' %}" class="{% if 'product-list' in request.path %}active{% endif %}">
+                                <i class="fas fa-list"></i> قائمة المنتجات
+                            </a></li>
+                            <li><a href="{% url 'inventory-report' %}" class="{% if 'inventory-report' in request.path %}active{% endif %}">
+                                <i class="fas fa-boxes"></i> تقرير المخزون
+                            </a></li>
+                        </ul>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a href="javascript:void(0);" class="nav-link submenu-toggle {% if 'customers' in request.path %}active{% endif %}">
+                            <i class="fas fa-users"></i>
+                            <span>العملاء</span>
+                            <i class="fas fa-chevron-left submenu-indicator"></i>
+                        </a>
+                        <span class="nav-tooltip">العملاء</span>
+                        <ul class="submenu">
+                            <li><a href="{% url 'customer-create' %}" class="{% if 'customer-create' in request.path %}active{% endif %}">
+                                <i class="fas fa-user-plus"></i> إضافة عميل جديد
+                            </a></li>
+                            <li><a href="{% url 'customer-list' %}" class="{% if 'customer-list' in request.path %}active{% endif %}">
+                                <i class="fas fa-user-friends"></i> قائمة العملاء
+                            </a></li>
+                        </ul>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a href="javascript:void(0);" class="nav-link submenu-toggle {% if 'suppliers' in request.path %}active{% endif %}">
+                            <i class="fas fa-truck"></i>
+                            <span>الموردين</span>
+                            <i class="fas fa-chevron-left submenu-indicator"></i>
+                        </a>
+                        <span class="nav-tooltip">الموردين</span>
+                        <ul class="submenu">
+                            <li><a href="{% url 'supplier-create' %}" class="{% if 'supplier-create' in request.path %}active{% endif %}">
+                                <i class="fas fa-user-plus"></i> إضافة مورد جديد
+                            </a></li>
+                            <li><a href="{% url 'supplier-list' %}" class="{% if 'supplier-list' in request.path %}active{% endif %}">
+                                <i class="fas fa-address-book"></i> قائمة الموردين
+                            </a></li>
+                        </ul>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a href="javascript:void(0);" class="nav-link submenu-toggle {% if 'reports' in request.path %}active{% endif %}">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>التقارير</span>
+                            <i class="fas fa-chevron-left submenu-indicator"></i>
+                        </a>
+                        <span class="nav-tooltip">التقارير</span>
+                        <ul class="submenu">
+                            <li><a href="{% url 'financial-report' %}" class="{% if 'financial-report' in request.path %}active{% endif %}">
+                                <i class="fas fa-file-invoice-dollar"></i> التقرير المالي
+                            </a></li>
+                            <li><a href="{% url 'profit-report' %}" class="{% if 'profit-report' in request.path %}active{% endif %}">
+                                <i class="fas fa-chart-line"></i> تقرير الأرباح
+                            </a></li>
+                            <li><a href="{% url 'inventory-analysis' %}" class="{% if 'inventory-analysis' in request.path %}active{% endif %}">
+                                <i class="fas fa-chart-pie"></i> تحليل المخزون
+                            </a></li>
+                            <li><a href="{% url 'debts-report' %}" class="{% if 'debts-report' in request.path %}active{% endif %}">
+                                <i class="fas fa-money-bill-wave"></i> تقرير المديونيات
+                            </a></li>
+                        </ul>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a href="{% url 'general-settings' %}" class="nav-link {% if 'general-settings' in request.path %}active{% endif %}">
+                            <i class="fas fa-cog"></i>
+                            <span>الإعدادات</span>
+                        </a>
+                        <span class="nav-tooltip">الإعدادات</span>
+                    </li>
+                    
+                    <li class="nav-item mt-4">
+                        <a href="{% url 'logout' %}" class="nav-link text-danger">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>تسجيل الخروج</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            {% endif %}
         </div>
-    </nav>
-    
-    <!-- Page Header (Optional) -->
-    <div class="bg-white border-bottom shadow-sm py-3 mb-4">
-        {% block page_header %}{% endblock %}
     </div>
     
-    <!-- Main Content -->
-    <main class="page-transition">
-        {% if messages %}
-        <div class="container mb-4">
-            {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
-                <div class="d-flex">
-                    <div class="me-2">
-                        {% if message.tags == 'success' %}
-                            <i class="fas fa-check-circle"></i>
-                        {% elif message.tags == 'error' %}
-                            <i class="fas fa-exclamation-circle"></i>
-                        {% elif message.tags == 'warning' %}
-                            <i class="fas fa-exclamation-triangle"></i>
-                        {% elif message.tags == 'info' %}
-                            <i class="fas fa-info-circle"></i>
-                        {% endif %}
+    <!-- Main Content Wrapper -->
+    <div class="main-content">
+        <!-- Top header bar -->
+        <header class="top-header">
+            <div class="container-fluid">
+                <!-- Mobile menu toggle -->
+                <div class="header-wrap">
+                    <div class="header-left">
+                        <button class="mobile-menu-btn d-lg-none">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        
+                        <!-- Page title with icon -->
+                        <div class="page-heading">
+                            <h4 class="page-title">
+                                {% block page_icon %}
+                                    {% if request.resolver_match.url_name == 'dashboard' %}
+                                        <i class="fas fa-tachometer-alt me-2 text-primary"></i>
+                                    {% elif 'sales' in request.path or 'sale-' in request.path %}
+                                        <i class="fas fa-shopping-cart me-2 text-primary"></i>
+                                    {% elif 'purchases' in request.path or 'purchase-' in request.path %}
+                                        <i class="fas fa-truck-loading me-2 text-primary"></i>
+                                    {% elif 'products' in request.path or 'product-' in request.path or 'inventory-' in request.path %}
+                                        <i class="fas fa-box me-2 text-primary"></i>
+                                    {% elif 'customers' in request.path or 'customer-' in request.path %}
+                                        <i class="fas fa-users me-2 text-primary"></i>
+                                    {% elif 'suppliers' in request.path or 'supplier-' in request.path %}
+                                        <i class="fas fa-truck me-2 text-primary"></i>
+                                    {% elif 'reports' in request.path %}
+                                        <i class="fas fa-chart-bar me-2 text-primary"></i>
+                                    {% elif 'settings' in request.path %}
+                                        <i class="fas fa-cog me-2 text-primary"></i>
+                                    {% else %}
+                                        <i class="fas fa-file me-2 text-primary"></i>
+                                    {% endif %}
+                                {% endblock %}
+                                <span>{% block page_title %}
+                                    {% if 'dashboard' in request.path or request.resolver_match.url_name == 'dashboard' %}
+                                        لوحة التحكم
+                                    {% elif 'sales/create' in request.path %}
+                                        فاتورة بيع جديدة
+                                    {% elif 'reports/sales' in request.path %}
+                                        تقارير المبيعات
+                                    {% elif 'sales' in request.path %}
+                                        قائمة المبيعات
+                                    {% elif 'sale-detail' in request.path %}
+                                        تفاصيل الفاتورة
+                                    {% elif 'purchases/create' in request.path %}
+                                        أمر شراء جديد
+                                    {% elif 'purchases' in request.path %}
+                                        قائمة المشتريات
+                                    {% elif 'purchase-detail' in request.path %}
+                                        تفاصيل الطلب
+                                    {% elif 'products/create' in request.path %}
+                                        إضافة منتج جديد
+                                    {% elif 'products' in request.path %}
+                                        قائمة المنتجات
+                                    {% elif 'inventory-report' in request.path %}
+                                        تقرير المخزون
+                                    {% elif 'inventory-analysis' in request.path %}
+                                        تحليل المخزون
+                                    {% elif 'product-detail' in request.path %}
+                                        تفاصيل المنتج
+                                    {% elif 'customers/create' in request.path %}
+                                        إضافة عميل جديد
+                                    {% elif 'customers' in request.path %}
+                                        قائمة العملاء
+                                    {% elif 'customer-detail' in request.path %}
+                                        تفاصيل العميل
+                                    {% elif 'suppliers/create' in request.path %}
+                                        إضافة مورد جديد
+                                    {% elif 'suppliers' in request.path %}
+                                        قائمة الموردين
+                                    {% elif 'supplier-detail' in request.path %}
+                                        تفاصيل المورد
+                                    {% elif 'financial-report' in request.path %}
+                                        التقرير المالي
+                                    {% elif 'reports/profit' in request.path %}
+                                        تقارير الأرباح
+                                    {% elif 'debts-report' in request.path %}
+                                        تقرير المديونيات
+                                    {% elif 'general-settings' in request.path or 'settings' in request.path %}
+                                        الإعدادات
+                                    {% elif 'financial' in request.path %}
+                                        التقارير المالية
+                                    {% elif 'reports' in request.path %}
+                                        التقارير
+                                    {% elif 'sales' in request.path %}
+                                        المبيعات
+                                    {% elif 'purchases' in request.path %}
+                                        المشتريات
+                                    {% elif 'products' in request.path %}
+                                        المنتجات
+                                    {% elif 'customers' in request.path %}
+                                        العملاء
+                                    {% elif 'suppliers' in request.path %}
+                                        الموردين
+                                    {% else %}
+                                        {{ request.resolver_match.view_name|default:"‘إدارة المخازن" }}
+                                    {% endif %}
+                                {% endblock %}</span>
+                            </h4>
+                        </div>
                     </div>
-                    <div>{{ message }}</div>
+                    
+                    <div class="header-right">
+                        <!-- Quick actions dropdown -->
+                        <div class="quick-actions dropdown me-2 d-none d-md-inline-block">
+                            <button class="btn btn-primary btn-sm rounded-pill px-3" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-bolt me-1"></i> إجراء سريع
+                                <i class="fas fa-chevron-down ms-1 small"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                                <li><a class="dropdown-item py-2" href="{% url 'sale-create' %}">
+                                    <i class="fas fa-plus-circle text-success me-2"></i> فاتورة بيع جديدة
+                                </a></li>
+                                <li><a class="dropdown-item py-2" href="{% url 'purchase-create' %}">
+                                    <i class="fas fa-shopping-cart text-primary me-2"></i> أمر شراء جديد
+                                </a></li>
+                                <li><a class="dropdown-item py-2" href="{% url 'product-create' %}">
+                                    <i class="fas fa-box text-warning me-2"></i> إضافة منتج جديد
+                                </a></li>
+                                <li><a class="dropdown-item py-2" href="{% url 'customer-create' %}">
+                                    <i class="fas fa-user-plus text-info me-2"></i> إضافة عميل
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item py-2" href="{% url 'financial-report' %}">
+                                    <i class="fas fa-chart-line text-danger me-2"></i> التقرير المالي
+                                </a></li>
+                            </ul>
+                        </div>
+                        
+                        <!-- Search bar -->
+                        <form class="search-form d-none d-md-flex me-3" action="{% url 'dashboard' %}" method="get">
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-0"><i class="fas fa-search text-muted"></i></span>
+                                <input type="search" name="q" class="form-control form-control-sm bg-light border-0" placeholder="بحث...">
+                            </div>
+                        </form>
+                        
+                        <!-- Notification dropdown -->
+                        <div class="dropdown d-inline-block me-2">
+                            <button class="header-btn position-relative" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-bell"></i>
+                                {% if notifications_count > 0 %}
+                                <span class="badge rounded-pill bg-danger badge-counter">{{ notifications_count }}</span>
+                                {% endif %}
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end dropdown-menu-card shadow-lg border-0 p-0" style="width: 320px;">
+                                <div class="card">
+                                    <div class="card-header bg-light py-2 px-3 d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0"><i class="fas fa-bell text-primary me-2"></i> الإشعارات</h6>
+                                        <a href="#" class="text-muted small">تعيين الكل كمقروء</a>
+                                    </div>
+                                    <div class="notify-list" style="max-height: 300px; overflow-y: auto;">
+                                        {% if notifications %}
+                                            {% for notification in notifications %}
+                                            <a href="{{ notification.url }}" class="notify-item p-3 border-bottom d-block text-decoration-none">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="flex-shrink-0">
+                                                        <div class="notify-icon {{ notification.icon_class }}">
+                                                            <i class="{{ notification.icon }}"></i>
+                                                        </div>
+                                                    </div>
+                                                    <div class="flex-grow-1 ms-3">
+                                                        <h6 class="mb-1 text-truncate">{{ notification.title }}</h6>
+                                                        <p class="mb-1 text-muted small text-truncate">{{ notification.text }}</p>
+                                                        <span class="text-muted smaller d-flex align-items-center">
+                                                            <i class="far fa-clock me-1"></i> {{ notification.created_at|timesince }}
+                                                        </span>
+                                                    </div>
+                                                    {% if not notification.is_read %}
+                                                    <span class="badge bg-primary ms-2">جديد</span>
+                                                    {% endif %}
+                                                </div>
+                                            </a>
+                                            {% endfor %}
+                                        {% else %}
+                                            <div class="text-center p-4">
+                                                <i class="fas fa-bell-slash text-muted mb-2" style="font-size: 2rem;"></i>
+                                                <p class="mb-0 text-muted">لا توجد إشعارات جديدة</p>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="card-footer text-center p-2">
+                                        <a href="{% url 'dashboard' %}">عرض كل الإشعارات</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- User profile dropdown -->
+                        <div class="dropdown ms-2">
+                            <button class="user-menu d-flex align-items-center bg-transparent border-0 p-0" data-bs-toggle="dropdown">
+                                <div class="user-avatar bg-{{ user.get_color_class }} text-white">
+                                    {{ user.get_initials|default:"U" }}
+                                </div>
+                                <span class="ms-2 d-none d-lg-inline">
+                                    <span class="fw-medium">{{ user.get_full_name|default:user.username }}</span>
+                                    <i class="fas fa-chevron-down ms-1 small"></i>
+                                </span>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end shadow border-0">
+                                <div class="p-3 border-bottom d-flex">
+                                    <div class="user-avatar bg-{{ user.get_color_class }} text-white">
+                                        {{ user.get_initials|default:"U" }}
+                                    </div>
+                                    <div class="ms-3">
+                                        <h6 class="mb-1">{{ user.get_full_name|default:user.username }}</h6>
+                                        <p class="text-muted mb-0 small">{{ user.email }}</p>
+                                    </div>
+                                </div>
+                                <div class="p-2">
+                                    <a class="dropdown-item rounded p-2" href="#">
+                                        <i class="fas fa-user me-2 text-primary"></i> الملف الشخصي
+                                    </a>
+                                    <a class="dropdown-item rounded p-2" href="{% url 'general-settings' %}">
+                                        <i class="fas fa-cog me-2 text-secondary"></i> الإعدادات
+                                    </a>
+                                    <div class="dropdown-divider"></div>
+                                    <a class="dropdown-item rounded p-2 text-danger" href="{% url 'logout' %}">
+                                        <i class="fas fa-sign-out-alt me-2"></i> تسجيل الخروج
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
-            {% endfor %}
-        </div>
-        {% endif %}
+        </header>
         
-        {% block content %}{% endblock %}
-    </main>
-    
-    <!-- Footer -->
-    <footer class="bg-white py-4 mt-auto border-top">
-        <div class="container-fluid">
-            <div class="row align-items-center">
-                <div class="col-md-6 text-center text-md-start">
-                    <p class="mb-0">&copy; {% now "Y" %} MWHEBA Stock. جميع الحقوق محفوظة.</p>
+        <!-- Main Content -->
+        <div class="content-body">
+            <div class="container-fluid">
+                {% if messages %}
+                <div class="row">
+                    <div class="col-12">
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
+                            <div class="d-flex">
+                                <div class="me-2">
+                                    {% if message.tags == 'success' %}
+                                        <i class="fas fa-check-circle"></i>
+                                    {% elif message.tags == 'error' %}
+                                        <i class="fas fa-exclamation-circle"></i>
+                                    {% elif message.tags == 'warning' %}
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    {% elif message.tags == 'info' %}
+                                        <i class="fas fa-info-circle"></i>
+                                    {% endif %}
+                                </div>
+                                <div>{{ message }}</div>
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        {% endfor %}
+                    </div>
                 </div>
-                <div class="col-md-6 text-center text-md-end">
-                    <p class="mb-0 text-muted">نظام إدارة المخزون والمبيعات <span class="text-primary">v1.0</span></p>
-                </div>
+                {% endif %}
+                
+                <!-- Page Content -->
+                {% block content %}{% endblock %}
             </div>
         </div>
-    </footer>
+        
+        <!-- Footer -->
+        <footer class="main-footer">
+            <div class="container-fluid">
+                <div class="row align-items-center">
+                    <div class="col-md-6 text-center text-md-start">
+                        <p class="mb-0">&copy; {% now "Y" %} MWHEBA Stock. جميع الحقوق محفوظة.</p>
+                    </div>
+                    <div class="col-md-6 text-center text-md-end">
+                        <p class="mb-0 text-muted">نظام إدارة المخزون والمبيعات <span class="text-primary">v1.0</span></p>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
     
     <!-- Back to top button -->
     <button id="back-to-top" class="btn btn-primary btn-sm rounded-circle position-fixed bottom-0 end-0 m-4 d-none">
         <i class="fas fa-arrow-up"></i>
     </button>
     
-    <!-- Loading Overlay (For AJAX operations) -->
+    <!-- Loading Overlay -->
     <div id="loading-overlay" class="position-fixed top-0 start-0 w-100 h-100 d-none" style="background-color: rgba(0,0,0,0.5); z-index: 9999;">
         <div class="position-absolute top-50 start-50 translate-middle text-white text-center">
             <div class="spinner-border mb-2" role="status">
@@ -453,82 +468,7 @@
         </div>
     </div>
     
-    <!-- Core JavaScript Libraries -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-    
-    <!-- Custom Scripts -->
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Back to top button functionality
-        const backToTopButton = document.getElementById('back-to-top');
-        
-        window.onscroll = function() {
-            if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
-                backToTopButton.classList.remove('d-none');
-            } else {
-                backToTopButton.classList.add('d-none');
-            }
-        };
-        
-        backToTopButton.addEventListener('click', function() {
-            window.scrollTo({top: 0, behavior: 'smooth'});
-        });
-        
-        // Enable Bootstrap tooltips
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-        
-        // Enable Bootstrap popovers
-        var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
-        popoverTriggerList.map(function (popoverTriggerEl) {
-            return new bootstrap.Popover(popoverTriggerEl);
-        });
-        
-        // Function to show loading overlay during AJAX operations
-        window.showLoading = function() {
-            document.getElementById('loading-overlay').classList.remove('d-none');
-        };
-        
-        window.hideLoading = function() {
-            document.getElementById('loading-overlay').classList.add('d-none');
-        };
-        
-        // Add timestamp to cache-busting for development
-        function addTimestampToAssets() {
-            const timestamp = new Date().getTime();
-            document.querySelectorAll('link[rel="stylesheet"], script[src]').forEach(element => {
-                const currentSrc = element.getAttribute('href') || element.getAttribute('src');
-                if (currentSrc && currentSrc.startsWith('/static/')) {
-                    const newSrc = currentSrc.includes('?') ? 
-                        `${currentSrc}&t=${timestamp}` : 
-                        `${currentSrc}?t=${timestamp}`;
-                    
-                    if (element.tagName === 'LINK') {
-                        element.setAttribute('href', newSrc);
-                    } else {
-                        element.setAttribute('src', newSrc);
-                    }
-                }
-            });
-        }
-        
-        // In development mode only
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-            addTimestampToAssets();
-        }
-
-        // Initialize any custom JavaScript from other modules
-        if (typeof initializeApp === 'function') {
-            initializeApp();
-        }
-    });
-    </script>
-    
-    <!-- Additional Scripts Specific to Each Page -->
-    <script src="/static/js/main.js"></script>
+    {% include "base_scripts.html" %}
     
     {% block extra_js %}{% endblock %}
 </body>

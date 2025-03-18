@@ -207,9 +207,7 @@ input, select, textarea {
 
 /* Page titles */
 .page-title {
-    margin-bottom: 1.5rem;
-    border-bottom: 1px solid #dee2e6;
-    padding-bottom: 0.5rem;
+    margin: 0.5rem;
 }
 
 /* RTL specific adjustments */

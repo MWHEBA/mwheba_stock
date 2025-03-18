@@ -60,6 +60,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                # 'mwheba_stock.context_processors.page_info',  # تم التعليق على هذا السطر
             ],
         },
     },
@@ -93,14 +94,15 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # Internationalization
-LANGUAGE_CODE = 'ar'  # Default language is Arabic
+LANGUAGE_CODE = 'en-us'  # Default language is English for system messages and admin
 TIME_ZONE = 'Africa/Cairo'  # Egyptian timezone
 USE_I18N = True
+USE_L10N = True  # Format dates, numbers, etc. according to locale
 USE_TZ = True
 
 LANGUAGES = [
-    ('ar', 'Arabic'),
-    ('en', 'English'),
+    ('en', 'English'),  # First language is the default for system
+    ('ar', 'Arabic'),   # Second language for UI translations
 ]
 
 LOCALE_PATHS = [os.path.join(BASE_DIR, 'locale')]

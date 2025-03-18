@@ -1,0 +1,149 @@
+<!-- Core JavaScript Libraries -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+
+<!-- Custom Scripts -->
+<script src="/static/js/main.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Sidebar functionality
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    const mainContent = document.querySelector('.main-content');
+    const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+    const sidebarContainer = document.querySelector('.sidebar-container');
+    
+    // Toggle sidebar on desktop
+    if(sidebarToggle) {
+        sidebarToggle.addEventListener('click', function() {
+            sidebar.classList.toggle('collapsed');
+            // Store sidebar state in localStorage
+            localStorage.setItem('sidebar-collapsed', sidebar.classList.contains('collapsed'));
+        });
+    }
+    
+    // Check if sidebar was collapsed before
+    if (localStorage.getItem('sidebar-collapsed') === 'true') {
+        sidebar.classList.add('collapsed');
+    }
+    
+    // Mobile sidebar toggle
+    if(mobileMenuBtn) {
+        mobileMenuBtn.addEventListener('click', function() {
+            sidebarContainer.classList.toggle('show');
+            document.body.classList.toggle('sidebar-open');
+        });
+    }
+    
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', function(event) {
+        if (window.innerWidth < 992 && 
+            sidebarContainer.classList.contains('show') && 
+            !sidebarContainer.contains(event.target) && 
+            !mobileMenuBtn.contains(event.target)) {
+            sidebarContainer.classList.remove('show');
+            document.body.classList.remove('sidebar-open');
+        }
+    });
+    
+    // Sidebar submenu functionality
+    const submenuToggles = document.querySelectorAll('.submenu-toggle');
+    
+    submenuToggles.forEach(toggle => {
+        toggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            const parentItem = this.closest('.nav-item');
+            
+            // For desktop expanded sidebar, handle submenu
+            if(!sidebar.classList.contains('collapsed') || window.innerWidth < 992) {
+                parentItem.classList.toggle('open');
+                
+                // Close other open submenus
+                document.querySelectorAll('.nav-item.open').forEach(item => {
+                    if(item !== parentItem) {
+                        item.classList.remove('open');
+                    }
+                });
+            } 
+            // For collapsed sidebar, move to the submenu page on clicks
+            else if(sidebar.classList.contains('collapsed') && window.innerWidth >= 992) {
+                const firstSubmenuItem = parentItem.querySelector('.submenu a');
+                if(firstSubmenuItem) {
+                    window.location.href = firstSubmenuItem.getAttribute('href');
+                }
+            }
+        });
+    });
+    
+    // Handle submenus that should be open based on active state
+    document.querySelectorAll('.nav-link.submenu-toggle.active').forEach(activeToggle => {
+        const parentItem = activeToggle.closest('.nav-item');
+        parentItem.classList.add('open');
+    });
+    
+    // Back to top button functionality
+    const backToTopButton = document.getElementById('back-to-top');
+    
+    window.onscroll = function() {
+        if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+            backToTopButton.classList.remove('d-none');
+        } else {
+            backToTopButton.classList.add('d-none');
+        }
+    };
+    
+    backToTopButton.addEventListener('click', function() {
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    });
+    
+    // Enable Bootstrap tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Enable Bootstrap popovers
+    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+    popoverTriggerList.map(function (popoverTriggerEl) {
+        return new bootstrap.Popover(popoverTriggerEl);
+    });
+    
+    // Function to show loading overlay during AJAX operations
+    window.showLoading = function() {
+        document.getElementById('loading-overlay').classList.remove('d-none');
+    };
+    
+    window.hideLoading = function() {
+        document.getElementById('loading-overlay').classList.add('d-none');
+    };
+    
+    // Add timestamp to cache-busting for development
+    function addTimestampToAssets() {
+        const timestamp = new Date().getTime();
+        document.querySelectorAll('link[rel="stylesheet"], script[src]').forEach(element => {
+            const currentSrc = element.getAttribute('href') || element.getAttribute('src');
+            if (currentSrc && currentSrc.startsWith('/static/')) {
+                const newSrc = currentSrc.includes('?') ? 
+                    `${currentSrc}&t=${timestamp}` : 
+                    `${currentSrc}?t=${timestamp}`;
+                
+                if (element.tagName === 'LINK') {
+                    element.setAttribute('href', newSrc);
+                } else {
+                    element.setAttribute('src', newSrc);
+                }
+            }
+        });
+    }
+    
+    // In development mode only
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        addTimestampToAssets();
+    }
+
+    // Initialize any custom JavaScript from other modules
+    if (typeof initializeApp === 'function') {
+        initializeApp();
+    }
+});
+</script>
