@@ -132,3 +132,24 @@
         </div>
     </div>
 </div>
+
+<!-- ابحث عن أي استدعاء للمسار category-create-ajax واستبدله بـ customer-category-create -->
+<script>
+    // مثال على التغيير الذي قد تحتاج إلى إجرائه:
+    // من:
+    // url: "{% url 'category-create-ajax' %}"
+    // إلى:
+    url: "{% url 'customer-category-create' %}"
+</script>
+
+
+
+
+
+
+
+{% endfor %}  {% endif %}    // استخدام "in" الإنجليزية وليس "في" العربية  {% if field.name in required_fields %}{% for field in form %}// تغيير أي عبارات تستخدم كلمة "في" العربية إلى "in" الإنجليزية
+<!-- تأكد من استخدام in بدلاً من في -->
+{% if field_name in fields %}
+  // محتوى الشرط  
+{% endif %}

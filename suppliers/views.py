@@ -418,3 +418,171 @@ def get_supplier_data(request, pk):
     }
     
     return JsonResponse(data)
+
+@login_required
+def supplier_debts(request):
+    """عرض صفحة مستحقات الموردين"""
+    # الحصول على الموردين الذين لديهم مستحقات
+    suppliers = Supplier.objects.filter(balance__gt=0).order_by('-balance')
+    
+    # تصفية إضافية
+    search_query = request.GET.get('search', '')
+    category_id = request.GET.get('category', '')
+    sort_by = request.GET.get('sort_by', '-balance')
+    
+    if search_query:
+        suppliers = suppliers.filter(
+            Q(name__icontains=search_query) | 
+            Q(phone__icontains=search_query) |
+            Q(email__icontains=search_query) |
+            Q(code__icontains=search_query)
+        )
+    
+    if category_id and category_id.isdigit():
+        suppliers = suppliers.filter(category_id=category_id)
+    
+    if sort_by:
+        suppliers = suppliers.order_by(sort_by)
+    
+    # إحصائيات المستحقات
+    total_balance = suppliers.aggregate(total=Sum('balance'))['total'] or 0
+    suppliers_with_debts_count = suppliers.count()
+    exceed_limit_count = suppliers.filter(credit_limit__gt=0).filter(balance__gt=F('credit_limit')).count()
+    
+    # احصل على الفئات لفلتر البحث
+    categories = SupplierCategory.objects.all()
+    
+    # تنفيذ الترقيم
+    page_size = int(request.GET.get('page_size', 10))
+    paginator = Paginator(suppliers, page_size)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'suppliers': page_obj,
+        'total_balance': total_balance,
+        'suppliers_with_debts_count': suppliers_with_debts_count,
+        'exceed_limit_count': exceed_limit_count,
+        'categories': categories,
+        'search_query': search_query,
+        'category_id': category_id,
+        'sort_by': sort_by,
+        'is_paginated': paginator.num_pages > 1,
+        'page_obj': page_obj,
+        'paginator': paginator,
+        'page_size': page_size,
+    }
+    
+    return render(request, 'suppliers/supplier_debts.html', context)
+
+@login_required
+def supplier_categories(request):
+    """عرض وإدارة تصنيفات الموردين"""
+    categories = SupplierCategory.objects.all().order_by('name')
+    
+    # احصائيات التصنيفات
+    for category in categories:
+        category.supplier_count = Supplier.objects.filter(category=category).count()
+        category.total_purchases = Supplier.objects.filter(category=category).aggregate(total=Sum('total_purchases'))['total'] or 0
+        category.total_balance = Supplier.objects.filter(category=category).aggregate(total=Sum('balance'))['total'] or 0
+    
+    context = {
+        'categories': categories,
+        'total_categories': categories.count(),
+    }
+    
+    return render(request, 'suppliers/supplier_categories.html', context)
+
+@login_required
+def supplier_category_create(request):
+    """إضافة تصنيف مورد جديد"""
+    if request.method == 'POST':
+        form = SupplierCategoryForm(request.POST)
+        if form.is_valid():
+            category = form.save()
+            
+            # إذا كان طلب AJAX، إرجاع استجابة JSON
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'category_id': category.id,
+                    'category_name': category.name
+                })
+            
+            messages.success(request, _(f'تم إضافة التصنيف {category.name} بنجاح'))
+            return redirect('supplier-categories')
+        else:
+            # إذا كان طلب AJAX، إرجاع رسائل الخطأ
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                errors = {field: errors[0] for field, errors in form.errors.items()}
+                return JsonResponse({'success': False, 'errors': errors})
+            
+            messages.error(request, _('يرجى تصحيح الأخطاء الموجودة في النموذج.'))
+    else:
+        form = SupplierCategoryForm()
+    
+    context = {
+        'form': form,
+        'title': _('إضافة تصنيف مورد جديد'),
+    }
+    
+    return render(request, 'suppliers/supplier_category_form.html', context)
+
+@login_required
+def supplier_category_edit(request, pk):
+    """تعديل تصنيف مورد"""
+    category = get_object_or_404(SupplierCategory, pk=pk)
+    if request.method == 'POST':
+        form = SupplierCategoryForm(request.POST, instance=category)
+        if form.is_valid():
+            form.save()
+            
+            # إذا كان طلب AJAX، إرجاع استجابة JSON
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'category_id': category.id,
+                    'category_name': category.name
+                })
+            
+            messages.success(request, _(f'تم تحديث تصنيف المورد {category.name} بنجاح.'))
+            return redirect('supplier-categories')
+        else:
+            # إذا كان طلب AJAX، إرجاع رسائل الخطأ
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                errors = {field: errors[0] for field, errors in form.errors.items()}
+                return JsonResponse({'success': False, 'errors': errors})
+            
+            messages.error(request, _('يرجى تصحيح الأخطاء الموجودة في النموذج.'))
+    else:
+        form = SupplierCategoryForm(instance=category)
+    
+    context = {
+        'form': form,
+        'category': category,
+        'title': _('تعديل تصنيف المورد'),
+    }
+    
+    return render(request, 'suppliers/supplier_category_form.html', context)
+
+@login_required
+def supplier_category_delete(request, pk):
+    """حذف تصنيف مورد"""
+    category = get_object_or_404(SupplierCategory, pk=pk)
+    if request.method == 'POST':
+        # التحقق من عدم وجود موردين مرتبطين بهذا التصنيف
+        if Supplier.objects.filter(category=category).exists():
+            messages.error(request, _('لا يمكن حذف التصنيف لأنه مرتبط بموردين.'))
+            return redirect('supplier-categories')
+        
+        name = category.name
+        category.delete()
+        messages.success(request, _(f'تم حذف تصنيف المورد {name} بنجاح.'))
+        return redirect('supplier-categories')
+    
+    context = {
+        'category': category,
+        'suppliers_count': Supplier.objects.filter(category=category).count(),
+    }
+    
+    return render(request, 'suppliers/supplier_category_confirm_delete.html', context)

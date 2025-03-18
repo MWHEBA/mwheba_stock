@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}حذف تصنيف مورد - {{ category.name }} - MWHEBA Stock{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- رأس الصفحة -->
+    <div class="d-flex flex-column flex-md-row align-items-center justify-content-between mb-4">
+        <div>
+            <h2 class="mb-1">
+                <i class="fas fa-trash text-danger me-2"></i> حذف تصنيف مورد
+            </h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">لوحة التحكم</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'supplier-list' %}">الموردين</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'supplier-categories' %}">تصنيفات الموردين</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">حذف تصنيف</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+    
+    <!-- بطاقة التأكيد -->
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-danger">
+                <div class="card-header bg-danger text-white py-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i> تأكيد الحذف
+                    </h5>
+                </div>
+                <div class="card-body p-4 text-center">
+                    <i class="fas fa-exclamation-triangle text-danger fa-4x mb-4"></i>
+                    
+                    <h4 class="mb-3">هل أنت متأكد من حذف تصنيف "{{ category.name }}"؟</h4>
+                    
+                    <p class="text-muted mb-4">هذا الإجراء لا يمكن التراجع عنه. سيتم حذف هذا التصنيف نهائياً.</p>
+                    
+                    {% if suppliers_count > 0 %}
+                    <div class="alert alert-warning" role="alert">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>تنبيه:</strong> هناك {{ suppliers_count }} مورد مرتبط بهذا التصنيف.
+                        يجب نقل هؤلاء الموردين إلى تصنيف آخر أو إزالة علاقتهم بهذا التصنيف قبل الحذف.
+                    </div>
+                    {% endif %}
+                    
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-center">
+                            <a href="{% url 'supplier-categories' %}" class="btn btn-outline-secondary me-2">
+                                <i class="fas fa-times me-1"></i> إلغاء
+                            </a>
+                            <button type="submit" class="btn btn-danger" {% if suppliers_count > 0 %}disabled{% endif %}>
+                                <i class="fas fa-trash me-1"></i> نعم، قم بالحذف
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -384,3 +384,10 @@ function updatePaymentSummary() {
         remainingElement.className = 'text-success';
     }
 }
+
+// ابحث عن أي استخدام لـ URL category-create-ajax واستبدله بـ customer-category-create
+// على سبيل المثال:
+// من:
+// const url = '/customers/categories/create-ajax/';
+// إلى:
+const url = '/customers/categories/create/';

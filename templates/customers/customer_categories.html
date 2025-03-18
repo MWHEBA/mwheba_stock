@@ -1,0 +1,306 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}تصنيفات العملاء - MWHEBA Stock{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- رأس الصفحة مع خيارات البحث والإضافة -->
+    <div class="d-flex flex-column flex-md-row align-items-center justify-content-between mb-3">
+        <div>
+            <h2 class="mb-1">
+                <i class="fas fa-tags text-primary me-2"></i> تصنيفات العملاء
+            </h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">لوحة التحكم</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'customer-list' %}">العملاء</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">تصنيفات العملاء</li>
+                </ol>
+            </nav>
+        </div>
+        <div class="d-flex mt-3 mt-md-0">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                <i class="fas fa-plus me-1"></i> إضافة تصنيف جديد
+            </button>
+        </div>
+    </div>
+    
+    <!-- بطاقة التصنيفات -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+            <h5 class="mb-0">
+                <i class="fas fa-tags text-primary me-2"></i> قائمة التصنيفات
+                <span class="badge bg-primary rounded-pill ms-2">{{ total_categories }}</span>
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>التصنيف</th>
+                            <th>الوصف</th>
+                            <th>عدد العملاء</th>
+                            <th>إجمالي المبيعات</th>
+                            <th>إجمالي المديونيات</th>
+                            <th class="text-center">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for category in categories %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <span class="badge bg-{{ category.color_code }} me-2">&nbsp;</span>
+                                    <span class="fw-medium">{{ category.name }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                {% if category.description %}
+                                    {{ category.description|truncatechars:50 }}
+                                {% else %}
+                                    <span class="text-muted">--</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'customer-list' %}?category={{ category.id }}">{{ category.customer_count }}</a>
+                            </td>
+                            <td>{{ category.total_sales|floatformat:2 }} ج.م</td>
+                            <td>
+                                {% if category.total_debt > 0 %}
+                                <span class="text-danger">{{ category.total_debt|floatformat:2 }} ج.م</span>
+                                {% else %}
+                                <span class="text-success">0.00 ج.م</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm">
+                                    <button type="button" class="btn btn-warning edit-category-btn" 
+                                            data-id="{{ category.id }}" 
+                                            data-name="{{ category.name }}"
+                                            data-description="{{ category.description|default:'' }}"
+                                            data-color="{{ category.color_code }}">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-danger delete-category-btn"
+                                            data-id="{{ category.id }}" 
+                                            data-name="{{ category.name }}"
+                                            data-count="{{ category.customer_count }}"
+                                            {% if category.customer_count > 0 %}disabled{% endif %}>
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5">
+                                <div class="text-muted">
+                                    <i class="fas fa-tags fa-3x mb-3 text-light"></i>
+                                    <h5>لا يوجد تصنيفات للعملاء</h5>
+                                    <p class="mb-1">قم بإضافة تصنيفات جديدة لتنظيم العملاء</p>
+                                    <button class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                                        <i class="fas fa-plus me-1"></i> إضافة تصنيف جديد
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- مودال إضافة تصنيف -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i> إضافة تصنيف جديد
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="addCategoryForm" action="{% url 'customer-category-create' %}" method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="id_name" class="form-label">اسم التصنيف <span class="text-danger">*</span></label>
+                        <input type="text" name="name" id="id_name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_description" class="form-label">الوصف</label>
+                        <textarea name="description" id="id_description" rows="3" class="form-control"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label d-block">لون التصنيف</label>
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="color_code" id="color_primary" value="primary" checked>
+                            <label class="btn btn-outline-primary" for="color_primary">أزرق</label>
+                            
+                            <input type="radio" class="btn-check" name="color_code" id="color_success" value="success">
+                            <label class="btn btn-outline-success" for="color_success">أخضر</label>
+                            
+                            <input type="radio" class="btn-check" name="color_code" id="color_danger" value="danger">
+                            <label class="btn btn-outline-danger" for="color_danger">أحمر</label>
+                            
+                            <input type="radio" class="btn-check" name="color_code" id="color_warning" value="warning">
+                            <label class="btn btn-outline-warning" for="color_warning">برتقالي</label>
+                            
+                            <input type="radio" class="btn-check" name="color_code" id="color_info" value="info">
+                            <label class="btn btn-outline-info" for="color_info">سماوي</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="submit" form="addCategoryForm" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i> إضافة
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- مودال تعديل تصنيف -->
+<div class="modal fade" id="editCategoryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i> تعديل التصنيف
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="editCategoryForm" method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="edit_id_name" class="form-label">اسم التصنيف <span class="text-danger">*</span></label>
+                        <input type="text" name="name" id="edit_id_name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_id_description" class="form-label">الوصف</label>
+                        <textarea name="description" id="edit_id_description" rows="3" class="form-control"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label d-block">لون التصنيف</label>
+                        <div class="btn-group edit-color-group" role="group">
+                            <input type="radio" class="btn-check" name="color_code" id="edit_color_primary" value="primary">
+                            <label class="btn btn-outline-primary" for="edit_color_primary">أزرق</label>
+                            
+                            <input type="radio" class="btn-check" name="color_code" id="edit_color_success" value="success">
+                            <label class="btn btn-outline-success" for="edit_color_success">أخضر</label>
+                            
+                            <input type="radio" class="btn-check" name="color_code" id="edit_color_danger" value="danger">
+                            <label class="btn btn-outline-danger" for="edit_color_danger">أحمر</label>
+                            
+                            <input type="radio" class="btn-check" name="color_code" id="edit_color_warning" value="warning">
+                            <label class="btn btn-outline-warning" for="edit_color_warning">برتقالي</label>
+                            
+                            <input type="radio" class="btn-check" name="color_code" id="edit_color_info" value="info">
+                            <label class="btn btn-outline-info" for="edit_color_info">سماوي</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="submit" form="editCategoryForm" class="btn btn-warning">
+                    <i class="fas fa-save me-1"></i> حفظ التغييرات
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- مودال حذف تصنيف -->
+<div class="modal fade" id="deleteCategoryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-trash me-2"></i> حذف تصنيف
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="text-center mb-4">
+                    <i class="fas fa-exclamation-triangle text-danger fa-4x mb-3"></i>
+                    <h4 class="text-danger">هل أنت متأكد من حذف هذا التصنيف؟</h4>
+                    <p class="text-muted">سيتم حذف التصنيف "<span id="categoryNameToDelete" class="fw-bold"></span>" نهائياً.</p>
+                </div>
+                
+                <form id="deleteCategoryForm" method="post">
+                    {% csrf_token %}
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i> إلغاء
+                </button>
+                <button type="submit" form="deleteCategoryForm" class="btn btn-danger">
+                    <i class="fas fa-trash-alt me-1"></i> حذف
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // تعديل التصنيف
+    const editCategoryBtns = document.querySelectorAll('.edit-category-btn');
+    editCategoryBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const categoryId = this.getAttribute('data-id');
+            const categoryName = this.getAttribute('data-name');
+            const categoryDesc = this.getAttribute('data-description');
+            const categoryColor = this.getAttribute('data-color');
+            
+            // تعبئة النموذج
+            document.getElementById('edit_id_name').value = categoryName;
+            document.getElementById('edit_id_description').value = categoryDesc;
+            document.getElementById(`edit_color_${categoryColor}`).checked = true;
+            
+            // تحديث مسار النموذج
+            const form = document.getElementById('editCategoryForm');
+            form.action = `/customers/categories/${categoryId}/edit/`;
+            
+            // فتح المودال
+            const modal = new bootstrap.Modal(document.getElementById('editCategoryModal'));
+            modal.show();
+        });
+    });
+    
+    // حذف التصنيف
+    const deleteCategoryBtns = document.querySelectorAll('.delete-category-btn');
+    deleteCategoryBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const categoryId = this.getAttribute('data-id');
+            const categoryName = this.getAttribute('data-name');
+            
+            // تعبئة البيانات
+            document.getElementById('categoryNameToDelete').textContent = categoryName;
+            
+            // تحديث مسار النموذج
+            const form = document.getElementById('deleteCategoryForm');
+            form.action = `/customers/categories/${categoryId}/delete/`;
+            
+            // فتح المودال
+            const modal = new bootstrap.Modal(document.getElementById('deleteCategoryModal'));
+            modal.show();
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}
+    {% if category %}تعديل تصنيف مورد - {{ category.name }}{% else %}إضافة تصنيف مورد جديد{% endif %} - MWHEBA Stock
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- رأس الصفحة -->
+    <div class="d-flex flex-column flex-md-row align-items-center justify-content-between mb-4">
+        <div>
+            <h2 class="mb-1">
+                {% if category %}
+                <i class="fas fa-edit text-primary me-2"></i> تعديل تصنيف مورد
+                {% else %}
+                <i class="fas fa-plus-circle text-primary me-2"></i> إضافة تصنيف مورد جديد
+                {% endif %}
+            </h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">لوحة التحكم</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'supplier-list' %}">الموردين</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'supplier-categories' %}">تصنيفات الموردين</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{% if category %}تعديل تصنيف{% else %}تصنيف جديد{% endif %}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+    
+    <!-- بطاقة النموذج -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">
+                        {% if category %}
+                        <i class="fas fa-edit text-primary me-2"></i> تعديل التصنيف {{ category.name }}
+                        {% else %}
+                        <i class="fas fa-plus-circle text-primary me-2"></i> إضافة تصنيف جديد
+                        {% endif %}
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" id="categoryForm">
+                        {% csrf_token %}
+                        
+                        <!-- اسم التصنيف -->
+                        <div class="mb-3">
+                            <label for="{{ form.name.id_for_label }}" class="form-label">اسم التصنيف <span class="text-danger">*</span></label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.name.errors.0 }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- الوصف -->
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">الوصف</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.description.errors.0 }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">وصف مختصر للتصنيف يساعد في فهم الغرض منه.</div>
+                        </div>
+                        
+                        <!-- لون التصنيف -->
+                        <div class="mb-3">
+                            <label for="{{ form.color_code.id_for_label }}" class="form-label">لون التصنيف</label>
+                            {{ form.color_code }}
+                            {% if form.color_code.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.color_code.errors.0 }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">سيتم استخدام هذا اللون لتمييز هذا التصنيف في الواجهة.</div>
+                        </div>
+                        
+                        <!-- أزرار الإجراءات -->
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'supplier-categories' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-right me-1"></i> رجوع
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i> {% if category %}حفظ التغييرات{% else %}حفظ{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

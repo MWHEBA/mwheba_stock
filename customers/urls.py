@@ -9,11 +9,14 @@ urlpatterns = [
     path('<int:pk>/delete/', views.customer_delete, name='customer-delete'),
     path('<int:pk>/record-payment/', views.record_payment, name='record-payment'),
     path('debts/', views.customer_debts, name='customer-debts'),
-    path('categories/', views.category_list, name='customer-categories'),
-    path('categories/create/', views.category_create, name='category-create'),
-    path('categories/create-ajax/', views.category_create_ajax, name='category-create-ajax'),
-    path('categories/<int:pk>/delete/', views.category_delete, name='category-delete'),
-    # مسارات المودالات الجديدة
-    path('<int:pk>/detail/', views.customer_detail, name='customer-detail'),
+    path('categories/', views.customer_categories, name='customer-categories'),
+    path('categories/create/', views.customer_category_create, name='customer-category-create'),
+    path('categories/<int:pk>/edit/', views.customer_category_edit, name='customer-category-edit'),
+    path('categories/<int:pk>/delete/', views.customer_category_delete, name='customer-category-delete'),
+    
+    # إعادة إضافة المسار لعمل AJAX
+    path('categories/create-ajax/', views.customer_category_create, name='category-create-ajax'),
+    
+    # مسارات إضافية للمودالات
     path('<int:pk>/get-data/', views.get_customer_data, name='get-customer-data'),
 ]

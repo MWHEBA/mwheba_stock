@@ -322,62 +322,56 @@ def customer_delete(request, pk):
 
 @login_required
 def customer_debts(request):
-    """عرض صفحة مديونيات العملاء والتحليلات الخاصة بها"""
-    # الحصول على ترتيب العرض
-    sort_param = request.GET.get('sort', 'debt_high')
+    """عرض صفحة مديونية العملاء"""
+    # الحصول على العملاء الذين لديهم مديونيات
+    customers = Customer.objects.filter(debt__gt=0).order_by('-debt')
     
-    # العملاء المدينين مع الإحصاءات
-    customers_query = Customer.objects.filter(debt__gt=0).annotate(
-        pending_sales_count=Count('sales', filter=Q(sales__status__in=['unpaid', 'partially_paid'])),
-        # الحصول على تاريخ آخر دفعة من العميل
-        last_payment_date=Subquery(
-            CustomerPayment.objects.filter(customer=OuterRef('pk'))
-            .order_by('-payment_date')
-            .values('payment_date')[:1]
+    # تصفية إضافية
+    search_query = request.GET.get('search', '')
+    category_id = request.GET.get('category', '')
+    sort_by = request.GET.get('sort_by', '-debt')
+    
+    if search_query:
+        customers = customers.filter(
+            Q(name__icontains=search_query) | 
+            Q(phone__icontains=search_query) |
+            Q(email__icontains=search_query) |
+            Q(code__icontains=search_query)
         )
-    )
     
-    # تطبيق الترتيب
-    if sort_param == 'debt_high':
-        customers_with_debts = customers_query.order_by('-debt')
-    elif sort_param == 'debt_low':
-        customers_with_debts = customers_query.order_by('debt')
-    elif sort_param == 'name':
-        customers_with_debts = customers_query.order_by('name')
-    elif sort_param == 'overdue':
-        # الترتيب حسب تاريخ آخر دفعة (الأقدم أولاً)
-        customers_with_debts = customers_query.order_by('last_payment_date')
-    else:
-        customers_with_debts = customers_query.order_by('-debt')
+    if category_id and category_id.isdigit():
+        customers = customers.filter(category_id=category_id)
     
-    # حساب إحصاءات المديونية
-    debt_stats = customers_query.aggregate(
-        total=Sum('debt'),
-        avg=Avg('debt'),
-        max=Max('debt')
-    )
+    if sort_by:
+        customers = customers.order_by(sort_by)
     
-    # حساب المديونيات المتأخرة (أكثر من 30 يوم)
-    thirty_days_ago = timezone.now().date() - timezone.timedelta(days=30)
-    overdue_debt = customers_query.filter(
-        last_payment_date__lt=thirty_days_ago
-    ).aggregate(total=Sum('debt'))['total'] or 0
+    # إحصائيات المديونية
+    total_debt = customers.aggregate(total=Sum('debt'))['total'] or 0
+    customers_with_debt_count = customers.count()
+    exceed_limit_count = customers.filter(credit_limit__gt=0).filter(debt__gt=F('credit_limit')).count()
     
-    # إعداد بيانات الرسم البياني حسب التصنيف
-    category_data = list(customers_query.values('category__name').annotate(total=Sum('debt')).order_by('-total'))
+    # احصل على الفئات لفلتر البحث
+    categories = CustomerCategory.objects.all()
+    
+    # تنفيذ الترقيم
+    page_size = int(request.GET.get('page_size', 10))
+    paginator = Paginator(customers, page_size)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
     
     context = {
-        'customers_with_debts': customers_with_debts,
-        'total_debt': debt_stats['total'] or 0,
-        'avg_debt': debt_stats['avg'] or 0,
-        'max_debt': debt_stats['max'] or 0,
-        'overdue_debt': overdue_debt,
-        'today_date': timezone.now().date(),
-        # تجهيز بيانات الرسم البياني بصيغة JSON
-        'chart_data': {
-            'categories': [item['category__name'] or 'بدون تصنيف' for item in category_data],
-            'values': [float(item['total']) for item in category_data]
-        }
+        'customers': page_obj,
+        'total_debt': total_debt,
+        'customers_with_debt_count': customers_with_debt_count,
+        'exceed_limit_count': exceed_limit_count,
+        'categories': categories,
+        'search_query': search_query,
+        'category_id': category_id,
+        'sort_by': sort_by,
+        'is_paginated': paginator.num_pages > 1,
+        'page_obj': page_obj,
+        'paginator': paginator,
+        'page_size': page_size,
     }
     
     return render(request, 'customers/customer_debts.html', context)
@@ -579,3 +573,121 @@ def get_customer_data(request, pk):
     }
     
     return JsonResponse(data)
+
+@login_required
+def customer_categories(request):
+    """عرض وإدارة تصنيفات العملاء"""
+    categories = CustomerCategory.objects.all().order_by('name')
+    
+    # احصائيات التصنيفات
+    for category in categories:
+        category.customer_count = Customer.objects.filter(category=category).count()
+        category.total_sales = Customer.objects.filter(category=category).aggregate(total=Sum('total_sales'))['total'] or 0
+        category.total_debt = Customer.objects.filter(category=category).aggregate(total=Sum('debt'))['total'] or 0
+    
+    context = {
+        'categories': categories,
+        'total_categories': categories.count(),
+    }
+    
+    return render(request, 'customers/customer_categories.html', context)
+
+@login_required
+def customer_category_create(request):
+    """إضافة تصنيف عميل جديد"""
+    if request.method == 'POST':
+        form = CustomerCategoryForm(request.POST)
+        if form.is_valid():
+            category = form.save()
+            
+            # إذا كان طلب AJAX، إرجاع استجابة JSON
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'category_id': category.id,
+                    'category_name': category.name
+                })
+            
+            messages.success(request, _(f'تم إضافة التصنيف {category.name} بنجاح'))
+            return redirect('customer-categories')
+        else:
+            # إذا كان طلب AJAX، إرجاع رسائل الخطأ
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                errors = {field: errors[0] for field, errors in form.errors.items()}
+                return JsonResponse({'success': False, 'errors': errors})
+            
+            messages.error(request, _('يرجى تصحيح الأخطاء الموجودة في النموذج.'))
+    else:
+        form = CustomerCategoryForm()
+    
+    context = {
+        'form': form,
+        'title': _('إضافة تصنيف عميل جديد'),
+    }
+    
+    return render(request, 'customers/customer_category_form.html', context)
+
+@login_required
+def customer_category_edit(request, pk):
+    """تعديل تصنيف عميل"""
+    category = get_object_or_404(CustomerCategory, pk=pk)
+    if request.method == 'POST':
+        form = CustomerCategoryForm(request.POST, instance=category)
+        if form.is_valid():
+            form.save()
+            
+            # إذا كان طلب AJAX، إرجاع استجابة JSON
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'category_id': category.id,
+                    'category_name': category.name
+                })
+            
+            messages.success(request, _(f'تم تحديث تصنيف العميل {category.name} بنجاح.'))
+            return redirect('customer-categories')
+        else:
+            # إذا كان طلب AJAX، إرجاع رسائل الخطأ
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                errors = {field: errors[0] for field, errors in form.errors.items()}
+                return JsonResponse({'success': False, 'errors': errors})
+            
+            messages.error(request, _('يرجى تصحيح الأخطاء الموجودة في النموذج.'))
+    else:
+        form = CustomerCategoryForm(instance=category)
+    
+    context = {
+        'form': form,
+        'category': category,
+        'title': _('تعديل تصنيف العميل'),
+    }
+    
+    return render(request, 'customers/customer_category_form.html', context)
+
+@login_required
+def customer_category_delete(request, pk):
+    """حذف تصنيف عميل"""
+    category = get_object_or_404(CustomerCategory, pk=pk)
+    if request.method == 'POST':
+        # التحقق من عدم وجود عملاء مرتبطين بهذا التصنيف
+        if Customer.objects.filter(category=category).exists():
+            messages.error(request, _('لا يمكن حذف التصنيف لأنه مرتبط بعملاء.'))
+            return redirect('customer-categories')
+        
+        name = category.name
+        category.delete()
+        messages.success(request, _(f'تم حذف تصنيف العميل {name} بنجاح.'))
+        return redirect('customer-categories')
+    
+    context = {
+        'category': category,
+        'customers_count': Customer.objects.filter(category=category).count(),
+    }
+    
+    return render(request, 'customers/customer_category_confirm_delete.html', context)
+
+# تأكد من إضافة هذه السطور في أعلى الملف إذا لم تكن موجودة
+from django.db.models import Q, F, Sum
+from django.core.paginator import Paginator
+from django.contrib import messages
+from django.utils.translation import gettext_lazy as _

@@ -3,7 +3,7 @@
 {% load static %}
 {% load custom_filters %}
 
-{% block title %}مديونيات العملاء - MWHEBA Stock{% endblock %}
+{% block title %}مستحقات الموردين - MWHEBA Stock{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -11,13 +11,13 @@
     <div class="d-flex flex-column flex-md-row align-items-center justify-content-between mb-3">
         <div>
             <h2 class="mb-1">
-                <i class="fas fa-hand-holding-usd text-primary me-2"></i> مديونيات العملاء
+                <i class="fas fa-hand-holding-usd text-primary me-2"></i> مستحقات الموردين
             </h2>
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb mb-0">
                     <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">لوحة التحكم</a></li>
-                    <li class="breadcrumb-item"><a href="{% url 'customer-list' %}">العملاء</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">المديونيات</li>
+                    <li class="breadcrumb-item"><a href="{% url 'supplier-list' %}">الموردين</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">المستحقات</li>
                 </ol>
             </nav>
         </div>
@@ -66,11 +66,11 @@
                     <div class="col-md-4">
                         <label for="sort-select" class="form-label">ترتيب حسب</label>
                         <select name="sort_by" id="sort-select" class="form-select">
-                            <option value="-debt" {% if sort_by == '-debt' %}selected{% endif %}>المديونية (تنازلي)</option>
-                            <option value="debt" {% if sort_by == 'debt' %}selected{% endif %}>المديونية (تصاعدي)</option>
+                            <option value="-balance" {% if sort_by == '-balance' %}selected{% endif %}>المستحقات (تنازلي)</option>
+                            <option value="balance" {% if sort_by == 'balance' %}selected{% endif %}>المستحقات (تصاعدي)</option>
                             <option value="name" {% if sort_by == 'name' %}selected{% endif %}>الاسم (أ-ي)</option>
                             <option value="-name" {% if sort_by == '-name' %}selected{% endif %}>الاسم (ي-أ)</option>
-                            <option value="-last_transaction_date" {% if sort_by == '-last_transaction_date' %}selected{% endif %}>آخر معاملة</option>
+                            <option value="-last_purchase_date" {% if sort_by == '-last_purchase_date' %}selected{% endif %}>آخر تاريخ شراء</option>
                         </select>
                     </div>
                     
@@ -79,7 +79,7 @@
                             <button type="submit" class="btn btn-primary me-md-2">
                                 <i class="fas fa-search me-1"></i> بحث
                             </button>
-                            <a href="{% url 'customer-debts' %}" class="btn btn-outline-secondary">
+                            <a href="{% url 'supplier-debts' %}" class="btn btn-outline-secondary">
                                 <i class="fas fa-times me-1"></i> إلغاء التصفية
                             </a>
                         </div>
@@ -99,8 +99,8 @@
                             <i class="fas fa-file-invoice-dollar fs-4 text-primary"></i>
                         </div>
                     </div>
-                    <h3 class="fs-3 fw-bold text-primary">{{ total_debt|floatformat:0 }}</h3>
-                    <p class="mb-0 text-muted small">إجمالي المديونيات (ج.م)</p>
+                    <h3 class="fs-3 fw-bold text-primary">{{ total_balance|floatformat:0 }}</h3>
+                    <p class="mb-0 text-muted small">إجمالي المستحقات (ج.م)</p>
                 </div>
             </div>
         </div>
@@ -109,11 +109,11 @@
                 <div class="card-body text-center">
                     <div class="d-flex align-items-center justify-content-center mb-2">
                         <div class="rounded-circle bg-warning bg-opacity-10 p-2">
-                            <i class="fas fa-users fs-4 text-warning"></i>
+                            <i class="fas fa-truck fs-4 text-warning"></i>
                         </div>
                     </div>
-                    <h3 class="fs-3 fw-bold text-warning">{{ customers_with_debt_count }}</h3>
-                    <p class="mb-0 text-muted small">عملاء عليهم مديونية</p>
+                    <h3 class="fs-3 fw-bold text-warning">{{ suppliers_with_debts_count }}</h3>
+                    <p class="mb-0 text-muted small">موردين لهم مستحقات</p>
                 </div>
             </div>
         </div>
@@ -132,12 +132,12 @@
         </div>
     </div>
     
-    <!-- جدول العملاء ذوي المديونيات -->
+    <!-- جدول الموردين المستحقات -->
     <div class="card shadow-sm">
         <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
             <h5 class="mb-0">
-                <i class="fas fa-money-bill-wave text-primary me-2"></i> العملاء الذين عليهم مديونيات
-                <span class="badge bg-primary rounded-pill ms-2">{{ customers.count }}</span>
+                <i class="fas fa-money-bill-wave text-primary me-2"></i> الموردين الذين لهم مستحقات
+                <span class="badge bg-primary rounded-pill ms-2">{{ suppliers.count }}</span>
             </h5>
             <div class="d-flex align-items-center">
                 <label class="me-2 text-muted">عرض:</label>
@@ -154,66 +154,66 @@
                 <table class="table table-hover table-borderless align-middle">
                     <thead class="table-light text-secondary small">
                         <tr>
-                            <th class="ps-4">العميل</th>
+                            <th class="ps-4">المورد</th>
                             <th>رقم الهاتف</th>
                             <th>حد الائتمان</th>
-                            <th>المديونية</th>
+                            <th>المستحقات</th>
                             <th>نسبة الاستهلاك</th>
-                            <th>آخر معاملة</th>
+                            <th>آخر شراء</th>
                             <th class="text-center">الإجراءات</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for customer in customers %}
-                        <tr class="{% if customer.debt > customer.credit_limit and customer.credit_limit > 0 %}table-danger{% elif customer.debt > customer.credit_limit|multiply:0.8 and customer.credit_limit > 0 %}table-warning{% endif %}">
+                        {% for supplier in suppliers %}
+                        <tr class="{% if supplier.balance > supplier.credit_limit and supplier.credit_limit > 0 %}table-danger{% elif supplier.balance > supplier.credit_limit|multiply:0.8 and supplier.credit_limit > 0 %}table-warning{% endif %}">
                             <td class="ps-4">
                                 <div class="d-flex align-items-center">
                                     <div class="me-3">
-                                        <div class="avatar bg-{{ customer.get_status_display_class }} text-white">
-                                            {{ customer.name|slice:":1"|upper }}
+                                        <div class="avatar bg-{{ supplier.get_status_display_class }} text-white">
+                                            {{ supplier.name|slice:":1"|upper }}
                                         </div>
                                     </div>
                                     <div>
-                                        <a href="#" class="text-decoration-none fw-medium d-block view-customer-btn" data-id="{{ customer.id }}">
-                                            {{ customer.name }}
+                                        <a href="#" class="text-decoration-none fw-medium d-block view-supplier-btn" data-id="{{ supplier.id }}">
+                                            {{ supplier.name }}
                                         </a>
-                                        <small class="text-muted">{{ customer.code }}</small>
+                                        <small class="text-muted">{{ supplier.code }}</small>
                                     </div>
                                 </div>
                             </td>
-                            <td dir="ltr" class="text-start">{{ customer.phone|default:"--" }}</td>
+                            <td dir="ltr" class="text-start">{{ supplier.phone|default:"--" }}</td>
                             <td>
-                                {% if customer.credit_limit > 0 %}
-                                    {{ customer.credit_limit|floatformat:2 }} ج.م
+                                {% if supplier.credit_limit > 0 %}
+                                    {{ supplier.credit_limit|floatformat:2 }} ج.م
                                 {% else %}
                                     <span class="text-muted">غير محدد</span>
                                 {% endif %}
                             </td>
                             <td>
-                                <span class="fw-bold text-danger">{{ customer.debt|floatformat:2 }} ج.م</span>
+                                <span class="fw-bold text-danger">{{ supplier.balance|floatformat:2 }} ج.م</span>
                             </td>
                             <td>
-                                {% if customer.credit_limit > 0 %}
+                                {% if supplier.credit_limit > 0 %}
                                 <div class="d-flex align-items-center">
                                     <div class="progress flex-grow-1 me-2" style="height: 5px;">
                                         <div class="progress-bar
-                                            {% if customer.debt > customer.credit_limit %}
+                                            {% if supplier.balance > supplier.credit_limit %}
                                                 bg-danger
-                                            {% elif customer.debt > customer.credit_limit|multiply:0.8 %}
+                                            {% elif supplier.balance > supplier.credit_limit|multiply:0.8 %}
                                                 bg-warning
                                             {% else %}
                                                 bg-success
                                             {% endif %}"
                                             role="progressbar"
-                                            style="width: {% if customer.debt > customer.credit_limit %}100{% else %}{{ customer.debt|percentage:customer.credit_limit|floatformat:0 }}{% endif %}%"
-                                            aria-valuenow="{{ customer.debt|percentage:customer.credit_limit|floatformat:0 }}"
+                                            style="width: {% if supplier.balance > supplier.credit_limit %}100{% else %}{{ supplier.balance|percentage:supplier.credit_limit|floatformat:0 }}{% endif %}%"
+                                            aria-valuenow="{{ supplier.balance|percentage:supplier.credit_limit|floatformat:0 }}"
                                             aria-valuemin="0"
                                             aria-valuemax="100">
                                         </div>
                                     </div>
                                     <span class="small fw-bold
-                                        {% if customer.debt > customer.credit_limit %}text-danger{% elif customer.debt > customer.credit_limit|multiply:0.8 %}text-warning{% else %}text-success{% endif %}">
-                                        {{ customer.debt|percentage:customer.credit_limit|floatformat:0 }}%
+                                        {% if supplier.balance > supplier.credit_limit %}text-danger{% elif supplier.balance > supplier.credit_limit|multiply:0.8 %}text-warning{% else %}text-success{% endif %}">
+                                        {{ supplier.balance|percentage:supplier.credit_limit|floatformat:0 }}%
                                     </span>
                                 </div>
                                 {% else %}
@@ -221,26 +221,26 @@
                                 {% endif %}
                             </td>
                             <td>
-                                {% if customer.last_transaction_date %}
-                                    <span class="text-muted">{{ customer.last_transaction_date|date:"Y-m-d" }}</span>
+                                {% if supplier.last_purchase_date %}
+                                    <span class="text-muted">{{ supplier.last_purchase_date|date:"Y-m-d" }}</span>
                                     <br>
-                                    <small class="text-muted">منذ {{ customer.days_since_last_transaction }} يوم</small>
+                                    <small class="text-muted">منذ {{ supplier.days_since_last_purchase }} يوم</small>
                                 {% else %}
                                     <span class="text-muted">--</span>
                                 {% endif %}
                             </td>
                             <td>
                                 <div class="btn-group btn-group-sm">
-                                    <button type="button" class="btn btn-info view-customer-btn" 
-                                        data-id="{{ customer.id }}" title="عرض التفاصيل">
+                                    <button type="button" class="btn btn-info view-supplier-btn" 
+                                        data-id="{{ supplier.id }}" title="عرض التفاصيل">
                                         <i class="fas fa-eye"></i>
                                     </button>
                                     <button type="button" class="btn btn-success" 
                                         data-bs-toggle="modal" data-bs-target="#recordPaymentModal"
-                                        data-id="{{ customer.id }}" title="تسجيل دفعة">
+                                        data-id="{{ supplier.id }}" title="تسجيل دفعة">
                                         <i class="fas fa-hand-holding-usd"></i>
                                     </button>
-                                    <a href="{% url 'customer-detail' pk=customer.id %}" class="btn btn-primary" title="فتح الصفحة">
+                                    <a href="{% url 'supplier-detail' pk=supplier.id %}" class="btn btn-primary" title="فتح الصفحة">
                                         <i class="fas fa-external-link-alt"></i>
                                     </a>
                                 </div>
@@ -251,10 +251,10 @@
                             <td colspan="7" class="text-center py-5">
                                 <div class="text-muted">
                                     <i class="fas fa-check-circle fa-3x mb-3 text-success"></i>
-                                    <h5>لا يوجد عملاء عليهم مديونيات حالياً</h5>
-                                    <p class="mb-1">جميع المديونيات تم سدادها.</p>
-                                    <a href="{% url 'customer-list' %}" class="btn btn-sm btn-primary mt-2">
-                                        <i class="fas fa-list me-1"></i> عرض قائمة العملاء
+                                    <h5>لا يوجد موردين لديهم مستحقات حالياً</h5>
+                                    <p class="mb-1">جميع المستحقات تم دفعها.</p>
+                                    <a href="{% url 'supplier-list' %}" class="btn btn-sm btn-primary mt-2">
+                                        <i class="fas fa-list me-1"></i> عرض قائمة الموردين
                                     </a>
                                 </div>
                             </td>
@@ -317,42 +317,10 @@
 </div>
 
 <!-- المودالات -->
-<div class="modal fade" id="viewCustomerModal" tabindex="-1" aria-labelledby="viewCustomerModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content border-0">
-            <!-- محتوى المودال سيتم تحميله بشكل دايناميكي -->
-            <div class="modal-body p-0">
-                <div class="d-flex justify-content-center p-5">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">جاري التحميل...</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- مودال تسجيل دفعة جديدة (يتم تحميله ديناميكياً) -->
-<div class="modal fade" id="recordPaymentModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title"><i class="fas fa-hand-holding-usd me-2"></i> تسجيل دفعة جديدة</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-4">
-                <div class="d-flex justify-content-center">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">جاري التحميل...</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+{% include 'suppliers/includes/modals/supplier_modals.html' %}
 
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'js/customers.js' %}"></script>
+<script src="{% static 'js/suppliers.js' %}"></script>
 {% endblock %}

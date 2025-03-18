@@ -12,4 +12,11 @@ urlpatterns = [
     path('<int:pk>/modal-edit/', views.supplier_modal_edit, name='supplier-modal-edit'),
     path('<int:pk>/payment-form/', views.supplier_payment_form, name='supplier-payment-form'),
     path('<int:pk>/get-data/', views.get_supplier_data, name='get-supplier-data'),
+    
+    # المسارات الجديدة
+    path('debts/', views.supplier_debts, name='supplier-debts'),
+    path('categories/', views.supplier_categories, name='supplier-categories'),
+    path('categories/create/', views.supplier_category_create, name='supplier-category-create'),
+    path('categories/<int:pk>/edit/', views.supplier_category_edit, name='supplier-category-edit'),
+    path('categories/<int:pk>/delete/', views.supplier_category_delete, name='supplier-category-delete'),
 ]

@@ -108,7 +108,7 @@
                             <li><a href="{% url 'customer-create' %}" class="{% if 'customer-create' in request.path %}active{% endif %}">
                                 <i class="fas fa-user-plus"></i> إضافة عميل جديد
                             </a></li>
-<li><a href="{% url 'customer-list' %}" class="{% if 'customer-list' in request.path %}active{% endif %}">
+<li><a href="{% url 'customer-list' %}" class="{% if 'customer-list' in request.path and not 'payment_status=with_debts' in request.GET.urlencode %}active{% endif %}">
                                                           <i class="fas fa-user-friends"></i> قائمة العملاء
                             </a></li>
 <li><a href="{% url 'customer-debts' %}" class="{% if 'customer-debts' in request.path %}active{% endif %}">
@@ -131,8 +131,14 @@
                             <li><a href="{% url 'supplier-create' %}" class="{% if 'supplier-create' in request.path %}active{% endif %}">
                                 <i class="fas fa-user-plus"></i> إضافة مورد جديد
                             </a></li>
-                            <li><a href="{% url 'supplier-list' %}" class="{% if 'supplier-list' in request.path %}active{% endif %}">
+                            <li><a href="{% url 'supplier-list' %}" class="{% if 'supplier-list' in request.path and not 'payment_status=with_debts' in request.GET.urlencode %}active{% endif %}">
                                 <i class="fas fa-address-book"></i> قائمة الموردين
+                            </a></li>
+                            <li><a href="{% url 'supplier-debts' %}" class="{% if 'supplier-debts' in request.path %}active{% endif %}">
+                                <i class="fas fa-money-bill-wave"></i> مستحقات الموردين
+                            </a></li>
+                            <li><a href="{% url 'supplier-categories' %}" class="{% if 'supplier-categories' in request.path %}active{% endif %}">
+                                <i class="fas fa-tags"></i> تصنيفات الموردين
                             </a></li>
                         </ul>
                     </li>
@@ -278,7 +284,7 @@
                                     {% elif 'suppliers' in request.path %}
                                         الموردين
                                     {% else %}
-                                        {{ request.resolver_match.view_name|default:"‘إدارة المخازن" }}
+                                        {{ request.resolver_match.view_name|default:"'إدارة المخازن" }}
                                     {% endif %}
                                 {% endblock %}</span>
                             </h4>

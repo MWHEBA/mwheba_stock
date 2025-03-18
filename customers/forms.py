@@ -3,29 +3,17 @@ from django.utils.translation import gettext_lazy as _
 from .models import Customer, CustomerCategory
 
 class CustomerCategoryForm(forms.ModelForm):
-    """نموذج إضافة وتعديل تصنيف العملاء"""
+    """نموذج إضافة/تعديل تصنيف العملاء"""
+    
     class Meta:
         model = CustomerCategory
-        fields = ['name', 'color_code', 'description']
-        
+        fields = ['name', 'description', 'color_code']
         widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control'}),
-            'color_code': forms.Select(attrs={'class': 'form-select color-select'}, choices=[
-                ('primary', _('أزرق')),
-                ('secondary', _('رمادي')),
-                ('success', _('أخضر')),
-                ('danger', _('أحمر')),
-                ('warning', _('أصفر')),
-                ('info', _('سماوي')),
-                ('dark', _('أسود')),
-            ]),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-        }
-        
-        labels = {
-            'name': _('اسم التصنيف'),
-            'color_code': _('لون التصنيف'),
-            'description': _('الوصف'),
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('اسم التصنيف')}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': _('وصف التصنيف')}),
+            'color_code': forms.Select(attrs={'class': 'form-select'}, 
+                                      choices=[('primary', 'أزرق'), ('success', 'أخضر'), ('danger', 'أحمر'),
+                                              ('warning', 'برتقالي'), ('info', 'سماوي'), ('secondary', 'رمادي')])
         }
 
 class CustomerForm(forms.ModelForm):
