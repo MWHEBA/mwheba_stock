@@ -3,50 +3,65 @@
 {% load i18n %}
 {% load crispy_forms_tags %}
 
-{% block title %}{% trans "تسجيل الدخول" %} | MWHEBA Stock{% endblock %}
+{% block title %}تسجيل الدخول - MWHEBA Stock{% endblock %}
 
 {% block content %}
-<div class="card shadow-lg border-0 rounded-lg">
-    <div class="card-header bg-primary text-white text-center">
-        <h3 class="mb-0 fw-bold">{% trans "تسجيل الدخول" %}</h3>
-    </div>
-    <div class="card-body p-4">
+<div class="card shadow-sm border-0">
+    <div class="card-body p-4 p-sm-5">
         <div class="text-center mb-4">
-            <img src="/static/img/logoo.png" alt="MWHEBA Stock" class="img-fluid" style="max-width: 150px;">
+            <img src="/static/img/logo.png" alt="MWHEBA Stock" class="mb-3" height="60">
+            <h2 class="fw-bold mb-1 text-primary">مرحباً بك مجددًا!</h2>
+            <p class="text-muted mb-0">قم بتسجيل الدخول للاستمرار</p>
         </div>
-
+        
         {% if form.errors %}
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <strong>{% trans "خطأ!" %}</strong> {% trans "اسم المستخدم أو كلمة المرور غير صحيحة." %}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div class="alert alert-danger">
+            <div class="d-flex">
+                <div class="me-2">
+                    <i class="fas fa-exclamation-triangle mt-1"></i>
+                </div>
+                <div>
+                    <strong>خطأ في تسجيل الدخول:</strong>
+                    <p class="mb-0">اسم المستخدم أو كلمة المرور غير صحيحة.</p>
+                </div>
+            </div>
         </div>
         {% endif %}
         
-        <form method="post">
+        <form method="post" class="needs-validation">
             {% csrf_token %}
+            
             <div class="mb-3">
-                <label for="id_username" class="form-label">{% trans "اسم المستخدم" %}</label>
+                <label class="form-label">اسم المستخدم</label>
                 <div class="input-group">
-                    <span class="input-group-text"><i class="fas fa-user"></i></span>
-                    <input type="text" name="username" id="id_username" class="form-control" required>
+                    <span class="input-group-text bg-light"><i class="fas fa-user"></i></span>
+                    <input type="text" name="username" class="form-control" placeholder="أدخل اسم المستخدم" required>
                 </div>
             </div>
+            
             <div class="mb-3">
-                <label for="id_password" class="form-label">{% trans "كلمة المرور" %}</label>
+                <div class="d-flex justify-content-between">
+                    <label class="form-label">كلمة المرور</label>
+                    <a href="{% url 'password_reset' %}" class="small text-decoration-none">نسيت كلمة المرور؟</a>
+                </div>
                 <div class="input-group">
-                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                    <input type="password" name="password" id="id_password" class="form-control" required>
+                    <span class="input-group-text bg-light"><i class="fas fa-lock"></i></span>
+                    <input type="password" name="password" class="form-control" placeholder="أدخل كلمة المرور" required>
                 </div>
             </div>
-            <div class="form-check mb-3">
-                <input class="form-check-input" type="checkbox" name="remember" id="remember">
-                <label class="form-check-label" for="remember">{% trans "تذكرني" %}</label>
+            
+            <div class="mb-3 form-check">
+                <input type="checkbox" name="remember" class="form-check-input" id="remember">
+                <label class="form-check-label" for="remember">تذكرني</label>
             </div>
-            <div class="d-flex align-items-center justify-content-between mt-4 mb-0">
-                <button class="btn btn-primary w-100 py-2" type="submit">
-                    <i class="fas fa-sign-in-alt me-2"></i>{% trans "تسجيل الدخول" %}
+            
+            <div class="d-grid mt-4">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fas fa-sign-in-alt me-2"></i> تسجيل الدخول
                 </button>
             </div>
+            
+            <input type="hidden" name="next" value="{{ next }}">
         </form>
     </div>
 </div>

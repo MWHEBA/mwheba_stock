@@ -21,6 +21,22 @@
             <a href="{% url 'customer-create' %}" class="btn btn-primary">
                 <i class="fas fa-plus me-1"></i> إضافة عميل جديد
             </a>
+            <div class="btn-group ms-2">
+                <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-file-export me-1"></i> تصدير
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="?{{ request.GET.urlencode }}&export=excel">
+                        <i class="far fa-file-excel text-success me-1"></i> تصدير Excel
+                    </a></li>
+                    <li><a class="dropdown-item" href="?{{ request.GET.urlencode }}&export=pdf">
+                        <i class="far fa-file-pdf text-danger me-1"></i> تصدير PDF
+                    </a></li>
+                    <li><a class="dropdown-item" href="?{{ request.GET.urlencode }}&export=print" target="_blank">
+                        <i class="fas fa-print text-primary me-1"></i> طباعة
+                    </a></li>
+                </ul>
+            </div>
         </div>
     </div>
 </div>
@@ -28,150 +44,286 @@
 
 {% block content %}
 <div class="container-fluid">
-    <!-- بطاقة البحث والتصفية -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <form method="get" id="filter-form">
-                <div class="row g-3">
-                    <div class="col-md-8">
-                        <div class="position-relative">
-                            <input type="text" name="search" class="form-control" placeholder="البحث بالاسم أو رقم الهاتف..." value="{{ request.GET.search|default:'' }}">
-                            <i class="fas fa-search position-absolute top-50 translate-middle-y" style="left: 15px;"></i>
+    <!-- بطاقة البحث والتصفية (محسّنة ومطوية افتراضياً) -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+            <h5 class="mb-0">
+                <i class="fas fa-search text-primary me-1"></i> بحث وتصفية
+            </h5>
+            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#searchCollapse" aria-expanded="false">
+                <i class="fas fa-sliders-h me-1"></i> خيارات البحث
+            </button>
+        </div>
+        <div class="collapse" id="searchCollapse">
+            <div class="card-body">
+                <form method="get" id="filter-form" class="mb-0">
+                    <!-- صف البحث الرئيسي -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-lg-5 col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text bg-light">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                {{ form.search }}
+                                <button type="submit" class="btn btn-primary px-4">
+                                    <i class="fas fa-search me-1"></i> بحث
+                                </button>
+                            </div>
+                            <div class="form-text">
+                                البحث بالاسم، الهاتف، البريد الإلكتروني أو الكود
+                            </div>
+                        </div>
+                        <div class="col-lg-7 col-md-6">
+                            <div class="d-flex flex-wrap gap-2 h-100 align-items-center">
+                                {% if search_query or debt_status != '' or form.category.value or form.status.value %}
+                                    <div class="d-flex flex-wrap gap-2">
+                                        {% if search_query %}
+                                            <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary py-2 px-3">
+                                                <i class="fas fa-search me-1"></i>
+                                                {{ search_query }}
+                                                <a href="?{% for key, value in request.GET.items %}{% if key != 'search' %}{{ key }}={{ value }}&{% endif %}{% endfor %}" class="ms-2 text-primary">
+                                                    <i class="fas fa-times"></i>
+                                                </a>
+                                            </span>
+                                        {% endif %}
+
+                                        {% if debt_status != '' %}
+                                            <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary py-2 px-3">
+                                                <i class="fas fa-money-bill-wave me-1"></i>
+                                                {% if debt_status == 'with_debts' %}
+                                                    عليهم مديونية
+                                                {% elif debt_status == 'no_debts' %}
+                                                    بدون مديونية
+                                                {% elif debt_status == 'exceed_limit' %}
+                                                    تجاوزوا حد الائتمان
+                                                {% endif %}
+                                                <a href="?{% for key, value in request.GET.items %}{% if key != 'debt_status' %}{{ key }}={{ value }}&{% endif %}{% endfor %}" class="ms-2 text-primary">
+                                                    <i class="fas fa-times"></i>
+                                                </a>
+                                            </span>
+                                        {% endif %}
+
+                                        {% if form.category.value %}
+                                            {% for category in categories %}
+                                                {% if category.id|stringformat:"i" == form.category.value %}
+                                                    <span class="badge rounded-pill bg-{{ category.color_code }} bg-opacity-10 text-{{ category.color_code }} py-2 px-3">
+                                                        <i class="fas fa-tag me-1"></i>
+                                                        {{ category.name }}
+                                                        <a href="?{% for key, value in request.GET.items %}{% if key != 'category' %}{{ key }}={{ value }}&{% endif %}{% endfor %}" class="ms-2 text-{{ category.color_code }}">
+                                                            <i class="fas fa-times"></i>
+                                                        </a>
+                                                    </span>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% endif %}
+
+                                        {% if form.status.value %}
+                                            <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary py-2 px-3">
+                                                <i class="fas fa-circle me-1"></i>
+                                                {% if form.status.value == 'active' %}نشط{% elif form.status.value == 'inactive' %}غير نشط{% else %}محظور{% endif %}
+                                                <a href="?{% for key, value in request.GET.items %}{% if key != 'status' %}{{ key }}={{ value }}&{% endif %}{% endfor %}" class="ms-2 text-primary">
+                                                    <i class="fas fa-times"></i>
+                                                </a>
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                    <a href="{% url 'customer-list' %}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-redo-alt me-1"></i> إلغاء التصفية
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted">يمكنك استخدام خيارات البحث والتصفية للعثور على العملاء</span>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="input-group">
-                            <select name="debt_status" class="form-select">
-                                <option value="all" {% if request.GET.debt_status == 'all' %}selected{% endif %}>جميع العملاء</option>
-                                <option value="with_debts" {% if request.GET.debt_status == 'with_debts' %}selected{% endif %}>عملاء لديهم مديونية</option>
-                                <option value="no_debts" {% if request.GET.debt_status == 'no_debts' %}selected{% endif %}>عملاء بدون مديونية</option>
-                            </select>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-filter me-1"></i> تصفية
-                            </button>
+                    
+                    <!-- خيارات متقدمة (تصنيف، حالة، مديونية، ترتيب) -->
+                    <div class="row g-2">
+                        <div class="col-lg-3 col-md-6">
+                            <label class="form-label small text-muted mb-1">تصنيف العميل</label>
+                            {{ form.category }}
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <label class="form-label small text-muted mb-1">حالة العميل</label>
+                            {{ form.status }}
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <label class="form-label small text-muted mb-1">حالة المديونية</label>
+                            {{ form.debt_status }}
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <label class="form-label small text-muted mb-1">ترتيب حسب</label>
+                            {{ form.sort_by }}
                         </div>
                     </div>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </div>
 
-    <!-- بطاقات إحصائيات العملاء -->
+    <!-- بطاقات إحصائيات العملاء - تم تحديث التصميم باستخدام الأنماط الجديدة -->
     <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card h-100">
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card shadow-sm h-100 border-primary" style="background-color: #01578a1f !important;">
                 <div class="card-body text-center">
-                    <h3 class="display-4 text-primary fw-bold">{{ customers.count }}</h3>
-                    <p class="mb-0">إجمالي العملاء</p>
+                    <div class="d-flex align-items-center justify-content-center mb-2">
+                        <div class="rounded-circle bg-opacity-10 p-2" style="background-color: #0157891a !important;">
+                            <i class="fas fa-users fs-4 text-primary"></i>
+                        </div>
+                    </div>
+                    <h3 class="fs-3 fw-bold text-primary">{{ total_customers }}</h3>
+                    <p class="mb-0 text-muted small">إجمالي العملاء</p>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card h-100">
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card shadow-sm h-100 border-success">
                 <div class="card-body text-center">
-                    <h3 class="display-6 text-success fw-bold">{{ total_sales|floatformat:2 }}</h3>
-                    <p class="mb-0">إجمالي المبيعات (ج.م)</p>
+                    <div class="d-flex align-items-center justify-content-center mb-2">
+                        <div class="rounded-circle bg-success bg-opacity-10 p-2">
+                            <i class="fas fa-chart-line fs-4 text-success"></i>
+                        </div>
+                    </div>
+                    <h3 class="fs-3 fw-bold text-success">{{ total_sales|floatformat:0 }}</h3>
+                    <p class="mb-0 text-muted small">إجمالي المبيعات (ج.م)</p>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card h-100">
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card shadow-sm h-100 border-danger">
                 <div class="card-body text-center">
-                    <h3 class="display-6 text-danger fw-bold">{{ total_debt|floatformat:2 }}</h3>
-                    <p class="mb-0">إجمالي المديونيات (ج.م)</p>
+                    <div class="d-flex align-items-center justify-content-center mb-2">
+                        <div class="rounded-circle bg-danger bg-opacity-10 p-2">
+                            <i class="fas fa-hand-holding-usd fs-4 text-danger"></i>
+                        </div>
+                    </div>
+                    <h3 class="fs-3 fw-bold text-danger">{{ total_debt|floatformat:0 }}</h3>
+                    <p class="mb-0 text-muted small">إجمالي المديونيات (ج.م)</p>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card h-100">
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card shadow-sm h-100 border-info">
                 <div class="card-body text-center">
-                    <h3 class="display-6 text-info fw-bold">{{ active_customers }}</h3>
-                    <p class="mb-0">عملاء نشطين هذا الشهر</p>
+                    <div class="d-flex align-items-center justify-content-center mb-2">
+                        <div class="rounded-circle bg-info bg-opacity-10 p-2">
+                            <i class="fas fa-user-check fs-4 text-info"></i>
+                        </div>
+                    </div>
+                    <h3 class="fs-3 fw-bold text-info">{{ recent_customers }}</h3>
+                    <p class="mb-0 text-muted small">عملاء نشطين آخر 30 يوم</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- جدول العملاء -->
-    <div class="card">
-        <div class="card-header bg-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">قائمة العملاء</h5>
-            <div>
-                <select id="show-entries" class="form-select form-select-sm d-inline-block" style="width: auto;">
-                    <option value="10" {% if page_size == 10 %}selected{% endif %}>10 صفوف</option>
-                    <option value="25" {% if page_size == 25 %}selected{% endif %}>25 صف</option>
-                    <option value="50" {% if page_size == 50 %}selected{% endif %}>50 صف</option>
-                    <option value="100" {% if page_size == 100 %}selected{% endif %}>100 صف</option>
-                </select>
+    <!-- جدول العملاء (تصميم محسن) -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+            <h5 class="mb-0">
+                <i class="fas fa-user-friends text-primary me-2"></i>قائمة العملاء
                 <span class="badge bg-primary rounded-pill ms-2">{{ customers.count }}</span>
+            </h5>
+            <div class="d-flex align-items-center">
+                <label class="me-2 text-muted">عرض:</label>
+                <select id="show-entries" class="form-select form-select-sm" style="width: auto;">
+                    <option value="10" {% if page_size == 10 %}selected{% endif %}>10</option>
+                    <option value="25" {% if page_size == 25 %}selected{% endif %}>25</option>
+                    <option value="50" {% if page_size == 50 %}selected{% endif %}>50</option>
+                    <option value="100" {% if page_size == 100 %}selected{% endif %}>100</option>
+                </select>
             </div>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead class="table-light">
+                <table class="table table-hover table-borderless align-middle">
+                    <thead class="table-light text-secondary small">
                         <tr>
-                            <th>الاسم</th>
+                            <th class="ps-4">العميل</th>
                             <th>رقم الهاتف</th>
                             <th>البريد الإلكتروني</th>
-                            <th>العنوان</th>
-                            <th>عدد المعاملات</th>
-                            <th>إجمالي المبيعات</th>
+                            <th>تصنيف</th>
                             <th>المديونية</th>
-                            <th>آخر معاملة</th>
-                            <th>الإجراءات</th>
+                            <th class="text-center">الحالة</th>
+                            <th class="text-center">الإجراءات</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for customer in customers %}
-                        <tr>
-                            <td>
-                                <a href="{% url 'customer-detail' customer.id %}">{{ customer.name }}</a>
+                        <tr class="{% if forloop.counter|divisibleby:2 %}bg-light{% endif %}">
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="me-3">
+                                        <div class="avatar bg-{{ customer.get_status_display_class }} text-white" style="width: 40px; height: 40px; font-size: 16px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                            {{ customer.name|slice:":1"|upper }}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <a href="{% url 'customer-detail' customer.id %}" class="text-decoration-none fw-medium d-block">
+                                            {{ customer.name }}
+                                        </a>
+                                        <small class="text-muted">{{ customer.code }}</small>
+                                    </div>
+                                    {% if customer.is_vip %}
+                                        <span class="ms-2 badge bg-warning text-dark"><i class="fas fa-crown"></i></span>
+                                    {% endif %}
+                                </div>
                             </td>
-                            <td>{{ customer.phone|default:"--" }}</td>
-                            <td>{{ customer.email|default:"--" }}</td>
-                            <td>{{ customer.address|default:"--"|truncatechars:20 }}</td>
-                            <td>{{ customer.transactions_count }}</td>
-                            <td>{{ customer.total_sales|floatformat:2 }} ج.م</td>
+                            <td dir="ltr" class="text-start">{{ customer.phone|default:"--" }}</td>
+                            <td>
+                                {% if customer.email %}
+                                    <a href="mailto:{{ customer.email }}" class="text-decoration-none text-muted">{{ customer.email }}</a>
+                                {% else %}
+                                    <span class="text-muted">--</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if customer.category %}
+                                    <span class="badge bg-{{ customer.category.color_code }} px-2 py-1">{{ customer.category.name }}</span>
+                                {% else %}
+                                    <span class="text-muted">--</span>
+                                {% endif %}
+                            </td>
                             <td>
                                 {% if customer.debt > 0 %}
-                                    <span class="text-danger fw-bold">{{ customer.debt|floatformat:2 }} ج.م</span>
+                                    <span class="fw-bold text-danger">{{ customer.debt|floatformat:2 }} ج.م</span>
                                 {% else %}
                                     <span class="text-success">0.00 ج.م</span>
                                 {% endif %}
                             </td>
-                            <td>
-                                {% if customer.last_transaction_date %}
-                                    {{ customer.last_transaction_date|date:"Y-m-d" }}
+                            <td class="text-center">
+                                {% if customer.status == 'active' %}
+                                    <span class="badge bg-success rounded-pill px-3">نشط</span>
+                                {% elif customer.status == 'inactive' %}
+                                    <span class="badge bg-warning text-dark rounded-pill px-3">غير نشط</span>
                                 {% else %}
-                                    --
+                                    <span class="badge bg-danger rounded-pill px-3">محظور</span>
                                 {% endif %}
                             </td>
-                            <td>
-                                <div class="btn-group">
-                                    <a href="{% url 'customer-detail' customer.id %}" class="btn btn-sm btn-info text-white" title="عرض">
+                            <td class="text-center">
+                                <div class="d-inline-flex">
+                                    <a href="{% url 'customer-detail' customer.id %}" class="btn btn-sm btn-light me-1 border-0" title="عرض التفاصيل">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <a href="{% url 'customer-edit' customer.id %}" class="btn btn-sm btn-primary" title="تعديل">
-                                        <i class="fas fa-edit"></i>
+                                    <a href="{% url 'customer-edit' customer.id %}" class="btn btn-sm btn-light me-1 border-0" title="تعديل">
+                                        <i class="fas fa-edit text-info"></i>
                                     </a>
-                                    <a href="{% url 'sale-create' %}?customer_id={{ customer.id }}" class="btn btn-sm btn-success" title="إنشاء فاتورة">
-                                        <i class="fas fa-receipt"></i>
+                                    <a href="{% url 'sale-create' %}?customer_id={{ customer.id }}" class="btn btn-sm btn-light me-1 border-0" title="إنشاء فاتورة">
+                                        <i class="fas fa-file-invoice text-success"></i>
                                     </a>
-                                    <button type="button" class="btn btn-sm btn-danger" 
-                                            data-bs-toggle="modal" data-bs-target="#deleteCustomerModal"
-                                            data-id="{{ customer.id }}" data-name="{{ customer.name }}"
-                                            title="حذف">
-                                        <i class="fas fa-trash"></i>
+                                    <button type="button" class="btn btn-sm btn-light border-0" title="حذف"
+                                        data-bs-toggle="modal" data-bs-target="#deleteCustomerModal"
+                                        data-id="{{ customer.id }}" data-name="{{ customer.name }}">
+                                        <i class="fas fa-trash text-danger"></i>
                                     </button>
                                 </div>
                             </td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="9" class="text-center py-5">
+                            <td colspan="7" class="text-center py-5">
                                 <div class="text-muted">
-                                    <i class="fas fa-users fa-3x mb-3"></i>
+                                    <i class="fas fa-users fa-3x mb-3 text-light"></i>
                                     <h5>لا يوجد عملاء للعرض</h5>
                                     <p>قم بإضافة عملاء جدد من خلال زر "إضافة عميل جديد"</p>
                                     <a href="{% url 'customer-create' %}" class="btn btn-primary">
@@ -193,11 +345,15 @@
                 <ul class="pagination justify-content-center mb-0">
                     {% if page_obj.has_previous %}
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">السابق</a>
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="fas fa-chevron-right me-1"></i> السابق
+                            </a>
                         </li>
                     {% else %}
                         <li class="page-item disabled">
-                            <span class="page-link">السابق</span>
+                            <span class="page-link">
+                                <i class="fas fa-chevron-right me-1"></i> السابق
+                            </span>
                         </li>
                     {% endif %}
                     
@@ -215,11 +371,15 @@
                     
                     {% if page_obj.has_next %}
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">التالي</a>
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                التالي <i class="fas fa-chevron-left ms-1"></i>
+                            </a>
                         </li>
                     {% else %}
                         <li class="page-item disabled">
-                            <span class="page-link">التالي</span>
+                            <span class="page-link">
+                                التالي <i class="fas fa-chevron-left ms-1"></i>
+                            </span>
                         </li>
                     {% endif %}
                 </ul>
@@ -233,21 +393,39 @@
 <div class="modal fade" id="deleteCustomerModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">تأكيد الحذف</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    تأكيد حذف العميل
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p>هل أنت متأكد من حذف العميل <strong id="customer-name-to-delete"></strong>؟</p>
-                <div class="alert alert-danger">
-                    <i class="fas fa-exclamation-triangle me-2"></i> تحذير: سيتم حذف جميع البيانات المرتبطة بهذا العميل، بما في ذلك سجل المبيعات والمدفوعات.
+                <p class="text-center fs-5">هل أنت متأكد من حذف العميل <strong id="customer-name-to-delete"></strong>؟</p>
+                <div class="alert alert-warning">
+                    <div class="d-flex">
+                        <div class="me-2">
+                            <i class="fas fa-exclamation-triangle text-warning fs-3"></i>
+                        </div>
+                        <div>
+                            <p class="mb-1 fw-medium">تحذير: سيتم حذف جميع البيانات المرتبطة بهذا العميل، بما في ذلك:</p>
+                            <ul class="mb-0">
+                                <li>سجل المبيعات والفواتير المرتبطة بالعميل</li>
+                                <li>سجل المدفوعات والمعاملات المالية</li>
+                                <li>جميع الملاحظات والمعلومات الإضافية</li>
+                            </ul>
+                            <p class="mt-2 mb-0">هذا الإجراء <strong class="text-danger">لا يمكن التراجع عنه</strong>!</p>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
                 <form id="delete-customer-form" method="post">
                     {% csrf_token %}
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                    <button type="submit" class="btn btn-danger">حذف</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i> تأكيد الحذف
+                    </button>
                 </form>
             </div>
         </div>
@@ -258,29 +436,47 @@
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // تفعيل البحث إذا كان هناك قيم فلترة فعالة
+        {% if search_query or debt_status != '' or form.category.value or form.status.value %}
+        // فتح قسم البحث تلقائياً إذا كان هناك فلاتر نشطة
+        new bootstrap.Collapse(document.getElementById('searchCollapse')).show();
+        {% endif %}
+        
         // تغيير عدد العناصر المعروضة
         const showEntriesSelect = document.getElementById('show-entries');
-        showEntriesSelect.addEventListener('change', function() {
-            const currentUrl = new URL(window.location.href);
-            currentUrl.searchParams.set('page_size', this.value);
-            window.location.href = currentUrl;
+        if (showEntriesSelect) {
+            showEntriesSelect.addEventListener('change', function() {
+                const currentUrl = new URL(window.location.href);
+                currentUrl.searchParams.set('page_size', this.value);
+                window.location.href = currentUrl;
+            });
+        }
+        
+        // تطبيق التصفية عند تغيير أي من الحقول
+        document.querySelectorAll('#filter-form select').forEach(function(select) {
+            select.addEventListener('change', function() {
+                document.getElementById('filter-form').submit();
+            });
+        });
+        
+        // تفعيل التلميحات
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+        tooltipTriggerList.map(function(tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
         });
 
         // إعداد مودال حذف العميل
         const deleteModal = document.getElementById('deleteCustomerModal');
-        deleteModal.addEventListener('show.bs.modal', function(event) {
-            const button = event.relatedTarget;
-            const customerId = button.getAttribute('data-id');
-            const customerName = button.getAttribute('data-name');
-            
-            document.getElementById('customer-name-to-delete').textContent = customerName;
-            document.getElementById('delete-customer-form').action = `/customers/${customerId}/delete/`;
-        });
-        
-        // تقديم نموذج التصفية عند تغيير حالة المديونية
-        document.querySelector('select[name="debt_status"]').addEventListener('change', function() {
-            document.getElementById('filter-form').submit();
-        });
+        if (deleteModal) {
+            deleteModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                const customerId = button.getAttribute('data-id');
+                const customerName = button.getAttribute('data-name');
+                
+                document.getElementById('customer-name-to-delete').textContent = customerName;
+                document.getElementById('delete-customer-form').action = `/customers/${customerId}/delete/`;
+            });
+        }
     });
 </script>
 {% endblock %}

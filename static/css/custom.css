@@ -1,0 +1,126 @@
+/* Custom styles for MWHEBA Stock */
+
+/* تعديل ألوان الأزرق لتناسب اللون الرئيسي للتطبيق */
+:root {
+    --bs-primary: #01578a;
+    --bs-primary-rgb: 1, 87, 138;
+}
+
+/* تعديل خلفية بطاقة إحصاءات العملاء */
+.stats-card-primary {
+    background-color: #01588a1f !important;
+}
+
+.stats-card-success {
+    background-color: rgba(25, 135, 84, 0.1) !important;
+}
+
+.stats-card-danger {
+    background-color: rgba(220, 53, 69, 0.1) !important;
+}
+
+.stats-card-info {
+    background-color: rgba(13, 202, 240, 0.1) !important;
+}
+
+/* تعديل حجم الأيقونات والأرقام */
+.card .display-5 {
+    font-size: 2rem !important;  /* تصغير الأرقام أكثر */
+    font-weight: 600 !important;
+}
+
+.card .fs-3 {
+    font-size: 1.4rem !important; /* تصغير الأيقونات أكثر */
+}
+
+/* أنماط عامة لقوائم العملاء والمنتجات */
+.avatar {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    color: white;
+    font-size: 16px;
+}
+
+/* تحسين مظهر رسائل النظام */
+.alert {
+    border-radius: 8px;
+    border: none;
+}
+
+.alert-success {
+    background-color: rgba(25, 135, 84, 0.1);
+    color: #198754;
+}
+
+.alert-danger {
+    background-color: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+}
+
+.alert-info {
+    background-color: rgba(13, 202, 240, 0.1);
+    color: #0dcaf0;
+}
+
+.alert-warning {
+    background-color: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+}
+
+/* تنسيق البطاقات */
+.card {
+    border-radius: 8px;
+    border-color: #e6e9ec;
+}
+
+.card-header {
+    background-color: #ffffff;
+    border-bottom: 1px solid #e6e9ec;
+}
+
+/* تحسين مظهر الجداول */
+.table-hover tbody tr:hover {
+    background-color: rgba(1, 87, 138, 0.05);
+}
+
+/* تنسيق الأزرار والشارات */
+.badge {
+    font-weight: 500;
+}
+
+.btn-primary,
+.bg-primary {
+    background-color: #01578a !important;
+    border-color: #01578a !important;
+}
+
+.btn-primary:hover {
+    background-color: #014a75 !important;
+    border-color: #014a75 !important;
+}
+
+.btn-outline-primary {
+    color: #01578a !important;
+    border-color: #01578a !important;
+}
+
+.btn-outline-primary:hover {
+    color: #fff !important;
+    background-color: #01578a !important;
+}
+
+.text-primary {
+    color: #01578a !important;
+}
+
+.fw-bold {
+    font-weight: 600 !important;
+}
+
+.fw-semibold {
+    font-weight: 600 !important;
+}

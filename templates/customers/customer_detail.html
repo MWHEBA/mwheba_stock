@@ -28,117 +28,247 @@
 {% block content %}
 <div class="container-fluid">
     <div class="row">
-        <div class="col-md-4 mb-4">
-            <!-- بطاقة بيانات العميل -->
+        <!-- بطاقة معلومات العميل -->
+        <div class="col-lg-4 col-md-5 mb-4">
             <div class="card shadow-sm h-100">
-                <div class="card-header bg-white">
+                <!-- معلومات العميل الرئيسية -->
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
                     <h5 class="mb-0">
-                        <i class="fas fa-user me-2 text-primary"></i> بيانات العميل
+                        <i class="fas fa-user-circle text-primary me-2"></i> معلومات العميل
                     </h5>
+                    <span class="badge bg-{{ customer.get_status_display_class }}">
+                        {% if customer.status == 'active' %}نشط{% elif customer.status == 'inactive' %}غير نشط{% else %}محظور{% endif %}
+                    </span>
                 </div>
                 <div class="card-body">
                     <div class="text-center mb-4">
-                        <div class="bg-light rounded-circle mx-auto d-flex align-items-center justify-content-center mb-3" 
+                        <!-- أيقونة العميل -->
+                        <div class="customer-icon bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
                              style="width: 100px; height: 100px;">
                             <i class="fas fa-user-tie text-primary" style="font-size: 40px;"></i>
                         </div>
-                        <h4 class="mb-0">{{ customer.name }}</h4>
-                        {% if customer.debt > 0 %}
-                            <div class="badge bg-danger mt-2">عليه مديونية</div>
-                        {% else %}
-                            <div class="badge bg-success mt-2">لا توجد مديونية</div>
+                        <!-- اسم العميل -->
+                        <h4 class="mb-0">
+                            {{ customer.name }}
+                            {% if customer.is_vip %}
+                                <span class="badge bg-warning text-dark ms-2"><i class="fas fa-crown me-1"></i> VIP</span>
+                            {% endif %}
+                        </h4>
+                        <!-- كود العميل -->
+                        <p class="text-muted mb-0">{{ customer.code }}</p>
+                        <!-- تصنيف العميل -->
+                        {% if customer.category %}
+                            <div class="mt-2">
+                                <span class="badge bg-{{ customer.category.color_code }} px-3 py-2">{{ customer.category.name }}</span>
+                            </div>
                         {% endif %}
                     </div>
                     
-                    <div class="border-top pt-3">
-                        <div class="row mb-3">
-                            <div class="col-5 text-muted">رقم الهاتف:</div>
-                            <div class="col-7">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-phone text-primary me-2"></i>
-                                    {{ customer.phone|default:"غير متاح" }}
+                    <!-- معلومات الاتصال -->
+                    <div class="contact-info mt-4">
+                        <h6 class="text-uppercase text-muted small fw-bold mb-3">معلومات الاتصال</h6>
+                        <div class="mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="icon-wrapper bg-primary bg-opacity-10 rounded-circle p-2 me-3">
+                                    <i class="fas fa-phone text-primary"></i>
+                                </div>
+                                <div>
+                                    <p class="mb-0 fw-medium">{{ customer.phone|default:"غير متاح" }}</p>
+                                    <p class="small text-muted mb-0">رقم الهاتف الأساسي</p>
                                 </div>
                             </div>
                         </div>
                         
-                        <div class="row mb-3">
-                            <div class="col-5 text-muted">العنوان:</div>
-                            <div class="col-7">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-map-marker-alt text-primary me-2"></i>
-                                    {{ customer.address|default:"غير متاح" }}
+                        {% if customer.alternative_phone %}
+                        <div class="mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="icon-wrapper bg-primary bg-opacity-10 rounded-circle p-2 me-3">
+                                    <i class="fas fa-phone-alt text-primary"></i>
+                                </div>
+                                <div>
+                                    <p class="mb-0 fw-medium">{{ customer.alternative_phone }}</p>
+                                    <p class="small text-muted mb-0">رقم هاتف بديل</p>
                                 </div>
                             </div>
                         </div>
+                        {% endif %}
                         
-                        <div class="row mb-3">
-                            <div class="col-5 text-muted">إجمالي المبيعات:</div>
-                            <div class="col-7 fw-bold text-success">{{ total_sales|floatformat:2 }} ج.م</div>
+                        {% if customer.email %}
+                        <div class="mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="icon-wrapper bg-primary bg-opacity-10 rounded-circle p-2 me-3">
+                                    <i class="fas fa-envelope text-primary"></i>
+                                </div>
+                                <div>
+                                    <p class="mb-0 fw-medium">{{ customer.email }}</p>
+                                    <p class="small text-muted mb-0">البريد الإلكتروني</p>
+                                </div>
+                            </div>
                         </div>
+                        {% endif %}
                         
-                        <div class="row mb-3">
-                            <div class="col-5 text-muted">المديونية:</div>
-                            <div class="col-7 fw-bold {% if customer.debt > 0 %}text-danger{% else %}text-success{% endif %}">
+                        {% if customer.address %}
+                        <div class="mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="icon-wrapper bg-primary bg-opacity-10 rounded-circle p-2 me-3">
+                                    <i class="fas fa-map-marker-alt text-primary"></i>
+                                </div>
+                                <div>
+                                    <p class="mb-0 fw-medium">{{ customer.address }}</p>
+                                    <p class="small text-muted mb-0">العنوان</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if customer.tax_number %}
+                        <div class="mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="icon-wrapper bg-primary bg-opacity-10 rounded-circle p-2 me-3">
+                                    <i class="fas fa-receipt text-primary"></i>
+                                </div>
+                                <div>
+                                    <p class="mb-0 fw-medium">{{ customer.tax_number }}</p>
+                                    <p class="small text-muted mb-0">الرقم الضريبي</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- الحد الائتماني -->
+                    <div class="mt-4">
+                        <h6 class="text-uppercase text-muted small fw-bold mb-3">الحد الائتماني</h6>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>الحد المسموح:</span>
+                            <span class="fw-bold">
+                                {% if customer.credit_limit > 0 %}
+                                    {{ customer.credit_limit|floatformat:2 }} ج.م
+                                {% else %}
+                                    غير محدد
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>المديونية الحالية:</span>
+                            <span class="fw-bold {% if customer.debt > 0 %}text-danger{% else %}text-success{% endif %}">
                                 {{ customer.debt|floatformat:2 }} ج.م
+                            </span>
+                        </div>
+                        
+                        {% if customer.credit_limit > 0 and customer.debt > 0 %}
+                            {% with percentage=customer.debt|floatformat:0|divisibleby:customer.credit_limit %}
+                            <!-- رسم بياني للمديونية كنسبة من الحد الائتماني -->
+                            <div class="mt-3">
+                                <div class="progress">
+                                    <div class="progress-bar 
+                                        {% if percentage > 90 %}bg-danger
+                                        {% elif percentage > 75 %}bg-warning
+                                        {% elif percentage > 50 %}bg-info
+                                        {% else %}bg-success{% endif %}" 
+                                        role="progressbar" 
+                                        style="width: {{ percentage }}%;" 
+                                        aria-valuenow="{{ percentage }}" 
+                                        aria-valuemin="0" 
+                                        aria-valuemax="100">
+                                        {{ percentage }}%
+                                    </div>
+                                </div>
                             </div>
+                            {% endwith %}
+                        {% endif %}
+                    </div>
+                    
+                    <!-- الملاحظات -->
+                    {% if customer.notes %}
+                    <div class="mt-4">
+                        <h6 class="text-uppercase text-muted small fw-bold mb-2">ملاحظات</h6>
+                        <div class="p-3 bg-light rounded">
+                            {{ customer.notes|linebreaks }}
                         </div>
                     </div>
+                    {% endif %}
                 </div>
-                <div class="card-footer bg-white">
+                
+                <!-- أزرار الإجراءات -->
+                <div class="card-footer bg-white py-3">
                     <div class="d-grid gap-2">
-                        <a href="{% url 'sale-create' %}?customer_id={{ customer.id }}" class="btn btn-primary">
-                            <i class="fas fa-plus-circle me-2"></i> إضافة فاتورة جديدة
+                        <a href="{% url 'sale-create' %}?customer_id={{ customer.id }}" class="btn btn-success">
+                            <i class="fas fa-file-invoice me-1"></i> إنشاء فاتورة جديدة
                         </a>
                         {% if customer.debt > 0 %}
-                            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addPaymentModal">
-                                <i class="fas fa-money-bill-wave me-2"></i> تسجيل دفعة
-                            </button>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPaymentModal">
+                            <i class="fas fa-money-bill-wave me-1"></i> تسجيل دفعة
+                        </button>
                         {% endif %}
                     </div>
                 </div>
             </div>
         </div>
         
-        <div class="col-md-8 mb-4">
-            <!-- مؤشرات إحصائية -->
+        <div class="col-lg-8 col-md-7">
+            <!-- بطاقات الإحصائيات -->
             <div class="row mb-4">
-                <div class="col-md-4">
-                    <div class="card text-center h-100">
-                        <div class="card-body">
-                            <h3 class="display-4 fw-bold text-primary">{{ sales_count }}</h3>
-                            <p class="mb-0">إجمالي الفواتير</p>
+                <div class="col-md-3 col-6">
+                    <div class="card bg-primary bg-opacity-10 border-0 h-100">
+                        <div class="card-body text-center">
+                            <div class="display-6 mb-2"><i class="fas fa-receipt text-primary"></i></div>
+                            <h3 class="display-5 fw-bold text-primary">{{ sales_count }}</h3>
+                            <p class="mb-0">عدد الفواتير</p>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="card text-center h-100">
-                        <div class="card-body">
-                            <h3 class="display-4 fw-bold text-success">{{ sales_items_count }}</h3>
-                            <p class="mb-0">إجمالي المنتجات</p>
+                <div class="col-md-3 col-6">
+                    <div class="card bg-success bg-opacity-10 border-0 h-100">
+                        <div class="card-body text-center">
+                            <div class="display-6 mb-2"><i class="fas fa-coins text-success"></i></div>
+                            <h3 class="display-5 fw-bold text-success">{{ total_sales|floatformat:0 }}</h3>
+                            <p class="mb-0">إجمالي المبيعات (ج.م)</p>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="card text-center h-100">
-                        <div class="card-body">
-                            <h3 class="display-4 fw-bold text-warning">{{ last_sale_days }}</h3>
-                            <p class="mb-0">أيام منذ آخر عملية</p>
+                <div class="col-md-3 col-6 mt-4 mt-md-0">
+                    <div class="card bg-info bg-opacity-10 border-0 h-100">
+                        <div class="card-body text-center">
+                            <div class="display-6 mb-2"><i class="fas fa-shopping-basket text-info"></i></div>
+                            <h3 class="display-5 fw-bold text-info">{{ sales_items_count }}</h3>
+                            <p class="mb-0">عدد المنتجات</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mt-4 mt-md-0">
+                    <div class="card bg-warning bg-opacity-10 border-0 h-100">
+                        <div class="card-body text-center">
+                            <div class="display-6 mb-2"><i class="fas fa-calendar-alt text-warning"></i></div>
+                            <h3 class="display-5 fw-bold text-warning">{{ last_sale_days }}</h3>
+                            <p class="mb-0">أيام منذ آخر طلب</p>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <!-- فواتير العميل -->
-            <div class="card shadow-sm">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <!-- عمليات البيع -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
                     <h5 class="mb-0">
-                        <i class="fas fa-receipt me-2 text-primary"></i> فواتير العميل
+                        <i class="fas fa-receipt text-primary me-2"></i> فواتير البيع 
+                        <span class="badge bg-primary rounded-pill ms-2">{{ sales.count }}</span>
                     </h5>
-                    <span class="badge bg-primary rounded-pill">{{ sales.count }}</span>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-light dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown">
+                            <i class="fas fa-sort me-1"></i> ترتيب
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="?sort=newest">الأحدث أولاً</a></li>
+                            <li><a class="dropdown-item" href="?sort=oldest">الأقدم أولاً</a></li>
+                            <li><a class="dropdown-item" href="?sort=highest">الأعلى قيمة</a></li>
+                            <li><a class="dropdown-item" href="?sort=lowest">الأقل قيمة</a></li>
+                        </ul>
+                    </div>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table class="table table-hover mb-0">
+                        <table class="table align-middle table-hover mb-0">
                             <thead class="table-light">
                                 <tr>
                                     <th>رقم الفاتورة</th>
@@ -153,26 +283,32 @@
                             <tbody>
                                 {% for sale in sales %}
                                 <tr>
-                                    <td>#{{ sale.id }}</td>
+                                    <td>
+                                        <a href="{% url 'sale-detail' sale.id %}" class="text-decoration-none fw-medium">
+                                            #{{ sale.id }}
+                                        </a>
+                                    </td>
                                     <td>{{ sale.sale_date|date:"Y-m-d" }}</td>
                                     <td>{{ sale.total_price|floatformat:2 }} ج.م</td>
                                     <td>{{ sale.paid_amount|floatformat:2 }} ج.م</td>
-                                    <td>{{ sale.remaining_amount|floatformat:2 }} ج.م</td>
+                                    <td class="{% if sale.remaining_amount > 0 %}text-danger fw-medium{% else %}text-success{% endif %}">
+                                        {{ sale.remaining_amount|floatformat:2 }} ج.م
+                                    </td>
                                     <td>
                                         {% if sale.status == 'paid' %}
                                             <span class="badge bg-success">مدفوعة</span>
                                         {% elif sale.status == 'partially_paid' %}
-                                            <span class="badge bg-warning">مدفوعة جزئياً</span>
+                                            <span class="badge bg-warning text-dark">مدفوعة جزئياً</span>
                                         {% else %}
                                             <span class="badge bg-danger">غير مدفوعة</span>
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <div class="btn-group">
-                                            <a href="{% url 'sale-detail' sale.id %}" class="btn btn-sm btn-light" title="عرض">
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'sale-detail' sale.id %}" class="btn btn-light" title="عرض التفاصيل">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            <a href="{% url 'sale-print' sale.id %}" class="btn btn-sm btn-light" title="طباعة" target="_blank">
+                                            <a href="{% url 'sale-print' sale.id %}" class="btn btn-light" title="طباعة" target="_blank">
                                                 <i class="fas fa-print"></i>
                                             </a>
                                         </div>
@@ -180,94 +316,89 @@
                                 </tr>
                                 {% empty %}
                                 <tr>
-                                    <td colspan="7" class="text-center py-5 text-muted">
-                                        <i class="fas fa-receipt fa-3x mb-3"></i>
-                                        <h5>لا توجد فواتير لهذا العميل</h5>
-                                        <a href="{% url 'sale-create' %}?customer_id={{ customer.id }}" class="btn btn-primary mt-2">
-                                            <i class="fas fa-plus me-1"></i> إضافة فاتورة
-                                        </a>
+                                    <td colspan="7" class="text-center py-5">
+                                        <div class="text-muted">
+                                            <i class="fas fa-receipt fa-3x mb-3"></i>
+                                            <h5>لا توجد فواتير لهذا العميل</h5>
+                                            <a href="{% url 'sale-create' %}?customer_id={{ customer.id }}" class="btn btn-primary mt-2">
+                                                <i class="fas fa-plus me-1"></i> إضافة فاتورة جديدة
+                                            </a>
+                                        </div>
                                     </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
                     </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- المنتجات الأكثر شراءً -->
-        <div class="col-md-6 mb-4">
-            <div class="card shadow-sm h-100">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-box me-2 text-primary"></i> المنتجات الأكثر شراءً
-                    </h5>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>المنتج</th>
-                                    <th>الكمية</th>
-                                    <th>آخر شراء</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for product in top_products %}
-                                <tr>
-                                    <td>
-                                        <a href="{% url 'product-detail' product.id %}">{{ product.name }}</a>
-                                    </td>
-                                    <td>{{ product.total_quantity }}</td>
-                                    <td>{{ product.last_purchase|date:"Y-m-d" }}</td>
-                                </tr>
-                                {% empty %}
-                                <tr>
-                                    <td colspan="3" class="text-center py-5 text-muted">
-                                        لا توجد منتجات مشتراة بعد
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                    {% if sales.count > 10 %}
+                    <div class="card-footer bg-white text-center py-2">
+                        <a href="#" class="text-decoration-none">عرض جميع الفواتير ({{ sales.count }})</a>
                     </div>
+                    {% endif %}
                 </div>
             </div>
-        </div>
-
-        <!-- سجل المدفوعات -->
-        <div class="col-md-6 mb-4">
-            <div class="card shadow-sm h-100">
-                <div class="card-header bg-white">
+            
+            <!-- سجل المدفوعات -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
                     <h5 class="mb-0">
-                        <i class="fas fa-money-bill me-2 text-primary"></i> سجل المدفوعات
+                        <i class="fas fa-money-bill-wave text-success me-2"></i> سجل المدفوعات
+                        {% if payments.count > 0 %}
+                        <span class="badge bg-success rounded-pill ms-2">{{ payments.count }}</span>
+                        {% endif %}
                     </h5>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table class="table table-hover mb-0">
+                        <table class="table align-middle table-hover mb-0">
                             <thead class="table-light">
                                 <tr>
                                     <th>التاريخ</th>
+                                    <th>رقم الفاتورة</th>
                                     <th>المبلغ</th>
                                     <th>طريقة الدفع</th>
-                                    <th>تفاصيل</th>
+                                    <th>ملاحظات</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for payment in payments %}
                                 <tr>
                                     <td>{{ payment.payment_date|date:"Y-m-d" }}</td>
-                                    <td>{{ payment.amount|floatformat:2 }} ج.م</td>
-                                    <td>{{ payment.get_payment_method_display }}</td>
-                                    <td>{{ payment.notes|default:"-" }}</td>
+                                    <td>
+                                        {% if payment.sale %}
+                                        <a href="{% url 'sale-detail' payment.sale.id %}" class="text-decoration-none fw-medium">
+                                            #{{ payment.sale.id }}
+                                        </a>
+                                        {% else %}
+                                        <span class="text-muted">--</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="fw-medium text-success">{{ payment.amount|floatformat:2 }} ج.م</td>
+                                    <td>
+                                        {% if payment.payment_method == 'cash' %}
+                                            <span class="badge bg-success bg-opacity-75">نقدي</span>
+                                        {% elif payment.payment_method == 'credit_card' %}
+                                            <span class="badge bg-info bg-opacity-75">بطاقة ائتمان</span>
+                                        {% elif payment.payment_method == 'bank_transfer' %}
+                                            <span class="badge bg-primary bg-opacity-75">تحويل بنكي</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ payment.get_payment_method_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ payment.notes|default:"--" }}</td>
                                 </tr>
                                 {% empty %}
                                 <tr>
-                                    <td colspan="4" class="text-center py-5 text-muted">
-                                        لا توجد مدفوعات مسجلة
+                                    <td colspan="5" class="text-center py-5">
+                                        <div class="text-muted">
+                                            <i class="fas fa-hand-holding-usd fa-3x mb-3"></i>
+                                            <h5>لا توجد مدفوعات مسجلة</h5>
+                                            {% if customer.debt > 0 %}
+                                            <button class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#addPaymentModal">
+                                                <i class="fas fa-plus me-1"></i> تسجيل دفعة
+                                            </button>
+                                            {% endif %}
+                                        </div>
                                     </td>
                                 </tr>
                                 {% endfor %}
@@ -284,46 +415,75 @@
 <div class="modal fade" id="deleteCustomerModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">تأكيد الحذف</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    تأكيد حذف العميل
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p>هل أنت متأكد من حذف العميل <strong>{{ customer.name }}</strong>؟</p>
-                <div class="alert alert-danger">
-                    <i class="fas fa-exclamation-triangle me-2"></i> تحذير: سيتم حذف جميع البيانات المتعلقة بهذا العميل بما في ذلك المبيعات والمدفوعات!
+                <p class="text-center fs-5">هل أنت متأكد من حذف العميل <strong>{{ customer.name }}</strong>؟</p>
+                <div class="alert alert-warning">
+                    <div class="d-flex">
+                        <div class="me-2">
+                            <i class="fas fa-exclamation-triangle text-warning fs-3"></i>
+                        </div>
+                        <div>
+                            <p class="mb-1 fw-medium">تحذير: سيتم حذف جميع البيانات المرتبطة بهذا العميل، بما في ذلك:</p>
+                            <ul class="mb-0">
+                                <li>سجل المبيعات والفواتير المرتبطة بالعميل</li>
+                                <li>سجل المدفوعات والمعاملات المالية</li>
+                                <li>جميع الملاحظات والمعلومات الإضافية</li>
+                            </ul>
+                            <p class="mt-2 mb-0">هذا الإجراء <strong class="text-danger">لا يمكن التراجع عنه</strong>!</p>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
                 <form action="{% url 'customer-delete' customer.id %}" method="post">
                     {% csrf_token %}
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                    <button type="submit" class="btn btn-danger">حذف</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i> تأكيد الحذف
+                    </button>
                 </form>
             </div>
         </div>
     </div>
 </div>
 
-<!-- مودال إضافة دفعة -->
+<!-- مودال إضافة دفعة جديدة -->
 <div class="modal fade" id="addPaymentModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">تسجيل دفعة من العميل</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-money-bill-wave me-2"></i>
+                    تسجيل دفعة من العميل
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form action="{% url 'add-customer-payment' customer.id %}" method="post">
                 {% csrf_token %}
                 <div class="modal-body">
+                    <div class="mb-4">
+                        <div class="alert alert-info d-flex">
+                            <i class="fas fa-info-circle me-2 mt-1"></i>
+                            <div>المديونية الحالية للعميل: <strong>{{ customer.debt|floatformat:2 }} ج.م</strong></div>
+                        </div>
+                    </div>
+                    
                     <div class="mb-3">
                         <label class="form-label">المبلغ <span class="text-danger">*</span></label>
                         <div class="input-group">
                             <input type="number" name="amount" class="form-control" step="0.01" min="0.01" max="{{ customer.debt }}" value="{{ customer.debt }}" required>
                             <span class="input-group-text">ج.م</span>
                         </div>
-                        <div class="form-text">المديونية الحالية: {{ customer.debt|floatformat:2 }} ج.م</div>
+                        <div class="form-text">يمكنك تغيير المبلغ إذا كانت الدفعة جزئية</div>
                     </div>
+                    
                     <div class="mb-3">
                         <label class="form-label">طريقة الدفع <span class="text-danger">*</span></label>
                         <select name="payment_method" class="form-select" required>
@@ -332,17 +492,78 @@
                             <option value="bank_transfer">تحويل بنكي</option>
                         </select>
                     </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">الفاتورة المرتبطة</label>
+                        <select name="sale_id" class="form-select">
+                            <option value="">-- غير مرتبطة بفاتورة محددة --</option>
+                            {% for sale in sales %}
+                                {% if sale.remaining_amount > 0 %}
+                                <option value="{{ sale.id }}">#{{ sale.id }} ({{ sale.sale_date|date:"Y-m-d" }}) - المتبقي: {{ sale.remaining_amount|floatformat:2 }} ج.م</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
                     <div class="mb-3">
                         <label class="form-label">ملاحظات</label>
-                        <textarea name="notes" class="form-control" rows="2" placeholder="مثال: دفعة من إجمالي المديونية"></textarea>
+                        <textarea name="notes" class="form-control" rows="2" placeholder="تفاصيل إضافية عن الدفعة"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                    <button type="submit" class="btn btn-primary">تسجيل الدفعة</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i> تسجيل الدفعة
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
+<style>
+/* Timeline styling */
+.timeline {
+    position: relative;
+    padding: 0;
+    list-style: none;
+    margin: 0;
+}
+
+.timeline:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e9ecef;
+    left: 15px;
+    margin-left: -1px;
+}
+
+.timeline-item {
+    position: relative;
+    padding-left: 40px;
+    margin-bottom: 20px;
+}
+
+.timeline-marker {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    left: 0;
+    top: 0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.timeline-content {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+}
+</style>
 {% endblock %}

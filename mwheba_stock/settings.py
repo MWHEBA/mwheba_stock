@@ -138,10 +138,11 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
 
-# إضافة middleware لتسجيل النشاط
-MIDDLEWARE += [
-    'accounts.middleware.ActivityLogMiddleware',
-]
+# إعدادات المشروع
+# تعليق السطر المتعلق بـ ActivityLogMiddleware لأننا لن نستخدمه حاليا
+# MIDDLEWARE += [
+#     'accounts.middleware.ActivityLogMiddleware',
+# ]
 
 # إعدادات الجلسة
 SESSION_COOKIE_AGE = 86400  # 24 ساعة

@@ -18,23 +18,29 @@
                 </li>
             </ol>
         </nav>
+        {% if customer %}
+            <a href="{% url 'customer-detail' customer.id %}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-right me-1"></i> العودة للتفاصيل
+            </a>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid">
-    <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
+    <div class="row">
+        <!-- بطاقة النموذج -->
+        <div class="col-lg-8">
             <div class="card shadow-sm">
-                <div class="card-header bg-white">
+                <div class="card-header bg-white py-3">
                     <h5 class="mb-0">
-                        <i class="fas {% if customer %}fa-edit text-secondary{% else %}fa-plus text-primary{% endif %} me-2"></i>
+                        <i class="fas {% if customer %}fa-edit text-info{% else %}fa-plus text-primary{% endif %} me-2"></i>
                         {% if customer %}تعديل بيانات العميل{% else %}إضافة عميل جديد{% endif %}
                     </h5>
                 </div>
                 <div class="card-body">
-                    <form method="post" novalidate>
+                    <form method="post" novalidate id="customerForm">
                         {% csrf_token %}
                         
                         {% if form.non_field_errors %}
@@ -43,87 +49,286 @@
                             </div>
                         {% endif %}
                         
-                        <div class="mb-3">
-                            <label for="{{ form.name.id_for_label }}" class="form-label">{{ form.name.label }} <span class="text-danger">*</span></label>
-                            {{ form.name }}
-                            {% if form.name.errors %}
-                                <div class="invalid-feedback d-block">{{ form.name.errors }}</div>
-                            {% endif %}
-                            <div class="form-text">أدخل اسم العميل بالكامل</div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="{{ form.phone.id_for_label }}" class="form-label">{{ form.phone.label }} <span class="text-danger">*</span></label>
-                            {{ form.phone }}
-                            {% if form.phone.errors %}
-                                <div class="invalid-feedback d-block">{{ form.phone.errors }}</div>
-                            {% endif %}
-                            <div class="form-text">رقم هاتف العميل للتواصل</div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="{{ form.email.id_for_label }}" class="form-label">{{ form.email.label }}</label>
-                            {{ form.email }}
-                            {% if form.email.errors %}
-                                <div class="invalid-feedback d-block">{{ form.email.errors }}</div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="{{ form.address.id_for_label }}" class="form-label">{{ form.address.label }}</label>
-                            {{ form.address }}
-                            {% if form.address.errors %}
-                                <div class="invalid-feedback d-block">{{ form.address.errors }}</div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="{{ form.notes.id_for_label }}" class="form-label">{{ form.notes.label }}</label>
-                            {{ form.notes }}
-                            {% if form.notes.errors %}
-                                <div class="invalid-feedback d-block">{{ form.notes.errors }}</div>
-                            {% endif %}
-                            <div class="form-text">ملاحظات إضافية حول العميل</div>
-                        </div>
-                        
-                        {% if customer %}
-                        <div class="mb-3">
-                            <label for="{{ form.debt.id_for_label }}" class="form-label">{{ form.debt.label }}</label>
-                            <div class="input-group">
-                                {{ form.debt }}
-                                <span class="input-group-text">ج.م</span>
+                        <!-- البيانات الأساسية -->
+                        <div class="row">
+                            <div class="col-12">
+                                <h6 class="border-bottom pb-2 mb-3">
+                                    <i class="fas fa-id-card me-2 text-primary"></i> البيانات الأساسية
+                                </h6>
                             </div>
-                            {% if form.debt.errors %}
-                                <div class="invalid-feedback d-block">{{ form.debt.errors }}</div>
-                            {% endif %}
-                            <div class="form-text text-danger">تحذير: تعديل المديونية يدوياً قد يؤدي إلى اختلاف في الحسابات.</div>
-                        </div>
-                        {% endif %}
-                        
-                        <hr class="my-4">
-                        
-                        <div class="d-flex justify-content-between">
-                            <a href="{% url 'customer-list' %}" class="btn btn-light border">
-                                <i class="fas fa-times me-1"></i> إلغاء
-                            </a>
-                            
-                            <div>
-                                {% if customer %}
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-save me-1"></i> حفظ التغييرات
-                                    </button>
-                                {% else %}
-                                    <button type="submit" name="save_and_add_another" class="btn btn-secondary me-2">
-                                        <i class="fas fa-plus me-1"></i> حفظ وإضافة آخر
-                                    </button>
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-save me-1"></i> حفظ
-                                    </button>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.name.id_for_label }}" class="form-label fw-medium text-dark">
+                                    {{ form.name.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.name.errors }}</div>
                                 {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.phone.id_for_label }}" class="form-label fw-medium text-dark">
+                                    {{ form.phone.label }}
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                                    {{ form.phone }}
+                                </div>
+                                {% if form.phone.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.phone.errors }}</div>
+                                {% endif %}
+                                <div class="form-text">يمكن إدخال رقم الهاتف بتنسيق دولي (+20...)</div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.alternative_phone.id_for_label }}" class="form-label fw-medium text-dark">
+                                    {{ form.alternative_phone.label }}
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-phone-alt"></i></span>
+                                    {{ form.alternative_phone }}
+                                </div>
+                                {% if form.alternative_phone.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.alternative_phone.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.email.id_for_label }}" class="form-label fw-medium text-dark">
+                                    {{ form.email.label }}
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                    {{ form.email }}
+                                </div>
+                                {% if form.email.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.email.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- معلومات التصنيف والحالة -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <h6 class="border-bottom pb-2 mb-3">
+                                    <i class="fas fa-tag me-2 text-primary"></i> التصنيف والحالة
+                                </h6>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.category.id_for_label }}" class="form-label fw-medium text-dark">
+                                    {{ form.category.label }}
+                                </label>
+                                <div class="input-group">
+                                    {{ form.category }}
+                                    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#newCategoryModal">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                                {% if form.category.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.category.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.status.id_for_label }}" class="form-label fw-medium text-dark">
+                                    {{ form.status.label }}
+                                </label>
+                                {{ form.status }}
+                                {% if form.status.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.status.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.credit_limit.id_for_label }}" class="form-label fw-medium text-dark">
+                                    {{ form.credit_limit.label }}
+                                </label>
+                                <div class="input-group">
+                                    {{ form.credit_limit }}
+                                    <span class="input-group-text">ج.م</span>
+                                </div>
+                                {% if form.credit_limit.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.credit_limit.errors }}</div>
+                                {% endif %}
+                                <div class="form-text">حد الائتمان المسموح به للعميل (0 يعني غير محدود)</div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.tax_number.id_for_label }}" class="form-label fw-medium text-dark">
+                                    {{ form.tax_number.label }}
+                                </label>
+                                {{ form.tax_number }}
+                                {% if form.tax_number.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.tax_number.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- معلومات إضافية -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <h6 class="border-bottom pb-2 mb-3">
+                                    <i class="fas fa-info-circle me-2 text-primary"></i> معلومات إضافية
+                                </h6>
+                            </div>
+                            
+                            <div class="col-12 mb-3">
+                                <label for="{{ form.address.id_for_label }}" class="form-label fw-medium text-dark">
+                                    {{ form.address.label }}
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
+                                    {{ form.address }}
+                                </div>
+                                {% if form.address.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.address.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-12 mb-3">
+                                <label for="{{ form.notes.id_for_label }}" class="form-label fw-medium text-dark">
+                                    {{ form.notes.label }}
+                                </label>
+                                {{ form.notes }}
+                                {% if form.notes.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.notes.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- أزرار الإجراءات -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                    <div>
+                                        <a href="{% url 'customer-list' %}" class="btn btn-light border">
+                                            <i class="fas fa-times me-1"></i> إلغاء
+                                        </a>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        {% if not customer %}
+                                        <button type="submit" name="save_and_add_another" class="btn btn-outline-primary">
+                                            <i class="fas fa-plus me-1"></i> حفظ وإضافة آخر
+                                        </button>
+                                        <button type="submit" name="save_and_add_sale" class="btn btn-outline-success">
+                                            <i class="fas fa-receipt me-1"></i> حفظ وإضافة فاتورة
+                                        </button>
+                                        {% endif %}
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save me-1"></i> حفظ
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </form>
                 </div>
+            </div>
+        </div>
+        
+        <!-- بطاقة المعلومات والإرشادات -->
+        <div class="col-lg-4">
+            <!-- نصائح وإرشادات -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-lightbulb text-warning me-2"></i> نصائح وإرشادات
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2 d-flex">
+                            <i class="fas fa-check-circle text-success mt-1 me-2"></i>
+                            <div>أدخل الاسم الكامل للعميل للتمييز بين العملاء المتشابهين.</div>
+                        </li>
+                        <li class="mb-2 d-flex">
+                            <i class="fas fa-check-circle text-success mt-1 me-2"></i>
+                            <div>استخدم رقم هاتف دقيق وصحيح للتواصل مع العميل.</div>
+                        </li>
+                        <li class="mb-2 d-flex">
+                            <i class="fas fa-check-circle text-success mt-1 me-2"></i>
+                            <div>يمكنك تعيين حد ائتمان للعميل لمراقبة المديونية.</div>
+                        </li>
+                        <li class="mb-2 d-flex">
+                            <i class="fas fa-check-circle text-success mt-1 me-2"></i>
+                            <div>استخدم خانة الملاحظات لتسجيل أي معلومات خاصة بالعميل.</div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- معلومات العميل المالية (في حالة التعديل) -->
+            {% if customer %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-money-bill-wave text-success me-2"></i> البيانات المالية
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between px-0">
+                            <span>إجمالي المبيعات:</span>
+                            <span class="fw-bold text-success">{{ customer.total_sales|floatformat:2 }} ج.م</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between px-0">
+                            <span>المديونية الحالية:</span>
+                            <span class="fw-bold {% if customer.debt > 0 %}text-danger{% else %}text-success{% endif %}">
+                                {{ customer.debt|floatformat:2 }} ج.م
+                            </span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between px-0">
+                            <span>نقاط الولاء:</span>
+                            <span class="fw-bold">{{ customer.points }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between px-0">
+                            <span>آخر معاملة:</span>
+                            <span>{{ customer.last_purchase_date|date:"Y-m-d"|default:"--" }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- مودال إضافة تصنيف جديد -->
+<div class="modal fade" id="newCategoryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">إضافة تصنيف جديد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">اسم التصنيف <span class="text-danger">*</span></label>
+                    <input type="text" id="new-category-name" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">اللون</label>
+                    <select id="new-category-color" class="form-select">
+                        <option value="primary" class="text-primary">أزرق</option>
+                        <option value="success" class="text-success">أخضر</option>
+                        <option value="warning" class="text-warning">أصفر</option>
+                        <option value="danger" class="text-danger">أحمر</option>
+                        <option value="info" class="text-info">سماوي</option>
+                        <option value="secondary" class="text-secondary">رمادي</option>
+                        <option value="dark" class="text-dark">أسود</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">الوصف</label>
+                    <textarea id="new-category-description" class="form-control" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" id="save-new-category">
+                    <i class="fas fa-save me-1"></i> حفظ التصنيف
+                </button>
             </div>
         </div>
     </div>
@@ -134,16 +339,80 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // تنسيق رقم الهاتف
-        const phoneInput = document.getElementById('id_phone');
-        if (phoneInput) {
-            phoneInput.addEventListener('input', function() {
-                let value = this.value.replace(/\D/g, '');
-                if (value.length > 11) {
-                    value = value.substring(0, 11);
-                }
+        const phoneInputs = document.querySelectorAll('.phone-input');
+        phoneInputs.forEach(input => {
+            input.addEventListener('input', function() {
+                let value = this.value.replace(/[^\d+]/g, '');
                 this.value = value;
             });
+        });
+        
+        // إضافة تصنيف جديد
+        document.getElementById('save-new-category').addEventListener('click', function() {
+            const categoryName = document.getElementById('new-category-name').value;
+            const categoryColor = document.getElementById('new-category-color').value;
+            const categoryDescription = document.getElementById('new-category-description').value;
+            
+            if (!categoryName) {
+                alert('يرجى إدخال اسم التصنيف');
+                return;
+            }
+            
+            // الحصول على قيمة CSRF token من الـ form
+            const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            
+            // إرسال طلب AJAX لإنشاء تصنيف جديد
+            fetch('{% url "category-create-ajax" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify({
+                    name: categoryName,
+                    color_code: categoryColor,
+                    description: categoryDescription
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // إضافة التصنيف الجديد لقائمة التصنيفات
+                    const categorySelect = document.getElementById('id_category');
+                    const option = new Option(categoryName, data.id);
+                    categorySelect.add(option);
+                    option.selected = true;
+                    
+                    // إغلاق المودال
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('newCategoryModal'));
+                    modal.hide();
+                    
+                    // مسح قيم الحقول
+                    document.getElementById('new-category-name').value = '';
+                    document.getElementById('new-category-description').value = '';
+                    
+                    // رسالة نجاح
+                    showToast('تم إضافة التصنيف بنجاح', 'success');
+                } else {
+                    showToast('حدث خطأ: ' + data.error, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('حدث خطأ أثناء إنشاء التصنيف', 'error');
+            });
+        });
+        
+        // دالة لعرض رسائل التأكيد/الخطأ
+        function showToast(message, type = 'info') {
+            // إذا كان لديك نظام توست مثبت، استخدمه هنا
+            // وإلا سنستخدم alert بسيط
+            alert(message);
         }
+        
+        // تلميحات الحقول
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
     });
 </script>
 {% endblock %}

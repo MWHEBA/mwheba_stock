@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}تأكيد حذف العميل - {{ customer.name }}{% endblock %}
+
+{% block page_header %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">لوحة التحكم</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'customer-list' %}">العملاء</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'customer-detail' customer.id %}">{{ customer.name }}</a></li>
+                <li class="breadcrumb-item active">تأكيد الحذف</li>
+            </ol>
+        </nav>
+        <a href="{% url 'customer-detail' customer.id %}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-right me-1"></i> العودة للتفاصيل
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-xl-6 col-lg-8 col-md-10">
+            <div class="card shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i> تأكيد حذف العميل
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="warning-icon bg-danger bg-opacity-10 text-danger rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
+                            style="width: 70px; height: 70px; font-size: 2rem;">
+                            <i class="fas fa-trash"></i>
+                        </div>
+                        <h4>هل أنت متأكد من حذف العميل <strong>{{ customer.name }}</strong>؟</h4>
+                        <p class="text-muted mt-2">هذا الإجراء لا يمكن التراجع عنه!</p>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <div class="d-flex">
+                            <div class="me-2">
+                                <i class="fas fa-exclamation-triangle text-warning fs-3"></i>
+                            </div>
+                            <div>
+                                <p class="mb-1 fw-medium">تحذير: سيتم حذف جميع البيانات المرتبطة بهذا العميل، بما في ذلك:</p>
+                                <ul class="mb-0">
+                                    <li>سجل المبيعات والفواتير المرتبطة بالعميل</li>
+                                    <li>سجل المدفوعات والمعاملات المالية</li>
+                                    <li>جميع الملاحظات والمعلومات الإضافية</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <dl class="row mt-4">
+                        <dt class="col-sm-4">اسم العميل:</dt>
+                        <dd class="col-sm-8 fw-bold">{{ customer.name }}</dd>
+                        
+                        <dt class="col-sm-4">رقم الهاتف:</dt>
+                        <dd class="col-sm-8">{{ customer.phone|default:"غير متاح" }}</dd>
+                        
+                        <dt class="col-sm-4">البريد الإلكتروني:</dt>
+                        <dd class="col-sm-8">{{ customer.email|default:"غير متاح" }}</dd>
+                        
+                        <dt class="col-sm-4">المديونية:</dt>
+                        <dd class="col-sm-8 {% if customer.debt > 0 %}text-danger fw-bold{% else %}text-success{% endif %}">
+                            {{ customer.debt|floatformat:2 }} ج.م
+                        </dd>
+                        
+                        <dt class="col-sm-4">إجمالي المبيعات:</dt>
+                        <dd class="col-sm-8 fw-bold">{{ customer.total_sales|floatformat:2 }} ج.م</dd>
+                        
+                        <dt class="col-sm-4">عدد الفواتير:</dt>
+                        <dd class="col-sm-8">{{ customer.sales.count }}</dd>
+                    </dl>
+                    
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'customer-detail' customer.id %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i> إلغاء
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash me-1"></i> تأكيد الحذف
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

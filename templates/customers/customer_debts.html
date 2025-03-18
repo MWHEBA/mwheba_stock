@@ -1,0 +1,380 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}مديونيات العملاء - MWHEBA Stock{% endblock %}
+
+{% block page_header %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-0 text-primary">
+                <i class="fas fa-hand-holding-usd me-2"></i> مديونيات العملاء
+            </h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">لوحة التحكم</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'customer-list' %}">العملاء</a></li>
+                    <li class="breadcrumb-item active">المديونيات</li>
+                </ol>
+            </nav>
+        </div>
+        <div class="d-flex">
+            <a href="{% url 'customer-list' %}?debt_status=with_debts" class="btn btn-outline-primary me-2">
+                <i class="fas fa-users me-1"></i> قائمة العملاء المدينين
+            </a>
+            <div class="dropdown">
+                <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-file-export me-1"></i> تصدير
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="?export=excel">
+                        <i class="far fa-file-excel text-success me-1"></i> تصدير Excel
+                    </a></li>
+                    <li><a class="dropdown-item" href="?export=pdf">
+                        <i class="far fa-file-pdf text-danger me-1"></i> تصدير PDF
+                    </a></li>
+                    <li><a class="dropdown-item" href="?export=print" target="_blank">
+                        <i class="fas fa-print text-primary me-1"></i> طباعة
+                    </a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- بطاقة المديونية الإجمالية -->
+    <div class="card mb-4 shadow-sm bg-danger bg-opacity-10">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-3 col-sm-6 border-end border-danger border-opacity-25">
+                    <div class="text-center p-3">
+                        <div class="display-6 mb-2">
+                            <i class="fas fa-users text-danger"></i>
+                        </div>
+                        <h3 class="display-4 fw-bold text-danger">{{ customers_with_debts.count }}</h3>
+                        <p class="mb-0">عدد العملاء المدينين</p>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6 border-end border-danger border-opacity-25">
+                    <div class="text-center p-3">
+                        <div class="display-6 mb-2">
+                            <i class="fas fa-money-bill-wave text-danger"></i>
+                        </div>
+                        <h3 class="display-4 fw-bold text-danger">{{ total_debt|floatformat:0 }}</h3>
+                        <p class="mb-0">إجمالي المديونيات (ج.م)</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="p-3">
+                        <h5 class="text-danger border-bottom pb-2 mb-3">
+                            <i class="fas fa-bell me-2"></i> نظرة عامة
+                        </h5>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>المبالغ المتأخرة (أكثر من 30 يوم):</span>
+                            <span class="fw-bold">{{ overdue_debt|default:0|floatformat:2 }} ج.م</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>المديونية المتوسطة للعميل:</span>
+                            <span class="fw-bold">{{ avg_debt|default:0|floatformat:2 }} ج.م</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>مديونية أعلى عميل:</span>
+                            <span class="fw-bold">{{ max_debt|default:0|floatformat:2 }} ج.م</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- قائمة العملاء المدينين -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+            <h5 class="mb-0">
+                <i class="fas fa-users-slash text-primary me-2"></i> العملاء المدينين
+                <span class="badge bg-primary rounded-pill ms-2">{{ customers_with_debts.count }}</span>
+            </h5>
+            <div class="dropdown">
+                <button class="btn btn-sm btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-sort me-1"></i> ترتيب
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="?sort=debt_high">الأعلى مديونية</a></li>
+                    <li><a class="dropdown-item" href="?sort=debt_low">الأقل مديونية</a></li>
+                    <li><a class="dropdown-item" href="?sort=name">الاسم (أ-ي)</a></li>
+                    <li><a class="dropdown-item" href="?sort=overdue">المتأخرة</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>الاسم</th>
+                            <th>رقم الهاتف</th>
+                            <th>المديونية</th>
+                            <th>حد الائتمان</th>
+                            <th>تاريخ آخر دفعة</th>
+                            <th>عدد الفواتير المعلقة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for customer in customers_with_debts %}
+                        <tr class="{% if customer.debt > customer.credit_limit and customer.credit_limit > 0 %}bg-danger bg-opacity-10{% endif %}">
+                            <td>
+                                <a href="{% url 'customer-detail' customer.id %}" class="text-decoration-none fw-medium">
+                                    {{ customer.name }}
+                                </a>
+                                {% if customer.is_vip %}
+                                    <span class="ms-1 badge bg-warning text-dark"><i class="fas fa-crown"></i></span>
+                                {% endif %}
+                            </td>
+                            <td dir="ltr" class="text-start">{{ customer.phone|default:"--" }}</td>
+                            <td class="text-danger fw-bold">{{ customer.debt|floatformat:2 }} ج.م</td>
+                            <td>
+                                {% if customer.credit_limit > 0 %}
+                                    {{ customer.credit_limit|floatformat:2 }} ج.م
+                                    {% if customer.debt > customer.credit_limit %}
+                                        <i class="ms-1 fas fa-exclamation-circle text-danger" title="تجاوز حد الائتمان"></i>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted">غير محدد</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ customer.last_payment_date|date:"Y-m-d"|default:"--" }}</td>
+                            <td>
+                                <a href="{% url 'sale-list' %}?customer={{ customer.id }}&status=pending" class="text-decoration-none">{{ customer.pending_sales_count }}</a>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'customer-detail' customer.id %}" class="btn btn-light" title="عرض التفاصيل">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-success" title="تسجيل دفعة"
+                                            data-bs-toggle="modal" data-bs-target="#recordPaymentModal"
+                                            data-customer-id="{{ customer.id }}"
+                                            data-customer-name="{{ customer.name }}"
+                                            data-debt="{{ customer.debt|floatformat:2 }}">
+                                        <i class="fas fa-money-bill-wave"></i>
+                                    </button>
+                                    <a href="{% url 'sale-create' %}?customer_id={{ customer.id }}" class="btn btn-primary" title="فاتورة جديدة">
+                                        <i class="fas fa-file-invoice"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5">
+                                <div class="text-muted">
+                                    <i class="fas fa-check-circle fa-3x mb-3"></i>
+                                    <h5>لا يوجد عملاء لديهم مديونيات</h5>
+                                    <p>كل العملاء مسددين مستحقاتهم بالكامل</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- الرسم البياني للمديونيات حسب الوقت -->
+    <div class="row mt-4">
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie text-primary me-2"></i> توزيع المديونيات حسب التصنيف</h5>
+                </div>
+                <div class="card-body">
+                    <div id="debt-by-category-chart" style="height: 300px;">
+                        <!-- هنا سيتم عرض الرسم البياني باستخدام JavaScript -->
+                        <div class="text-center py-5 text-muted">
+                            <i class="fas fa-chart-pie fa-3x mb-3"></i>
+                            <h5>بيانات الرسم البياني</h5>
+                            <p>يتم تحميل الرسم البياني...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0"><i class="fas fa-chart-line text-primary me-2"></i> تطور المديونيات</h5>
+                </div>
+                <div class="card-body">
+                    <div id="debt-timeline-chart" style="height: 300px;">
+                        <!-- هنا سيتم عرض الرسم البياني باستخدام JavaScript -->
+                        <div class="text-center py-5 text-muted">
+                            <i class="fas fa-chart-line fa-3x mb-3"></i>
+                            <h5>بيانات الرسم البياني</h5>
+                            <p>يتم تحميل الرسم البياني...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- مودال تسجيل دفعة للعميل -->
+<div class="modal fade" id="recordPaymentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-money-bill-wave me-2"></i> تسجيل دفعة
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="payment-form" method="post" action="">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-4">
+                        <div class="alert alert-info d-flex">
+                            <i class="fas fa-info-circle me-2 mt-1"></i>
+                            <div>
+                                <span>تسجيل دفعة للعميل: </span>
+                                <strong id="customer-name"></strong>
+                                <br>
+                                <span>المديونية الحالية: </span>
+                                <strong id="customer-debt"></strong>
+                                <span> ج.م</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">المبلغ <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <input type="number" name="amount" id="payment-amount" class="form-control" step="0.01" min="0.01" required>
+                            <span class="input-group-text">ج.م</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">طريقة الدفع <span class="text-danger">*</span></label>
+                        <select name="payment_method" class="form-select" required>
+                            <option value="cash" selected>نقدي</option>
+                            <option value="credit_card">بطاقة ائتمان</option>
+                            <option value="bank_transfer">تحويل بنكي</option>
+                            <option value="check">شيك</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">تاريخ الدفع</label>
+                        <input type="date" name="payment_date" class="form-control" value="{{ today_date|date:'Y-m-d' }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">ملاحظات</label>
+                        <textarea name="notes" class="form-control" rows="2" placeholder="تفاصيل إضافية عن الدفعة"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i> تسجيل الدفعة
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // إعداد مودال تسجيل الدفعة
+        const paymentModal = document.getElementById('recordPaymentModal');
+        if (paymentModal) {
+            paymentModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                const customerId = button.getAttribute('data-customer-id');
+                const customerName = button.getAttribute('data-customer-name');
+                const debt = button.getAttribute('data-debt');
+                
+                document.getElementById('customer-name').textContent = customerName;
+                document.getElementById('customer-debt').textContent = debt;
+                document.getElementById('payment-amount').value = debt;
+                document.getElementById('payment-amount').setAttribute('max', debt);
+                document.getElementById('payment-form').action = `/customers/${customerId}/record-payment/`;
+            });
+        }
+        
+        // محاولة رسم المخططات البيانية إن وجدت البيانات
+        try {
+            // بيانات المخططات تأتي من المعالج
+            if (typeof debtCategoryData !== 'undefined' && debtCategoryData) {
+                renderCategoryChart();
+            }
+            
+            if (typeof debtTimelineData !== 'undefined' && debtTimelineData) {
+                renderTimelineChart();
+            }
+        } catch (e) {
+            console.error("حدث خطأ في رسم المخططات البيانية:", e);
+        }
+        
+        // دوال رسم المخططات
+        function renderCategoryChart() {
+            const ctx = document.getElementById('debt-by-category-chart').getContext('2d');
+            new Chart(ctx, {
+                type: 'pie',
+                data: debtCategoryData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                        }
+                    }
+                }
+            });
+        }
+        
+        function renderTimelineChart() {
+            const ctx = document.getElementById('debt-timeline-chart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: debtTimelineData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'المبلغ (ج.م)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'التاريخ'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}
