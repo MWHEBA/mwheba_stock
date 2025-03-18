@@ -7,7 +7,6 @@
     <h5 class="modal-title">
         <i class="fas fa-user-circle me-2"></i> {{ customer.name }}
     </h5>
-    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
 </div>
 <div class="modal-body">
     <div class="row">
@@ -143,17 +142,11 @@
 </div>
 <div class="modal-footer">
     <div class="d-flex justify-content-between w-100">
-        <div>
-            <a href="{% url 'customer-detail' customer.id %}" class="btn btn-primary">
-                <i class="fas fa-external-link-alt me-1"></i> فتح في صفحة كاملة
-            </a>
             {% if customer.debt > 0 %}
             <button type="button" class="btn btn-success" id="recordPaymentBtn" data-id="{{ customer.id }}" data-bs-toggle="modal" data-bs-target="#recordPaymentModal">
                 <i class="fas fa-hand-holding-usd me-1"></i> تسجيل دفعة
             </button>
             {% endif %}
-        </div>
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
     </div>
 </div>
 
