@@ -107,8 +107,14 @@
                             <li><a href="{% url 'customer-create' %}" class="{% if 'customer-create' in request.path %}active{% endif %}">
                                 <i class="fas fa-user-plus"></i> إضافة عميل جديد
                             </a></li>
-                            <li><a href="{% url 'customer-list' %}" class="{% if 'customer-list' in request.path %}active{% endif %}">
-                                <i class="fas fa-user-friends"></i> قائمة العملاء
+<li><a href="{% url 'customer-list' %}" class="{% if 'customer-list' in request.path %}active{% endif %}">
+                                                          <i class="fas fa-user-friends"></i> قائمة العملاء
+                            </a></li>
+<li><a href="{% url 'customer-debts' %}" class="{% if 'customer-debts' in request.path %}active{% endif %}">
+                                <i class="fas fa-money-bill-wave"></i> مديونيات العملاء
+                            </a></li>
+                            <li><a href="{% url 'customer-categories' %}" class="{% if 'customer-categories' in request.path %}active{% endif %}">
+                                <i class="fas fa-tags"></i> تصنيفات العملاء
                             </a></li>
                         </ul>
                     </li>

@@ -34,7 +34,7 @@ INSTALLED_APPS = [
     'sales',
     'purchases',
     'reports',
-    'store_settings',  # Keep only this settings app
+    'store_settings',
 ]
 
 MIDDLEWARE = [

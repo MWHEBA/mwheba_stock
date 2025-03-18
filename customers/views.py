@@ -454,3 +454,34 @@ def category_delete(request, pk):
         messages.success(request, _('تم حذف التصنيف بنجاح'))
     
     return redirect('customer-categories')
+
+@login_required
+def category_create(request):
+    """إضافة تصنيف عملاء جديد"""
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        color_code = request.POST.get('color_code', 'primary')
+        description = request.POST.get('description', '')
+        
+        if not name:
+            messages.error(request, _('اسم التصنيف مطلوب'))
+            return redirect('category-create')
+            
+        if CustomerCategory.objects.filter(name=name).exists():
+            messages.error(request, _('يوجد تصنيف بهذا الاسم بالفعل'))
+            return redirect('category-create')
+            
+        category = CustomerCategory.objects.create(
+            name=name,
+            color_code=color_code,
+            description=description
+        )
+        
+        messages.success(request, _('تم إضافة التصنيف بنجاح'))
+        
+        if 'save_and_add_another' in request.POST:
+            return redirect('category-create')
+        else:
+            return redirect('customer-categories')
+            
+    return render(request, 'customers/customer_category_create.html')

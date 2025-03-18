@@ -16,7 +16,7 @@ urlpatterns = [
     path('sales/', include('sales.urls')),
     path('purchases/', include('purchases.urls')),
     path('reports/', include('reports.urls')),
-    path('settings/', include('store_settings.urls')),  # Only using store_settings
+    path('settings/', include('store_settings.urls')),
 ]
 
 # Serve static and media files in development

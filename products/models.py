@@ -23,8 +23,8 @@ class Product(models.Model):
     updated_at = models.DateTimeField(_('Updated Date'), auto_now=True)
     
     class Meta:
-        verbose_name = _('Product')
-        verbose_name_plural = _('Products')
+        verbose_name = _('المنتج')
+        verbose_name_plural = _('المنتجات')
     
     def __str__(self):
         return f"{self.name} ({self.sku})"
@@ -65,8 +65,8 @@ class PurchasePriceHistory(models.Model):
     date_changed = models.DateTimeField(_('Date of Change'), auto_now_add=True)
     
     class Meta:
-        verbose_name = _('Purchase Price History')
-        verbose_name_plural = _('Purchase Price Histories')
+        verbose_name = _('سجل سعر الشراء')
+        verbose_name_plural = _('سجلات أسعار الشراء')
         ordering = ['-date_changed']
     
     def __str__(self):
