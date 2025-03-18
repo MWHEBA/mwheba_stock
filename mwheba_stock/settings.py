@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     'crispy_bootstrap5',
     
     # Your custom apps
+    'core',  # Add the core app for common functionality
     'accounts',
     'products',
     'customers',

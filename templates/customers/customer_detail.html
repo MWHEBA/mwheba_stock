@@ -1,53 +1,52 @@
 {% extends 'base.html' %}
 {% load i18n %}
 {% load static %}
+{% load custom_filters %}
 {% load custom_math %}
+
 {% block title %}{{ customer.name }} - تفاصيل العميل{% endblock %}
-{% block title %}{{ customer.name }} - تفاصيل العميل{% endblock %}
+
 {% block content %}
-{% block content %}er-fluid">
-<div class="container-fluid">ت العميل الأساسية -->
+<div class="container-fluid">
     <!-- رأس الصفحة مع معلومات العميل الأساسية -->
-    <div class="row mb-4">">
-        <div class="col-12"> border-0 shadow-sm">
+    <div class="row mb-4">
+        <div class="col-12">
             <div class="card border-0 shadow-sm">
-                <div class="card-body p-4">-column flex-md-row justify-content-between align-items-center">
+                <div class="card-body p-4">
                     <div class="d-flex flex-column flex-md-row justify-content-between align-items-center">
-                        <!-- معلومات العميل الأساسية -->enter mb-3 mb-md-0">
-                            <div class="avatar bg-{{ customer.get_status_display_class }} text-white rounded-3 me-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; font-size: 24px;">
+                        <!-- معلومات العميل الأساسية -->
+                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center">
                             <div class="avatar bg-{{ customer.get_status_display_class }} text-white rounded-3 me-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; font-size: 24px;">
                                 <i class="fas fa-user"></i>
                             </div>
-                            <div>div class="d-flex align-items-center">
-                                <div class="d-flex align-items-center">ame }}</h2>
+                            <div>
+                                <div class="d-flex align-items-center">
                                     <h2 class="mb-0 me-2">{{ customer.name }}</h2>
-                                    {% if customer.is_vip %}g-warning text-dark rounded-pill px-3 py-2 ms-2">
+                                    {% if customer.is_vip %}
                                         <span class="badge bg-warning text-dark rounded-pill px-3 py-2 ms-2">
                                             <i class="fas fa-crown me-1"></i> VIP
                                         </span>
                                     {% endif %}
-                                </div>lass="text-muted mb-1">{{ customer.code }}</div>
+                                </div>
                                 <div class="text-muted mb-1">{{ customer.code }}</div>
                                 <!-- بطاقات الحالة -->
-                                <!-- بطاقات الحالة -->
-                                <div class="mt-2">يل -->
-                                    <!-- حالة العميل -->s == 'active' %}
-                                    {% if customer.status == 'active' %}unded-pill px-3 py-2">
+                                <div class="mt-2">
+                                    <!-- حالة العميل -->
+                                    {% if customer.status == 'active' %}
                                         <span class="badge bg-success rounded-pill px-3 py-2">
                                             <i class="fas fa-check-circle me-1"></i> نشط
-                                        </span>tomer.status == 'inactive' %}
-                                    {% elif customer.status == 'inactive' %}ark rounded-pill px-3 py-2">
+                                        </span>
+                                    {% elif customer.status == 'inactive' %}
                                         <span class="badge bg-warning text-dark rounded-pill px-3 py-2">
                                             <i class="fas fa-exclamation-circle me-1"></i> غير نشط
                                         </span>
-                                    {% else %}class="badge bg-danger rounded-pill px-3 py-2">
+                                    {% else %}
                                         <span class="badge bg-danger rounded-pill px-3 py-2">
                                             <i class="fas fa-ban me-1"></i> محظور
                                         </span>
                                     {% endif %}
                                     <!-- تصنيف العميل -->
-                                    <!-- تصنيف العميل -->ry %}
-                                    {% if customer.category %}{{ customer.category.color_code }} rounded-pill px-3 py-2 ms-2">
+                                    {% if customer.category %}
                                         <span class="badge bg-{{ customer.category.color_code }} rounded-pill px-3 py-2 ms-2">
                                             <i class="fas fa-tag me-1"></i> {{ customer.category.name }}
                                         </span>
@@ -56,17 +55,16 @@
                             </div>
                         </div>
                         <!-- أزرار الإجراءات -->
-                        <!-- أزرار الإجراءات -->wrap">
-                        <div class="d-flex flex-wrap">te' %}?customer_id={{ customer.id }}" class="btn btn-primary me-2 mb-2">
+                        <div class="d-flex flex-wrap">
                             <a href="{% url 'sale-create' %}?customer_id={{ customer.id }}" class="btn btn-primary me-2 mb-2">
                                 <i class="fas fa-file-invoice me-1"></i> فاتورة جديدة
-                            </a>ref="{% url 'customer-edit' customer.id %}" class="btn btn-warning me-2 mb-2">
+                            </a>
                             <a href="{% url 'customer-edit' customer.id %}" class="btn btn-warning me-2 mb-2">
                                 <i class="fas fa-edit me-1"></i> تعديل
-                            </a>ton type="button" class="btn btn-danger mb-2" data-bs-toggle="modal" 
+                            </a>
                             <button type="button" class="btn btn-danger mb-2" data-bs-toggle="modal"  
                                     data-bs-target="#deleteCustomerModal" data-id="{{ customer.id }}" 
-                                    data-name="{{ customer.name }}">ف
+                                    data-name="{{ customer.name }}">
                                 <i class="fas fa-trash me-1"></i> حذف
                             </button>
                         </div>
@@ -76,27 +74,26 @@
         </div>
     </div>
     <!-- شريط التبويب -->
-    <!-- شريط التبويب -->bs mb-4" id="customerTabs" role="tablist">
     <ul class="nav nav-tabs mb-4" id="customerTabs" role="tablist">
-        <li class="nav-item" role="presentation">verview-tab" data-bs-toggle="tab" data-bs-target="#overview-tab-pane" 
+        <li class="nav-item" role="presentation">
             <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview-tab-pane" 
                     type="button" role="tab" aria-selected="true">
                 <i class="fas fa-info-circle me-1"></i> نظرة عامة
             </button>
-        </li>lass="nav-item" role="presentation">
-        <li class="nav-item" role="presentation">b" data-bs-toggle="tab" data-bs-target="#sales-tab-pane" 
+        </li>
+        <li class="nav-item" role="presentation">
             <button class="nav-link" id="sales-tab" data-bs-toggle="tab" data-bs-target="#sales-tab-pane" 
                     type="button" role="tab" aria-selected="false">
                 <i class="fas fa-shopping-cart me-1"></i> المبيعات
             </button>
-        </li>lass="nav-item" role="presentation">
-        <li class="nav-item" role="presentation">-tab" data-bs-toggle="tab" data-bs-target="#payments-tab-pane" 
+        </li>
+        <li class="nav-item" role="presentation">
             <button class="nav-link" id="payments-tab" data-bs-toggle="tab" data-bs-target="#payments-tab-pane" 
-                    type="button" role="tab" aria-selected="false">ات
+                    type="button" role="tab" aria-selected="false">
                 <i class="fas fa-money-bill-wave me-1"></i> المدفوعات
             </button>
-        </li>lass="nav-item" role="presentation">
-        <li class="nav-item" role="presentation">b" data-bs-toggle="tab" data-bs-target="#notes-tab-pane" 
+        </li>
+        <li class="nav-item" role="presentation">
             <button class="nav-link" id="notes-tab" data-bs-toggle="tab" data-bs-target="#notes-tab-pane" 
                     type="button" role="tab" aria-selected="false">
                 <i class="fas fa-sticky-note me-1"></i> الملاحظات
@@ -104,60 +101,56 @@
         </li>
     </ul>
     <!-- محتوى التبويبات -->
-    <!-- محتوى التبويبات --> id="customerTabsContent">
     <div class="tab-content" id="customerTabsContent">
-        <!-- تبويب النظرة العامة -->ow active" id="overview-tab-pane" role="tabpanel" aria-labelledby="overview-tab">
+        <!-- تبويب النظرة العامة -->
         <div class="tab-pane fade show active" id="overview-tab-pane" role="tabpanel" aria-labelledby="overview-tab">
-            <div class="row">لإحصائيات -->
-                <!-- بطاقات الإحصائيات -->">
+            <div class="row">
+                <!-- بطاقات الإحصائيات -->
                 <div class="col-lg-12 mb-4">
-                    <div class="row">لمبيعات -->
-                        <!-- إجمالي المبيعات -->4">
-                        <div class="col-md-3 mb-4">border-0 shadow-sm">
+                    <div class="row">
+                        <!-- إجمالي المبيعات -->
+                        <div class="col-md-3 mb-4">
                             <div class="card h-100 border-0 shadow-sm">
-                                <div class="card-body text-center p-4">e rounded-circle text-success mx-auto mb-3" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
+                                <div class="card-body text-center p-4">
                                     <div class="avatar bg-success-subtle rounded-circle text-success mx-auto mb-3" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
                                         <i class="fas fa-chart-line fs-3"></i>
-                                    </div>ass="mb-1 fw-bold">{{ total_sales|floatformat:2 }}</h3>
+                                    </div>
                                     <h3 class="mb-1 fw-bold">{{ total_sales|floatformat:2 }}</h3>
                                     <p class="mb-0 text-muted">إجمالي المبيعات (ج.م)</p>
                                 </div>
                             </div>
                         </div>
                         <!-- عدد المبيعات -->
-                        <!-- عدد المبيعات -->mb-4">
-                        <div class="col-md-3 mb-4">border-0 shadow-sm">
+                        <div class="col-md-3 mb-4">
                             <div class="card h-100 border-0 shadow-sm">
-                                <div class="card-body text-center p-4">ounded-circle text-info mx-auto mb-3" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
+                                <div class="card-body text-center p-4">
                                     <div class="avatar bg-info-subtle rounded-circle text-info mx-auto mb-3" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
                                         <i class="fas fa-shopping-bag fs-3"></i>
-                                    </div>ass="mb-1 fw-bold">{{ sales_count }}</h3>
+                                    </div>
                                     <h3 class="mb-1 fw-bold">{{ sales_count }}</h3>
                                     <p class="mb-0 text-muted">عدد الفواتير</p>
                                 </div>
                             </div>
                         </div>
                         <!-- المديونية -->
-                        <!-- المديونية -->-3 mb-4">
-                        <div class="col-md-3 mb-4">border-0 shadow-sm">
+                        <div class="col-md-3 mb-4">
                             <div class="card h-100 border-0 shadow-sm">
-                                <div class="card-body text-center p-4"> rounded-circle text-danger mx-auto mb-3" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
+                                <div class="card-body text-center p-4">
                                     <div class="avatar bg-danger-subtle rounded-circle text-danger mx-auto mb-3" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
                                         <i class="fas fa-money-bill-wave fs-3"></i>
-                                    </div>ass="mb-1 fw-bold">{{ customer.debt|floatformat:2 }}</h3>
+                                    </div>
                                     <h3 class="mb-1 fw-bold">{{ customer.debt|floatformat:2 }}</h3>
                                     <p class="mb-0 text-muted">المديونية (ج.م)</p>
                                 </div>
                             </div>
                         </div>
                         <!-- أيام منذ آخر معاملة -->
-                        <!-- أيام منذ آخر معاملة -->
-                        <div class="col-md-3 mb-4">border-0 shadow-sm">
+                        <div class="col-md-3 mb-4">
                             <div class="card h-100 border-0 shadow-sm">
-                                <div class="card-body text-center p-4">e rounded-circle text-primary mx-auto mb-3" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
+                                <div class="card-body text-center p-4">
                                     <div class="avatar bg-primary-subtle rounded-circle text-primary mx-auto mb-3" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
                                         <i class="fas fa-calendar-alt fs-3"></i>
-                                    </div>ass="mb-1 fw-bold">{{ last_sale_days|default:"--" }}</h3>
+                                    </div>
                                     <h3 class="mb-1 fw-bold">{{ last_sale_days|default:"--" }}</h3>
                                     <p class="mb-0 text-muted">أيام منذ آخر معاملة</p>
                                 </div>
@@ -166,78 +159,71 @@
                     </div>
                 </div>
                 <!-- معلومات العميل -->
-                <!-- معلومات العميل -->-4">
-                <div class="col-lg-6 mb-4">border-0 shadow-sm">
+                <div class="col-lg-6 mb-4">
                     <div class="card h-100 border-0 shadow-sm">
                         <div class="card-header bg-white">
-                            <h5 class="card-title mb-0">xt-primary me-2"></i> معلومات العميل
+                            <h5 class="card-title mb-0">
                                 <i class="fas fa-user text-primary me-2"></i> معلومات العميل
                             </h5>
-                        </div>lass="card-body">
-                        <div class="card-body">up list-group-flush">
+                        </div>
+                        <div class="card-body">
                             <ul class="list-group list-group-flush">
-                                <!-- رقم الهاتف -->up-item d-flex justify-content-between px-0">
-                                <li class="list-group-item d-flex justify-content-between px-0">اتف:</span>
+                                <!-- رقم الهاتف -->
+                                <li class="list-group-item d-flex justify-content-between px-0">
                                     <span><i class="fas fa-phone text-primary me-2"></i> رقم الهاتف:</span>
-                                    <span dir="ltr">er.phone %}
-                                        {% if customer.phone %}tomer.phone }}" class="text-decoration-none">
-                                            <a href="tel:{{ customer.phone }}" class="text-decoration-none">hone }}
+                                    <span dir="ltr">
+                                        {% if customer.phone %}
+                                            <a href="tel:{{ customer.phone }}" class="text-decoration-none">
                                                 <i class="fas fa-phone text-success me-1"></i> {{ customer.phone }}
-                                            </a>%}
-                                        {% else %}class="text-muted">غير محدد</span>
+                                            </a>
+                                        {% else %}
                                             <span class="text-muted">غير محدد</span>
                                         {% endif %}
                                     </span>
                                 </li>
                                 <!-- رقم هاتف بديل -->
-                                <!-- رقم هاتف بديل -->tive_phone %}
-                                {% if customer.alternative_phone %}ustify-content-between px-0">
-                                <li class="list-group-item d-flex justify-content-between px-0"> هاتف بديل:</span>
+                                {% if customer.alternative_phone %}
+                                <li class="list-group-item d-flex justify-content-between px-0">
                                     <span><i class="fas fa-phone-alt text-primary me-2"></i> رقم هاتف بديل:</span>
-                                    <span dir="ltr">:{{ customer.alternative_phone }}" class="text-decoration-none">
-                                        <a href="tel:{{ customer.alternative_phone }}" class="text-decoration-none">hone }}
+                                    <span dir="ltr">
+                                        <a href="tel:{{ customer.alternative_phone }}" class="text-decoration-none">
                                             <i class="fas fa-phone text-success me-1"></i> {{ customer.alternative_phone }}
                                         </a>
                                     </span>
-                                </li>dif %}
+                                </li>
                                 {% endif %}
                                 <!-- البريد الإلكتروني -->
-                                <!-- البريد الإلكتروني --> d-flex justify-content-between px-0">
-                                <li class="list-group-item d-flex justify-content-between px-0">يد الإلكتروني:</span>
+                                <li class="list-group-item d-flex justify-content-between px-0">
                                     <span><i class="fas fa-envelope text-primary me-2"></i> البريد الإلكتروني:</span>
-                                    <span> if customer.email %}
-                                        {% if customer.email %}customer.email }}" class="text-decoration-none">
+                                    <span>
+                                        {% if customer.email %}
                                             <a href="mailto:{{ customer.email }}" class="text-decoration-none">
                                                 {{ customer.email }}
-                                            </a>%}
-                                        {% else %}class="text-muted">غير محدد</span>
+                                            </a>
+                                        {% else %}
                                             <span class="text-muted">غير محدد</span>
                                         {% endif %}
                                     </span>
                                 </li>
                                 <!-- العنوان -->
-                                <!-- العنوان -->group-item d-flex justify-content-between px-0">
-                                <li class="list-group-item d-flex justify-content-between px-0">> العنوان:</span>
+                                <li class="list-group-item d-flex justify-content-between px-0">
                                     <span><i class="fas fa-map-marker-alt text-primary me-2"></i> العنوان:</span>
                                     <span>{{ customer.address|default:"غير محدد" }}</span>
                                 </li>
                                 <!-- الرقم الضريبي -->
-                                <!-- الرقم الضريبي -->ber %}
-                                {% if customer.tax_number %}-flex justify-content-between px-0">
-                                <li class="list-group-item d-flex justify-content-between px-0">الرقم الضريبي:</span>
+                                {% if customer.tax_number %}
+                                <li class="list-group-item d-flex justify-content-between px-0">
                                     <span><i class="fas fa-file-invoice text-primary me-2"></i> الرقم الضريبي:</span>
                                     <span>{{ customer.tax_number }}</span>
-                                </li>dif %}
+                                </li>
                                 {% endif %}
                                 <!-- تاريخ الإضافة -->
-                                <!-- تاريخ الإضافة -->item d-flex justify-content-between px-0">
-                                <li class="list-group-item d-flex justify-content-between px-0"> تاريخ الإضافة:</span>
+                                <li class="list-group-item d-flex justify-content-between px-0">
                                     <span><i class="fas fa-calendar-plus text-primary me-2"></i> تاريخ الإضافة:</span>
                                     <span>{{ customer.created_at|date:"Y-m-d" }}</span>
                                 </li>
                                 <!-- آخر تحديث -->
-                                <!-- آخر تحديث -->oup-item d-flex justify-content-between px-0">
-                                <li class="list-group-item d-flex justify-content-between px-0">ث:</span>
+                                <li class="list-group-item d-flex justify-content-between px-0">
                                     <span><i class="fas fa-edit text-primary me-2"></i> آخر تحديث:</span>
                                     <span>{{ customer.updated_at|date:"Y-m-d" }}</span>
                                 </li>
@@ -246,147 +232,137 @@
                     </div>
                 </div>
                 <!-- معلومات مالية -->
-                <!-- معلومات مالية -->b-4">
-                <div class="col-lg-6 mb-4">border-0 shadow-sm">
+                <div class="col-lg-6 mb-4">
                     <div class="card h-100 border-0 shadow-sm">
                         <div class="card-header bg-white">
-                            <h5 class="card-title mb-0">heck-alt text-success me-2"></i> المعلومات المالية
+                            <h5 class="card-title mb-0">
                                 <i class="fas fa-money-check-alt text-success me-2"></i> المعلومات المالية
                             </h5>
-                        </div>lass="card-body">
+                        </div>
                         <div class="card-body">
-                            <div class="mb-4">2">حد الائتمان و المديونية</h6>
-                                <h6 class="mb-2">حد الائتمان و المديونية</h6>ign-items-center mb-1">
+                            <div class="mb-4">
+                                <h6 class="mb-2">حد الائتمان و المديونية</h6>
                                 <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <span>المديونية الحالية:</span>omer.debt > 0 %}text-danger{% else %}text-success{% endif %}">
+                                    <span>المديونية الحالية:</span>
                                     <span class="fw-bold {% if customer.debt > 0 %}text-danger{% else %}text-success{% endif %}">
                                         {{ customer.debt|floatformat:2 }} ج.م
                                     </span>
-                                </div>lass="d-flex justify-content بين align-items-center mb-2">
+                                </div>
                                 <div class="d-flex justify-content بين align-items-center mb-2">
-                                    <span>حد الائتمان:</span>limit|floatformat:2 }} ج.م</span>
+                                    <span>حد الائتمان:</span>
                                     <span>{{ customer.credit_limit|floatformat:2 }} ج.م</span>
                                 </div>
                                 {% if customer.credit_limit > 0 %}
-                                {% if customer.credit_limit > 0 %}t: 10px;">
                                 <div class="progress" style="height: 10px;">
-                                    <div class="progress-bar  customer.credit_limit %}
+                                    <div class="progress-bar 
                                         {% if customer.debt > customer.credit_limit %}
-                                            bg-dangermer.debt > customer.credit_limit %}
+                                            bg-danger
                                         {% elif customer.debt > customer.credit_limit|mul:0.8 %}
                                             bg-warning
-                                        {% else %}cess
+                                        {% else %}
                                             bg-success
-                                        {% endif %}" ssbar" 
-                                         role="progressbar"  customer.debt > customer.credit_limit %}100{% else %}{{ customer.debt|floatformat:0|default:0 }}{% endif %}%" 
+                                        {% endif %}" 
+                                         role="progressbar" 
                                          style="width: {% if customer.debt > customer.credit_limit %}100{% else %}{{ customer.debt|div:customer.credit_limit|mul:100|floatformat:0 }}{% endif %}%" 
                                          aria-valuenow="{{ customer.debt }}" 
-                                         aria-valuemin="0" customer.credit_limit }}">
+                                         aria-valuemin="0" 
                                          aria-valuemax="{{ customer.credit_limit }}">
                                     </div>
-                                </div>lass="d-flex justify-content-between mt-1">
+                                </div>
                                 <div class="d-flex justify-content-between mt-1">
-                                    <small class="text-muted">0 ج.م</small>redit_limit|floatformat:2 }} ج.م</small>
+                                    <small class="text-muted">0 ج.م</small>
                                     <small class="text-muted">{{ customer.credit_limit|floatformat:2 }} ج.م</small>
-                                </div>if %}
+                                </div>
                                 {% endif %}
                             </div>
                             <ul class="list-group list-group-flush">
-                            <ul class="list-group list-group-flush">
-                                <!-- إجمالي المبيعات -->em d-flex justify-content بين px-0">
-                                <li class="list-group-item d-flex justify-content بين px-0">> إجمالي المبيعات:</span>
-                                    <span><i class="fas fa-chart-line text-success me-2"></i> إجمالي المبيعات:</span></span>
+                                <!-- إجمالي المبيعات -->
+                                <li class="list-group-item d-flex justify-content بين px-0">
+                                    <span><i class="fas fa-chart-line text-success me-2"></i> إجمالي المبيعات:</span>
                                     <span class="text-success fw-medium">{{ customer.total_sales|floatformat:2 }} ج.م</span>
                                 </li>
                                 <!-- عدد المبيعات -->
-                                <!-- عدد المبيعات -->-item d-flex justify-content بين px-0">
-                                <li class="list-group-item d-flex justify-content بين px-0"></i> عدد الفواتير:</span>
+                                <li class="list-group-item d-flex justify-content بين px-0">
                                     <span><i class="fas fa-shopping-cart text-primary me-2"></i> عدد الفواتير:</span>
                                     <span>{{ sales_count }}</span>
                                 </li>
                                 <!-- عدد المنتجات المشتراة -->
-                                <!-- عدد المنتجات المشتراة -->lex justify-content بين px-0">
-                                <li class="list-group-item d-flex justify-content بين px-0">لمنتجات المشتراة:</span>
+                                <li class="list-group-item d-flex justify-content بين px-0">
                                     <span><i class="fas fa-box text-primary me-2"></i> عدد المنتجات المشتراة:</span>
                                     <span>{{ sales_items_count|default:"0" }}</span>
                                 </li>
                                 <!-- نقاط الولاء -->
-                                <!-- نقاط الولاء -->p-item d-flex justify-content بين px-0">
-                                <li class="list-group-item d-flex justify-content بين px-0">اط الولاء:</span>
+                                <li class="list-group-item d-flex justify-content بين px-0">
                                     <span><i class="fas fa-trophy text-warning me-2"></i> نقاط الولاء:</span>
                                     <span class="fw-medium">{{ customer.points }}</span>
                                 </li>
                             </ul>
                         </div>
                         {% if customer.debt > 0 %}
-                        {% if customer.debt > 0 %}-white">
-                        <div class="card-footer bg-white">tn btn-success w-100" data-bs-toggle="modal" data-bs-target="#recordPaymentModal">
+                        <div class="card-footer bg-white">
                             <button type="button" class="btn btn-success w-100" data-bs-toggle="modal" data-bs-target="#recordPaymentModal">
                                 <i class="fas fa-hand-holding-usd me-1"></i> تسجيل دفعة جديدة
                             </button>
-                        </div>if %}
+                        </div>
                         {% endif %}
                     </div>
                 </div>
                 <!-- آخر المبيعات -->
-                <!-- آخر المبيعات --> mb-4">
-                <div class="col-lg-12 mb-4">0 shadow-sm">
-                    <div class="card border-0 shadow-sm">d-flex justify-content بين align-items-center">
+                <div class="col-lg-12 mb-4">
+                    <div class="card border-0 shadow-sm">
                         <div class="card-header bg-white d-flex justify-content بين align-items-center">
-                            <h5 class="card-title mb-0">g-cart text-primary me-2"></i> آخر المبيعات
+                            <h5 class="card-title mb-0">
                                 <i class="fas fa-shopping-cart text-primary me-2"></i> آخر المبيعات
-                            </h5>ef="#" class="btn btn-sm btn-primary" data-bs-toggle="tab" data-bs-target="#sales-tab-pane" onclick="document.getElementById('sales-tab').click()">
+                            </h5>
                             <a href="#" class="btn btn-sm btn-primary" data-bs-toggle="tab" data-bs-target="#sales-tab-pane" onclick="document.getElementById('sales-tab').click()">
                                 عرض الكل <i class="fas fa-arrow-left ms-1"></i>
                             </a>
-                        </div>lass="card-body p-0">
-                        <div class="card-body p-0">nsive">
-                            <div class="table-responsive">hover align-middle mb-0">
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
                                 <table class="table table-hover align-middle mb-0">
                                     <thead class="table-light">
-                                        <tr><th>رقم الفاتورة</th>
+                                        <tr>
                                             <th>رقم الفاتورة</th>
                                             <th>التاريخ</th>
-                                            <th>المبلغ</th>>
+                                            <th>المبلغ</th>
                                             <th>المدفوع</th>
                                             <th>المتبقي</th>
                                             <th>الحالة</th>
                                             <th></th>
                                         </tr>
                                     </thead>
-                                    <tbody>for sale in sales|slice:":5" %}
+                                    <tbody>
                                         {% for sale in sales|slice:":5" %}
-                                        <tr><td>
-                                            <td><strong class="text-primary">#{{ sale.id }}</strong>
-                                                <strong class="text-primary">#{{ sale.id }}</strong>
-                                            </td>{ sale.sale_date|date:"Y-m-d" }}</td>
-                                            <td>{{ sale.sale_date|date:"Y-m-d" }}</td>.م</td>
+                                        <tr>
+                                            <td><strong class="text-primary">#{{ sale.id }}</strong></td>
+                                            <td>{{ sale.sale_date|date:"Y-m-d" }}</td>
                                             <td>{{ sale.total_price|floatformat:2 }} ج.م</td>
-                                            <td>{{ sale.paid_amount|floatformat:2 }} ج.م</td>-danger{% else %}text-success{% endif %}">
+                                            <td>{{ sale.paid_amount|floatformat:2 }} ج.م</td>
                                             <td class="{% if sale.remaining_amount > 0 %}text-danger{% else %}text-success{% endif %}">
                                                 {{ sale.remaining_amount|floatformat:2 }} ج.م
                                             </td>
-                                            <td>{% if sale.status == 'paid' %}
-                                                {% if sale.status == 'paid' %}ess">مدفوعة</span>
+                                            <td>
+                                                {% if sale.status == 'paid' %}
                                                     <span class="badge bg-success">مدفوعة</span>
-                                                {% elif sale.status == 'partially_paid' %}k">مدفوعة جزئياً</span>
+                                                {% elif sale.status == 'partially_paid' %}
                                                     <span class="badge bg-warning text-dark">مدفوعة جزئياً</span>
-                                                {% else %}class="badge bg-danger">غير مدفوعة</span>
+                                                {% else %}
                                                     <span class="badge bg-danger">غير مدفوعة</span>
                                                 {% endif %}
                                             </td>
-                                            <td><a href="{% url 'sale-detail' sale.id %}" class="btn btn-sm btn-outline-primary">
+                                            <td>
                                                 <a href="{% url 'sale-detail' sale.id %}" class="btn btn-sm btn-outline-primary">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
                                             </td>
-                                        </tr>pty %}
+                                        </tr>
                                         {% empty %}
-                                        <tr><td colspan="7" class="text-center py-4">
-                                            <td colspan="7" class="text-center py-4">يعات لهذا العميل</p>
+                                        <tr>
+                                            <td colspan="7" class="text-center py-4">
                                                 <p class="mb-0 text-muted">لا توجد مبيعات لهذا العميل</p>
                                             </td>
-                                        </tr>dfor %}
+                                        </tr>
                                         {% endfor %}
                                     </tbody>
                                 </table>
@@ -397,163 +373,160 @@
             </div>
         </div>
         <!-- تبويب المبيعات (عرض تفصيلي لكل المبيعات) -->
-        <!-- تبويب المبيعات (عرض تفصيلي لكل المبيعات) -->le="tabpanel" aria-labelledby="sales-tab">
         <div class="tab-pane fade" id="sales-tab-pane" role="tabpanel" aria-labelledby="sales-tab">
-            <div class="card shadow-sm mb-4">ite d-flex justify-content بين align-items-center py-3">
+            <div class="card shadow-sm mb-4">
                 <div class="card-header bg-white d-flex justify-content بين align-items-center py-3">
-                    <h5 class="mb-0"> fa-receipt text-primary me-2"></i> فواتير البيع 
-                        <i class="fas fa-receipt text-primary me-2"></i> فواتير البيع t }}</span>
+                    <h5 class="mb-0">
+                        <i class="fas fa-receipt text-primary me-2"></i> فواتير البيع 
                         <span class="badge bg-primary rounded-pill ms-2">{{ sales.count }}</span>
-                    </h5>class="dropdown">
-                    <div class="dropdown"> btn-sm btn-light dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown">
+                    </h5>
+                    <div class="dropdown">
                         <button class="btn btn-sm btn-light dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown">
                             <i class="fas fa-sort me-1"></i> ترتيب
-                        </button>="dropdown-menu dropdown-menu-end">
-                        <ul class="dropdown-menu dropdown-menu-end">=newest">الأحدث أولاً</a></li>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="?sort=newest">الأحدث أولاً</a></li>
                             <li><a class="dropdown-item" href="?sort=oldest">الأقدم أولاً</a></li>
                             <li><a class="dropdown-item" href="?sort=highest">الأعلى قيمة</a></li>
                             <li><a class="dropdown-item" href="?sort=lowest">الأقل قيمة</a></li>
                         </ul>
                     </div>
-                </div>lass="card-body p-0">
-                <div class="card-body p-0">nsive">
-                    <div class="table-responsive">middle table-hover mb-0">
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
                         <table class="table align-middle table-hover mb-0">
                             <thead class="table-light">
-                                <tr><th>رقم الفاتورة</th>
+                                <tr>
                                     <th>رقم الفاتورة</th>
                                     <th>التاريخ</th>
-                                    <th>المبلغ</th>>
+                                    <th>المبلغ</th>
                                     <th>المدفوع</th>
                                     <th>المتبقي</th>
-                                    <th>الحالة</th>th>
+                                    <th>الحالة</th>
                                     <th>الإجراءات</th>
                                 </tr>
                             </thead>
-                            <tbody>for sale in sales %}
+                            <tbody>
                                 {% for sale in sales %}
-                                <tr><td>
+                                <tr>
                                     <td><a href="{% url 'sale-detail' sale.id %}" class="text-decoration-none fw-medium">
-                                        <a href="{% url 'sale-detail' sale.id %}" class="text-decoration-none fw-medium">
                                             #{{ sale.id }}
                                         </a>
-                                    </td>{ sale.sale_date|date:"Y-m-d" }}</td>
-                                    <td>{{ sale.sale_date|date:"Y-m-d" }}</td>.م</td>
+                                    </td>
+                                    <td>{{ sale.sale_date|date:"Y-m-d" }}</td>
                                     <td>{{ sale.total_price|floatformat:2 }} ج.م</td>
-                                    <td>{{ sale.paid_amount|floatformat:2 }} ج.م</td>-danger fw-medium{% else %}text-success{% endif %}">
+                                    <td>{{ sale.paid_amount|floatformat:2 }} ج.م</td>
                                     <td class="{% if sale.remaining_amount > 0 %}text-danger fw-medium{% else %}text-success{% endif %}">
                                         {{ sale.remaining_amount|floatformat:2 }} ج.م
                                     </td>
-                                    <td>{% if sale.status == 'paid' %}
-                                        {% if sale.status == 'paid' %}ess">مدفوعة</span>
+                                    <td>
+                                        {% if sale.status == 'paid' %}
                                             <span class="badge bg-success">مدفوعة</span>
-                                        {% elif sale.status == 'partially_paid' %}k">مدفوعة جزئياً</span>
+                                        {% elif sale.status == 'partially_paid' %}
                                             <span class="badge bg-warning text-dark">مدفوعة جزئياً</span>
-                                        {% else %}class="badge bg-danger">غير مدفوعة</span>
+                                        {% else %}
                                             <span class="badge bg-danger">غير مدفوعة</span>
                                         {% endif %}
                                     </td>
-                                    <td><div class="btn-group btn-group-sm">
-                                        <div class="btn-group btn-group-sm">le.id %}" class="btn btn-light" title="عرض التفاصيل">
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
                                             <a href="{% url 'sale-detail' sale.id %}" class="btn btn-light" title="عرض التفاصيل">
                                                 <i class="fas fa-eye"></i>
-                                            </a>ref="{% url 'sale-print' sale.id %}" class="btn btn-light" title="طباعة" target="_blank">
+                                            </a>
                                             <a href="{% url 'sale-print' sale.id %}" class="btn btn-light" title="طباعة" target="_blank">
                                                 <i class="fas fa-print"></i>
                                             </a>
                                         </div>
                                     </td>
-                                </tr>pty %}
+                                </tr>
                                 {% empty %}
-                                <tr><td colspan="7" class="text-center py-5">
+                                <tr>
                                     <td colspan="7" class="text-center py-5">
-                                        <div class="text-muted">eipt fa-3x mb-3"></i>
+                                        <div class="text-muted">
                                             <i class="fas fa-receipt fa-3x mb-3"></i>
-                                            <h5>لا توجد فواتير لهذا العميل</h5>stomer_id={{ customer.id }}" class="btn btn-primary mt-2">
+                                            <h5>لا توجد فواتير لهذا العميل</h5>
                                             <a href="{% url 'sale-create' %}?customer_id={{ customer.id }}" class="btn btn-primary mt-2">
                                                 <i class="fas fa-plus me-1"></i> إضافة فاتورة جديدة
                                             </a>
                                         </div>
                                     </td>
-                                </tr>dfor %}
+                                </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
-                    </div>sales.count > 10 %}
-                    {% if sales.count > 10 %}g-white text-center py-2">
-                    <div class="card-footer bg-white text-center py-2">يع الفواتير ({{ sales.count }})</a>
+                    </div>
+                    {% if sales.count > 10 %}
+                    <div class="card-footer bg-white text-center py-2">
                         <a href="#" class="text-decoration-none">عرض جميع الفواتير ({{ sales.count }})</a>
-                    </div>if %}
+                    </div>
                     {% endif %}
                 </div>
             </div>
         </div>
         <!-- تبويب المدفوعات -->
-        <!-- تبويب المدفوعات -->e" id="payments-tab-pane" role="tabpanel" aria-labelledby="payments-tab">
         <div class="tab-pane fade" id="payments-tab-pane" role="tabpanel" aria-labelledby="payments-tab">
-            <div class="card shadow-sm mb-4">ite d-flex justify-content بين align-items-center py-3">
+            <div class="card shadow-sm mb-4">
                 <div class="card-header bg-white d-flex justify-content بين align-items-center py-3">
-                    <h5 class="mb-0"> fa-money-bill-wave text-success me-2"></i> سجل المدفوعات
+                    <h5 class="mb-0">
                         <i class="fas fa-money-bill-wave text-success me-2"></i> سجل المدفوعات
-                        {% if payments.count > 0 %}ss rounded-pill ms-2">{{ payments.count }}</span>
+                        {% if payments.count > 0 %}
                         <span class="badge bg-success rounded-pill ms-2">{{ payments.count }}</span>
                         {% endif %}
                     </h5>
-                </div>lass="card-body p-0">
-                <div class="card-body p-0">nsive">
-                    <div class="table-responsive">middle table-hover mb-0">
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
                         <table class="table align-middle table-hover mb-0">
                             <thead class="table-light">
-                                <tr><th>التاريخ</th>
-                                    <th>التاريخ</th></th>
+                                <tr>
+                                    <th>التاريخ</th>
                                     <th>رقم الفاتورة</th>
-                                    <th>المبلغ</th></th>
+                                    <th>المبلغ</th>
                                     <th>طريقة الدفع</th>
                                     <th>ملاحظات</th>
                                 </tr>
                             </thead>
-                            <tbody>for payment in payments %}
+                            <tbody>
                                 {% for payment in payments %}
-                                <tr><td>{{ payment.payment_date|date:"Y-m-d" }}</td>
+                                <tr>
                                     <td>{{ payment.payment_date|date:"Y-m-d" }}</td>
-                                    <td>{% if payment.sale %}
-                                        {% if payment.sale %}-detail' payment.sale.id %}" class="text-decoration-none fw-medium">
+                                    <td>
+                                        {% if payment.sale %}
                                         <a href="{% url 'sale-detail' payment.sale.id %}" class="text-decoration-none fw-medium">
                                             #{{ payment.sale.id }}
-                                        </a>lse %}
-                                        {% else %}s="text-muted">--</span>
+                                        </a>
+                                        {% else %}
                                         <span class="text-muted">--</span>
                                         {% endif %}
-                                    </td>lass="fw-medium text-success">{{ payment.amount|floatformat:2 }} ج.م</td>
+                                    </td>
                                     <td class="fw-medium text-success">{{ payment.amount|floatformat:2 }} ج.م</td>
-                                    <td>{% if payment.payment_method == 'cash' %}
-                                        {% if payment.payment_method == 'cash' %}ity-75">نقدي</span>
+                                    <td>
+                                        {% if payment.payment_method == 'cash' %}
                                             <span class="badge bg-success bg-opacity-75">نقدي</span>
-                                        {% elif payment.payment_method == 'credit_card' %}ة ائتمان</span>
+                                        {% elif payment.payment_method == 'credit_card' %}
                                             <span class="badge bg-info bg-opacity-75">بطاقة ائتمان</span>
-                                        {% elif payment.payment_method == 'bank_transfer' %}يل بنكي</span>
+                                        {% elif payment.payment_method == 'bank_transfer' %}
                                             <span class="badge bg-primary bg-opacity-75">تحويل بنكي</span>
-                                        {% else %}class="badge bg-secondary">{{ payment.get_payment_method_display }}</span>
+                                        {% else %}
                                             <span class="badge bg-secondary">{{ payment.get_payment_method_display }}</span>
                                         {% endif %}
-                                    </td>{ payment.notes|default:"--" }}</td>
+                                    </td>
                                     <td>{{ payment.notes|default:"--" }}</td>
-                                </tr>pty %}
+                                </tr>
                                 {% empty %}
-                                <tr><td colspan="5" class="text-center py-5">
+                                <tr>
                                     <td colspan="5" class="text-center py-5">
-                                        <div class="text-muted">d-holding-usd fa-3x mb-3"></i>
+                                        <div class="text-muted">
                                             <i class="fas fa-hand-holding-usd fa-3x mb-3"></i>
                                             <h5>لا توجد مدفوعات مسجلة</h5>
-                                            {% if customer.debt > 0 %}mary mt-2" data-bs-toggle="modal" data-bs-target="#addPaymentModal">
+                                            {% if customer.debt > 0 %}
                                             <button class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#addPaymentModal">
                                                 <i class="fas fa-plus me-1"></i> تسجيل دفعة
-                                            </button>%}
+                                            </button>
                                             {% endif %}
                                         </div>
                                     </td>
-                                </tr>dfor %}
+                                </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
@@ -562,22 +535,21 @@
             </div>
         </div>
         <!-- تبويب الملاحظات -->
-        <!-- تبويب الملاحظات -->e" id="notes-tab-pane" role="tabpanel" aria-labelledby="notes-tab">
         <div class="tab-pane fade" id="notes-tab-pane" role="tabpanel" aria-labelledby="notes-tab">
-            <div class="row">ol-lg-12 mb-4">
-                <div class="col-lg-12 mb-4">order-0 shadow-sm">
+            <div class="row">
+                <div class="col-lg-12 mb-4">
                     <div class="card h-100 border-0 shadow-sm">
                         <div class="card-header bg-white">
-                            <h5 class="card-title mb-0">note text-primary me-2"></i> الملاحظات
+                            <h5 class="card-title mb-0">
                                 <i class="fas fa-sticky-note text-primary me-2"></i> الملاحظات
                             </h5>
-                        </div>lass="card-body">
-                        <div class="card-body">s %}
-                            {% if customer.notes %}t rounded">
-                            <div class="p-3 bg-light rounded %}
+                        </div>
+                        <div class="card-body">
+                            {% if customer.notes %}
+                            <div class="p-3 bg-light rounded">
                                 {{ customer.notes|linebreaks }}
-                            </div>e %}
-                            {% else %}text-muted">لا توجد ملاحظات لهذا العميل.</p>
+                            </div>
+                            {% else %}
                             <p class="text-muted">لا توجد ملاحظات لهذا العميل.</p>
                             {% endif %}
                         </div>
@@ -588,63 +560,59 @@
     </div>
 </div>
 <!-- مودال تسجيل دفعة جديدة -->
-<!-- مودال تسجيل دفعة جديدة -->ordPaymentModal" tabindex="-1" aria-hidden="true">
 <div class="modal fade" id="recordPaymentModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow">t-white">
-            <div class="modal-header bg-success text-white">d-holding-usd me-2"></i> تسجيل دفعة جديدة</h5>
-                <h5 class="modal-title"><i class="fas fa-hand-holding-usd me-2"></i> تسجيل دفعة جديدة</h5>="Close"></button>
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="fas fa-hand-holding-usd me-2"></i> تسجيل دفعة جديدة</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>lass="modal-body p-4">
-            <div class="modal-body p-4">cord-payment' customer.id %}" method="post" id="payment-form">
+            </div>
+            <div class="modal-body p-4">
                 <form action="{% url 'record-payment' customer.id %}" method="post" id="payment-form">
-                    {% csrf_token %}t alert-info">
+                    {% csrf_token %}
                     <div class="alert alert-info">
-                        <div class="d-flex">"><i class="fas fa-info-circle"></i></div>
-                            <div class="me-2"><i class="fas fa-info-circle"></i></div>mat:2 }} ج.م</div>
+                        <div class="d-flex">
+                            <div class="me-2"><i class="fas fa-info-circle"></i></div>
                             <div>تستطيع تسجيل دفعة بمبلغ حتى {{ customer.debt|floatformat:2 }} ج.م</div>
                         </div>
-                    </div>lass="mb-3">
-                    <div class="mb-3">form-label">المبلغ <span class="text-danger">*</span></label>
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label">المبلغ <span class="text-danger">*</span></label>
-                        <div class="input-group">name="amount" class="form-control" step="0.01" min="0.01" max="{{ customer.debt }}" value="{{ customer.debt }}" required>
+                        <div class="input-group">
                             <input type="number" name="amount" class="form-control" step="0.01" min="0.01" max="{{ customer.debt }}" value="{{ customer.debt }}" required>
                             <span class="input-group-text">ج.م</span>
-                        </div>lass="form-text">يمكنك تغيير المبلغ إذا كانت الدفعة جزئية</div>
+                        </div>
                         <div class="form-text">يمكنك تغيير المبلغ إذا كانت الدفعة جزئية</div>
                     </div>
                     <div class="mb-3">
-                    <div class="mb-3">form-label">طريقة الدفع <span class="text-danger">*</span></label>
                         <label class="form-label">طريقة الدفع <span class="text-danger">*</span></label>
                         <select name="payment_method" class="form-select" required>
-                            <option value="cash" selected>نقدي</option>ption>
+                            <option value="cash" selected>نقدي</option>
                             <option value="credit_card">بطاقة ائتمان</option>
                             <option value="bank_transfer">تحويل بنكي</option>
                         </select>
                     </div>
                     <div class="mb-3">
-                    <div class="mb-3">form-label">الفاتورة المرتبطة</label>
                         <label class="form-label">الفاتورة المرتبطة</label>
-                        <select name="sale_id" class="form-select">محددة --</option>
+                        <select name="sale_id" class="form-select">
                             <option value="">-- غير مرتبطة بفاتورة محددة --</option>
-                            {% for sale in sales %}g_amount > 0 %}
-                                {% if sale.remaining_amount > 0 %}sale.id }} ({{ sale.sale_date|date:"Y-m-d" }}) - المتبقي: {{ sale.remaining_amount|floatformat:2 }} ج.م</option>
+                            {% for sale in sales %}
+                                {% if sale.remaining_amount > 0 %}
                                 <option value="{{ sale.id }}">#{{ sale.id }} ({{ sale.sale_date|date:"Y-m-d" }}) - المتبقي: {{ sale.remaining_amount|floatformat:2 }} ج.م</option>
                                 {% endif %}
                             {% endfor %}
                         </select>
                     </div>
                     <div class="mb-3">
-                    <div class="mb-3">form-label">ملاحظات</label>
-                        <label class="form-label">ملاحظات</label>l" rows="2" placeholder="تفاصيل إضافية عن الدفعة"></textarea>
+                        <label class="form-label">ملاحظات</label>
                         <textarea name="notes" class="form-control" rows="2" placeholder="تفاصيل إضافية عن الدفعة"></textarea>
                     </div>
                 </form>
-            </div>lass="modal-footer">
-            <div class="modal-footer">class="btn btn-secondary" data-bs-dismiss="modal">
+            </div>
+            <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="fas fa-times me-1"></i> إلغاء
-                </button>ype="submit" form="payment-form" class="btn btn-success">
+                </button>
                 <button type="submit" form="payment-form" class="btn btn-success">
                     <i class="fas fa-save me-1"></i> تسجيل الدفعة
                 </button>
@@ -653,10 +621,9 @@
     </div>
 </div>
 <!-- تضمين مودال الحذف -->
-<!-- تضمين مودال الحذف -->udes/modals/delete_modal.html' %}
 {% include 'customers/includes/modals/delete_modal.html' %}
 {% endblock %}
+
 {% block extra_js %}
-{% block extra_js %}ic 'js/customers.js' %}"></script>
 <script src="{% static 'js/customers.js' %}"></script>
 {% endblock %}

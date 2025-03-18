@@ -25,7 +25,7 @@
             <div class="progress" style="height: 10px;">
                 <div class="progress-bar
                     {% if customer.debt > customer.credit_limit %}
-                        bg-dangert:0|add:"0" %}
+                        bg-danger
                     {% elif customer.debt > customer.credit_limit|mul:0.8 %}
                         bg-warning
                     {% else %}
