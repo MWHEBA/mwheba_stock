@@ -1,82 +1,132 @@
+<!-- filepath: c:\Users\UTD\MWHEBA_App\templates\customers\includes\modals\add_modal.html -->
 <!-- مودال إضافة عميل جديد -->
 <div class="modal fade" id="addCustomerModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
-        <div class="modal-content">
+        <div class="modal-content border-0 shadow">
             <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title">
+                <h5 class="modal-title d-flex align-items-center">
                     <i class="fas fa-plus-circle me-2"></i> إضافة عميل جديد
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body p-4">
                 <form id="addCustomerForm" action="{% url 'customer-create' %}" method="post" class="needs-validation" novalidate>
                     {% csrf_token %}
                     <input type="hidden" name="is_ajax" value="1">
-                    <div class="row">
+                    
+                    <div class="alert alert-info mb-4">
+                        <div class="d-flex">
+                            <div class="me-3">
+                                <i class="fas fa-info-circle fs-4 text-info mt-1"></i>
+                            </div>
+                            <div>
+                                <p class="mb-0">قم بإدخال بيانات العميل بشكل صحيح، البيانات المميزة بـ <span class="text-danger">*</span> مطلوبة.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row g-3">
                         <!-- اسم العميل -->
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">اسم العميل <span class="text-danger">*</span></label>
-                            <input type="text" name="name" class="form-control" required>
+                            <label class="form-label fw-medium">اسم العميل <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="fas fa-user text-primary"></i></span>
+                                <input type="text" name="name" class="form-control" placeholder="أدخل اسم العميل" required>
+                            </div>
                             <div class="invalid-feedback">يرجى إدخال اسم العميل</div>
+                        </div>
+                        
+                        <!-- كود العميل -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-medium">كود العميل</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="fas fa-barcode text-primary"></i></span>
+                                <input type="text" name="code" class="form-control" placeholder="سيتم توليده تلقائياً إذا تركته فارغاً">
+                            </div>
+                            <div class="form-text small">يمكنك تخصيص كود العميل أو تركه فارغاً ليتم توليده تلقائياً</div>
                         </div>
                         
                         <!-- رقم الهاتف -->
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">رقم الهاتف <span class="text-danger">*</span></label>
-                            <input type="text" name="phone" class="form-control phone-input" required>
+                            <label class="form-label fw-medium">رقم الهاتف <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="fas fa-phone text-primary"></i></span>
+                                <input type="text" name="phone" class="form-control phone-input" placeholder="مثال: 01234567890" dir="ltr" required>
+                            </div>
                             <div class="invalid-feedback">يرجى إدخال رقم هاتف صحيح</div>
                         </div>
                         
                         <!-- البريد الإلكتروني -->
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">البريد الإلكتروني</label>
-                            <input type="email" name="email" class="form-control">
+                            <label class="form-label fw-medium">البريد الإلكتروني</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="fas fa-envelope text-primary"></i></span>
+                                <input type="email" name="email" class="form-control" placeholder="example@domain.com" dir="ltr">
+                            </div>
+                            <div class="form-text">اختياري: أدخل البريد الإلكتروني للعميل إذا كان متاحًا</div>
                         </div>
                         
                         <!-- العنوان -->
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">العنوان</label>
-                            <input type="text" name="address" class="form-control">
+                            <label class="form-label fw-medium">العنوان</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="fas fa-map-marker-alt text-primary"></i></span>
+                                <input type="text" name="address" class="form-control" placeholder="أدخل عنوان العميل">
+                            </div>
                         </div>
+                        
+                        <div class="col-12"><hr class="text-muted my-2"></div>
                         
                         <!-- حد الائتمان -->
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">حد الائتمان</label>
+                            <label class="form-label fw-medium">حد الائتمان</label>
                             <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="fas fa-credit-card text-primary"></i></span>
                                 <input type="number" name="credit_limit" class="form-control" value="0" min="0" step="0.01">
                                 <span class="input-group-text">ج.م</span>
                             </div>
-                            <div class="form-text">حد الائتمان المسموح به للعميل (0 يعني غير محدود)</div>
+                            <div class="form-text">القيمة 0 تعني أن حد الائتمان غير محدود</div>
                         </div>
                         
                         <!-- تصنيف العميل -->
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">تصنيف العميل</label>
-                            <select name="category" class="form-select">
-                                <option value="">-- بدون تصنيف --</option>
-                                {% for category in categories %}
-                                <option value="{{ category.id }}">{{ category.name }}</option>
-                                {% endfor %}
-                            </select>
+                            <label class="form-label fw-medium">تصنيف العميل</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="fas fa-tag text-primary"></i></span>
+                                <select name="category" class="form-select">
+                                    <option value="">-- بدون تصنيف --</option>
+                                    {% for category in categories %}
+                                    <option value="{{ category.id }}">{{ category.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="button" class="btn btn-outline-secondary" title="إضافة تصنيف جديد">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
                         </div>
                         
-                        <!-- حالة العميل (مضاف حديثًا) -->
+                        <!-- حالة العميل -->
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">حالة العميل <span class="text-danger">*</span></label>
-                            <select name="status" class="form-select" required>
-                                <option value="active" selected>نشط</option>
-                                <option value="inactive">غير نشط</option>
-                                <option value="blocked">محظور</option>
-                            </select>
+                            <label class="form-label fw-medium">حالة العميل <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="fas fa-toggle-on text-primary"></i></span>
+                                <select name="status" class="form-select" required>
+                                    <option value="active" selected>نشط</option>
+                                    <option value="inactive">غير نشط</option>
+                                    <option value="blocked">محظور</option>
+                                </select>
+                            </div>
                             <div class="invalid-feedback">يرجى اختيار حالة العميل</div>
                         </div>
                     </div>
                 </form>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i> إلغاء
+                </button>
                 <button type="button" class="btn btn-primary" id="saveCustomerBtn">
-                    <i class="fas fa-save me-1"></i> حفظ
+                    <i class="fas fa-save me-1"></i> حفظ البيانات
                 </button>
             </div>
         </div>

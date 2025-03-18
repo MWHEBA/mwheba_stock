@@ -1,38 +1,53 @@
 <!-- مودال تأكيد الحذف -->
 <div class="modal fade" id="deleteCustomerModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
             <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title">
+                <h5 class="modal-title d-flex align-items-center">
                     <i class="fas fa-exclamation-triangle me-2"></i>
                     تأكيد حذف العميل
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <p class="text-center fs-5">هل أنت متأكد من حذف العميل <strong id="customer-name-to-delete"></strong>؟</p>
-                <div class="alert alert-warning">
+            <div class="modal-body p-4">
+                <div class="text-center mb-4">
+                    <div class="avatar-lg mb-3 mx-auto">
+                        <div class="avatar-title bg-danger-subtle text-danger fs-1 rounded-circle">
+                            <i class="fas fa-trash-alt"></i>
+                        </div>
+                    </div>
+                    <h4 class="text-danger">هل أنت متأكد؟</h4>
+                    <p class="text-muted fs-5">
+                        أنت على وشك حذف بيانات العميل <strong id="customer-name-to-delete"></strong>
+                    </p>
+                </div>
+                
+                <div class="alert alert-warning border-0">
                     <div class="d-flex">
-                        <div class="me-2">
+                        <div class="me-3">
                             <i class="fas fa-exclamation-triangle text-warning fs-3"></i>
                         </div>
                         <div>
-                            <p class="mb-1 fw-medium">تحذير: سيتم حذف جميع البيانات المرتبطة بهذا العميل، بما في ذلك:</p>
+                            <h5 class="alert-heading mb-1">تحذير!</h5>
+                            <p class="mb-1">سيتم حذف جميع البيانات المرتبطة بهذا العميل، بما في ذلك:</p>
                             <ul class="mb-0">
-                                <li>سجل المبيعات والفواتير المرتبطة بالعميل</li>
+                                <li>جميع فواتير وعمليات البيع</li>
                                 <li>سجل المدفوعات والمعاملات المالية</li>
-                                <li>جميع الملاحظات والمعلومات الإضافية</li>
+                                <li>تاريخ التعاملات والملاحظات المسجلة</li>
                             </ul>
-                            <p class="mt-2 mb-0">هذا الإجراء <strong class="text-danger">لا يمكن التراجع عنه</strong>!</p>
+                            <hr>
+                            <p class="mb-0">هذا الإجراء <strong class="text-danger">لا يمكن التراجع عنه</strong>!</p>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer bg-light">
                 <form id="delete-customer-form" method="post">
                     {% csrf_token %}
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                    <button type="submit" class="btn btn-danger">
+                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i> إلغاء
+                    </button>
+                    <button type="submit" class="btn btn-danger px-4">
                         <i class="fas fa-trash me-1"></i> تأكيد الحذف
                     </button>
                 </form>

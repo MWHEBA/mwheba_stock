@@ -1,91 +1,87 @@
 <!-- filepath: c:\Users\UTD\MWHEBA_App\templates\accounts\login.html -->
-{% extends "base_auth.html" %}
+{% extends 'base_auth.html' %}
 {% load i18n %}
-{% load crispy_forms_tags %}
+{% load static %}
 
 {% block title %}تسجيل الدخول - MWHEBA Stock{% endblock %}
 
+{% block body_class %}bg-light{% endblock %}
+
 {% block content %}
-<div class="card shadow-sm border-0">
-    <div class="card-body p-4 p-sm-5">
-        <div class="text-center mb-4">
-            <img src="/static/img/logo.png" alt="MWHEBA Stock" class="mb-3" height="60">
-            <h2 class="fw-bold mb-1 text-primary">مرحباً بك مجددًا!</h2>
-            <p class="text-muted mb-0">قم بتسجيل الدخول للاستمرار</p>
-        </div>
-        
-        {% if form.errors %}
-        <div class="alert alert-danger">
-            <div class="d-flex">
-                <div class="me-2">
-                    <i class="fas fa-exclamation-triangle mt-1"></i>
+<div class="container">
+    <div class="row justify-content-center my-5">
+        <div class="col-lg-5 col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <!-- Logo and Title -->
+                    <div class="text-center mb-4">
+                        <img src="{% static 'img/logoo.png' %}" alt="MWHEBA Stock" class="img-fluid mb-3" style="max-height: 80px;">
+                        <h4>تسجيل الدخول</h4>
+                        <p class="text-muted">قم بتسجيل الدخول للوصول إلى نظام إدارة المخزون</p>
+                    </div>
+
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i> اسم المستخدم أو كلمة المرور غير صحيحة.
+                    </div>
+                    {% endif %}
+
+                    {% if messages %}
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+
+                    <!-- Login Form -->
+                    <form method="post" action="{% url 'login' %}">
+                        {% csrf_token %}
+                        {% if next %}
+                        <input type="hidden" name="next" value="{{ next }}">
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label for="id_username" class="form-label">اسم المستخدم</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="fas fa-user text-muted"></i></span>
+                                <input type="text" name="username" id="id_username" class="form-control" placeholder="أدخل اسم المستخدم" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <label for="id_password" class="form-label">كلمة المرور</label>
+                                <a href="{% url 'password_reset' %}" class="text-decoration-none small">نسيت كلمة المرور؟</a>
+                            </div>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="fas fa-lock text-muted"></i></span>
+                                <input type="password" name="password" id="id_password" class="form-control" placeholder="أدخل كلمة المرور" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" name="remember" id="remember" class="form-check-input">
+                            <label class="form-check-label" for="remember">تذكرني</label>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-sign-in-alt me-2"></i> تسجيل الدخول
+                            </button>
+                        </div>
+                    </form>
                 </div>
-                <div>
-                    <strong>خطأ في تسجيل الدخول:</strong>
-                    <p class="mb-0">اسم المستخدم أو كلمة المرور غير صحيحة.</p>
-                </div>
+            </div>
+
+            <!-- Additional links -->
+            <div class="text-center mt-4">
+                <p class="text-muted mb-0">
+                    هل تواجه مشكلة في تسجيل الدخول؟ 
+                    <a href="#" class="text-decoration-none">اتصل بالدعم</a>
+                </p>
             </div>
         </div>
-        {% endif %}
-        
-        <form method="post" class="needs-validation">
-            {% csrf_token %}
-            
-            <div class="mb-3">
-                <label class="form-label">اسم المستخدم</label>
-                <div class="input-group">
-                    <span class="input-group-text bg-light"><i class="fas fa-user"></i></span>
-                    <input type="text" name="username" class="form-control" placeholder="أدخل اسم المستخدم" required>
-                </div>
-            </div>
-            
-            <div class="mb-3">
-                <div class="d-flex justify-content-between">
-                    <label class="form-label">كلمة المرور</label>
-                    <a href="{% url 'password_reset' %}" class="small text-decoration-none">نسيت كلمة المرور؟</a>
-                </div>
-                <div class="input-group">
-                    <span class="input-group-text bg-light"><i class="fas fa-lock"></i></span>
-                    <input type="password" name="password" class="form-control" placeholder="أدخل كلمة المرور" required>
-                </div>
-            </div>
-            
-            <div class="mb-3 form-check">
-                <input type="checkbox" name="remember" class="form-check-input" id="remember">
-                <label class="form-check-label" for="remember">تذكرني</label>
-            </div>
-            
-            <div class="d-grid mt-4">
-                <button type="submit" class="btn btn-primary btn-lg">
-                    <i class="fas fa-sign-in-alt me-2"></i> تسجيل الدخول
-                </button>
-            </div>
-            
-            <input type="hidden" name="next" value="{{ next }}">
-        </form>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_css %}
-<style>
-    :root {
-        --bs-primary: #01578a;
-        --bs-primary-rgb: 1, 87, 138;
-    }
-    
-    .btn-primary {
-        background-color: #01578a;
-        border-color: #01578a;
-    }
-    
-    .btn-primary:hover {
-        background-color: #014a75;
-        border-color: #014a75;
-    }
-    
-    .bg-primary {
-        background-color: #01578a !important;
-    }
-</style>
 {% endblock %}

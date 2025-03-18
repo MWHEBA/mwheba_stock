@@ -203,6 +203,33 @@ document.addEventListener('DOMContentLoaded', function() {
             this.value = value;
         });
     });
+
+    // إضافة تأثير التلميح للبطاقات
+    document.querySelectorAll('.card-hover').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.classList.add('shadow');
+        });
+
+        card.addEventListener('mouseleave', function() {
+            this.classList.remove('shadow');
+        });
+    });
+
+    // تفعيل زر الشريط الجانبي في الصفحة التفصيلية للعميل
+    const sidebarToggleBtn = document.getElementById('sidebar-toggle-customer');
+    if (sidebarToggleBtn) {
+        const customerSidebar = document.getElementById('customer-sidebar');
+        sidebarToggleBtn.addEventListener('click', function() {
+            customerSidebar.classList.toggle('collapsed');
+            document.getElementById('customer-main-content').classList.toggle('expanded');
+        });
+    }
+
+    // تحديث حالة الدفع عند تغيير المبلغ المدفوع
+    const paymentAmountInput = document.getElementById('payment-amount');
+    if (paymentAmountInput) {
+        paymentAmountInput.addEventListener('input', updatePaymentSummary);
+    }
 });
 
 // وظائف مساعدة
@@ -225,7 +252,18 @@ function loadCustomerDetails(customerId) {
         .then(response => response.text())
         .then(html => {
             detailContent.innerHTML = html;
-            document.getElementById('openEditModalBtn').setAttribute('data-id', customerId);
+            const editBtn = document.getElementById('openEditModalBtn');
+            if (editBtn) {
+                editBtn.setAttribute('data-id', customerId);
+            }
+            const viewFullPageBtn = document.getElementById('viewFullPageBtn');
+            if (viewFullPageBtn) {
+                viewFullPageBtn.href = `/customers/${customerId}/`;
+            }
+            const createInvoiceBtn = document.getElementById('createInvoiceBtn');
+            if (createInvoiceBtn) {
+                createInvoiceBtn.href = `/sales/create/?customer_id=${customerId}`;
+            }
         })
         .catch(error => {
             console.error('Error:', error);
@@ -252,6 +290,7 @@ function loadCustomerForEdit(customerId) {
                 
                 // ملء النموذج
                 document.getElementById('edit-name').value = customer.name;
+                document.getElementById('edit-code').value = customer.code || ''; // إضافة كود العميل
                 document.getElementById('edit-phone').value = customer.phone || '';
                 document.getElementById('edit-email').value = customer.email || '';
                 document.getElementById('edit-address').value = customer.address || '';
@@ -326,4 +365,22 @@ function getFieldName(field) {
     };
     
     return fieldNames[field] || field;
+}
+
+// وظيفة لتحديث ملخص الدفع
+function updatePaymentSummary() {
+    const amount = parseFloat(document.getElementById('payment-amount').value) || 0;
+    const totalDebt = parseFloat(document.getElementById('total-debt').dataset.value) || 0;
+    const remainingAmount = Math.max(0, totalDebt - amount);
+    
+    document.getElementById('payment-summary-amount').textContent = amount.toFixed(2);
+    document.getElementById('payment-summary-remaining').textContent = remainingAmount.toFixed(2);
+    
+    // تحديث لون المبلغ المتبقي
+    const remainingElement = document.getElementById('payment-summary-remaining-container');
+    if (remainingAmount > 0) {
+        remainingElement.className = 'text-danger';
+    } else {
+        remainingElement.className = 'text-success';
+    }
 }

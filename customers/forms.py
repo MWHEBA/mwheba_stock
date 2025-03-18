@@ -30,9 +30,19 @@ class CustomerCategoryForm(forms.ModelForm):
 
 class CustomerForm(forms.ModelForm):
     """نموذج إضافة وتعديل العملاء مع واجهة متقدمة"""
+    
+    # إضافة حقل الكود للنموذج وجعله قابلاً للتحرير
+    code = forms.CharField(
+        label=_('كود العميل'),
+        max_length=20,
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'سيتم توليده تلقائياً إذا تركته فارغاً'}),
+        help_text=_('يمكنك تخصيص كود العميل أو تركه فارغاً ليتم توليده تلقائياً')
+    )
+    
     class Meta:
         model = Customer
-        fields = ['name', 'phone', 'alternative_phone', 'email', 'address', 'category', 
+        fields = ['code', 'name', 'phone', 'alternative_phone', 'email', 'address', 'category', 
                  'status', 'credit_limit', 'tax_number', 'notes']
         
         widgets = {
@@ -115,6 +125,20 @@ class CustomerForm(forms.ModelForm):
                 else:
                     phone = '+2' + phone
         return phone
+    
+    def clean_code(self):
+        """التحقق من عدم تكرار الكود"""
+        code = self.cleaned_data.get('code')
+        if code:
+            # التحقق فقط إذا تم تغيير الكود أو إذا كانت عملية إنشاء جديدة
+            instance = getattr(self, 'instance', None)
+            if instance and instance.pk:
+                if Customer.objects.filter(code=code).exclude(pk=instance.pk).exists():
+                    raise forms.ValidationError(_('هذا الكود مستخدم بالفعل، يرجى اختيار كود آخر'))
+            else:
+                if Customer.objects.filter(code=code).exists():
+                    raise forms.ValidationError(_('هذا الكود مستخدم بالفعل، يرجى اختيار كود آخر'))
+        return code
         
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

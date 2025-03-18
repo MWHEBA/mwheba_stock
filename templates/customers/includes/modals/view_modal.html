@@ -1,27 +1,64 @@
 <!-- مودال عرض تفاصيل العميل -->
 <div class="modal fade" id="viewCustomerModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow">
             <div class="modal-header bg-info text-white">
-                <h5 class="modal-title">
+                <h5 class="modal-title d-flex align-items-center">
                     <i class="fas fa-user-circle me-2"></i> تفاصيل العميل
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body" id="customerDetailContent">
+            <div class="modal-body p-0" id="customerDetailContent">
                 <!-- سيتم تحميل المحتوى هنا عبر AJAX -->
                 <div class="text-center py-5">
-                    <div class="spinner-border text-primary" role="status">
+                    <div class="spinner-grow text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
                         <span class="visually-hidden">جاري التحميل...</span>
                     </div>
+                    <p class="text-muted">جاري تحميل بيانات العميل...</p>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
-                <button type="button" class="btn btn-warning" id="openEditModalBtn">
-                    <i class="fas fa-edit me-1"></i> تعديل
-                </button>
+            <div class="modal-footer bg-light d-flex justify-content-between">
+                <div>
+                    <a href="#" class="btn btn-success" id="createInvoiceBtn">
+                        <i class="fas fa-file-invoice me-1"></i> إنشاء فاتورة جديدة
+                    </a>
+                </div>
+                <div>
+                    <a href="#" class="btn btn-info me-2" id="viewFullPageBtn">
+                        <i class="fas fa-external-link-alt me-1"></i> عرض الصفحة الكاملة
+                    </a>
+                    <button type="button" class="btn btn-warning me-2" id="openEditModalBtn">
+                        <i class="fas fa-edit me-1"></i> تعديل
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i> إغلاق
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // إضافة معالج أحداث لزر إنشاء فاتورة جديدة
+        const createInvoiceBtn = document.getElementById('createInvoiceBtn');
+        if (createInvoiceBtn) {
+            createInvoiceBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const customerId = document.getElementById('openEditModalBtn').getAttribute('data-id');
+                window.location.href = `/sales/create/?customer_id=${customerId}`;
+            });
+        }
+        
+        // إضافة معالج أحداث لزر عرض الصفحة الكاملة
+        const viewFullPageBtn = document.getElementById('viewFullPageBtn');
+        if (viewFullPageBtn) {
+            viewFullPageBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const customerId = document.getElementById('openEditModalBtn').getAttribute('data-id');
+                window.location.href = `/customers/${customerId}/`;
+            });
+        }
+    });
+</script>

@@ -224,7 +224,7 @@ def customer_detail(request, pk):
     # Get customer payments
     payments = CustomerPayment.objects.filter(customer=customer).order_by('-payment_date')
     
-    # Calculate statistics
+    # حساب إحصائيات العميل
     sales_count = sales.count()
     total_sales = sales.aggregate(total=Sum('total_price'))['total'] or 0
     sales_items_count = sales.aggregate(count=Sum('items__quantity'))['count'] or 0
@@ -235,6 +235,19 @@ def customer_detail(request, pk):
     if last_sale:
         last_sale_days = (timezone.now().date() - last_sale.sale_date).days
     
+    # تحضير البيانات للرسومات البيانية
+    # 1. بيانات المبيعات الشهرية
+    sales_by_month = []
+    if sales.exists():
+        # الحصول على المبيعات الشهرية للسنة الحالية
+        current_year = timezone.now().year
+        for month in range(1, 13):
+            month_sales = sales.filter(
+                sale_date__year=current_year,
+                sale_date__month=month
+            ).aggregate(total=Sum('total_price'))['total'] or 0
+            sales_by_month.append(float(month_sales))
+    
     context = {
         'customer': customer,
         'sales': sales,
@@ -243,6 +256,7 @@ def customer_detail(request, pk):
         'total_sales': total_sales,
         'sales_items_count': sales_items_count,
         'last_sale_days': last_sale_days,
+        'sales_by_month': sales_by_month,
     }
     
     # إذا كان الطلب لعرض في المودال
@@ -552,6 +566,7 @@ def get_customer_data(request, pk):
         'customer': {
             'id': customer.id,
             'name': customer.name,
+            'code': customer.code,  # إضافة كود العميل
             'phone': customer.phone,
             'email': customer.email,
             'address': customer.address,

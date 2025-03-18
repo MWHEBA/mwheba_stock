@@ -147,3 +147,12 @@ AUTHENTICATION_BACKENDS = [
 # إعدادات الجلسة
 SESSION_COOKIE_AGE = 86400  # 24 ساعة
 SESSION_SAVE_EVERY_REQUEST = True
+
+# Email settings for password reset
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # For development only
+EMAIL_HOST = 'smtp.your-email-provider.com'  # For production
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'your-email@example.com'
+EMAIL_HOST_PASSWORD = 'your-email-password'
+DEFAULT_FROM_EMAIL = 'MWHEBA Stock <noreply@mwheba.com>'

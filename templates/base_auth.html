@@ -15,64 +15,35 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css" integrity="sha384-nU14brUcp6StFntEOOEBvcJm4huWjB0OcIeQ3fltAfSmuZFrkAif0T+UtNGlKKQv" crossorigin="anonymous">
     
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
-    <!-- Google Font: Cairo -->
+    <!-- Cairo Google Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    
+    <!-- Page-specific styles -->
+    {% block extra_css %}{% endblock %}
     
     <style>
-        :root {
-            --bs-primary: #01578a;
-            --bs-primary-rgb: 1, 87, 138;
-        }
-        
         body {
             font-family: 'Cairo', sans-serif;
-            background-color: #f5f8fa;
+            background-color: #f8f9fa;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
         }
-        
-        .btn-primary {
-            background-color: #01578a;
-            border-color: #01578a;
-        }
-        
-        .btn-primary:hover {
-            background-color: #014a75;
-            border-color: #014a75;
-        }
-        
-        .bg-primary {
-            background-color: #01578a !important;
-        }
-        
         .auth-container {
             width: 100%;
-            max-width: 450px;
-            margin: 0 auto;
-            padding: 1rem;
-        }
-        
-        .card {
-            box-shadow: 0 4px 8px rgba(0,0,0,.05);
-            border: none;
-            border-radius: 10px;
-        }
-        
-        .card-header {
-            border-top-left-radius: 10px !important;
-            border-top-right-radius: 10px !important;
+            padding: 15px;
         }
     </style>
-    
-    {% block extra_css %}{% endblock %}
 </head>
-<body class="bg-light">
+<body class="{% block body_class %}{% endblock %}">
     <div class="auth-container">
         {% if messages %}
             {% for message in messages %}
@@ -94,6 +65,10 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
     
+    <!-- Custom JavaScript -->
+    <script src="{% static 'js/main.js' %}"></script>
+    
+    <!-- Page-specific scripts -->
     {% block extra_js %}{% endblock %}
 </body>
 </html>

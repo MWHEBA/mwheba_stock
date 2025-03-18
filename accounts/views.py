@@ -1,6 +1,7 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.decorators import login_required
+from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from django.db.models import Sum, Count
@@ -24,6 +25,17 @@ class CustomLoginView(LoginView):
         form.fields['username'].widget.attrs.update({'class': 'form-control', 'placeholder': _('اسم المستخدم')})
         form.fields['password'].widget.attrs.update({'class': 'form-control', 'placeholder': _('كلمة المرور')})
         return form
+
+    def get_success_url(self):
+        next_url = self.request.GET.get('next')
+        if next_url:
+            return next_url
+        return reverse_lazy('dashboard')  # Default redirect to dashboard
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = _('تسجيل الدخول')
+        return context
 
 class CustomLogoutView(LogoutView):
     next_page = 'login'

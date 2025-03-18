@@ -80,16 +80,16 @@ class Customer(models.Model):
         return self.name
         
     def save(self, *args, **kwargs):
-        # إنشاء كود العميل تلقائيًا إذا لم يكن موجودًا
+        # إزالة توليد الكود التلقائي من هنا لنسمح بتعديله يدوياً
+        # إذا لم يتم تحديد الكود، سيتم توليده تلقائياً في نموذج الإضافة
         if not self.code:
-            # استخدم الاختصار الأول من الاسم + التاريخ + رقم عشوائي
-            import random
-            from datetime import datetime
-            name_prefix = ''.join(word[0].upper() for word in self.name.split()[:2])
-            date_suffix = datetime.now().strftime('%y%m%d')
-            random_suffix = random.randint(100, 999)
-            self.code = f"C{name_prefix}{date_suffix}{random_suffix}"
-            
+            prefix = "CUST"
+            last_customer = Customer.objects.all().order_by('-id').first()
+            if last_customer:
+                last_id = last_customer.id
+                self.code = f"{prefix}{last_id + 1:04d}"
+            else:
+                self.code = f"{prefix}0001"
         super().save(*args, **kwargs)
     
     def get_absolute_url(self):
