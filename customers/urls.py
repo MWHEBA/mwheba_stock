@@ -16,4 +16,5 @@ urlpatterns = [
     
     # مسارات إضافية للمودالات
     path('<int:pk>/get-data/', views.get_customer_data, name='get-customer-data'),
+    path('check-similarity/', views.check_name_similarity, name='check-name-similarity'),
 ]

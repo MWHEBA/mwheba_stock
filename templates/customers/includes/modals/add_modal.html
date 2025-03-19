@@ -298,3 +298,35 @@
         }
     });
 </script>
+
+<!-- تضمين مودال التنبيه بالتشابه في أسماء العملاء -->
+<div class="modal fade" id="nameSimilarityModal" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i> تنبيه: أسماء متشابهة
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="alert alert-warning mb-3">
+                    <p>تم العثور على عميل موجود بالفعل باسم مشابه للاسم الذي أدخلته.</p>
+                    <p class="mb-0">يرجى التحقق لتجنب إضافة نفس العميل مرتين.</p>
+                </div>
+                
+                <div id="modalSimilarCustomersContainer">
+                    <!-- سيتم إضافة العملاء المشابهين هنا ديناميكياً -->
+                </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-between">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i> إلغاء
+                </button>
+                <button type="button" class="btn btn-primary" id="modalProceedWithAddBtn">
+                    <i class="fas fa-check me-1"></i> متابعة الإضافة
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

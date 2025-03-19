@@ -137,7 +137,7 @@ input, select, textarea {
 
 .card-body {
     overflow: auto; /* إضافة تمرير إذا كان المحتوى كبيرًا جدًا */
-    max-height: 80vh; /* حد أقصى للارتفاع */
+    max-height: 100vh; /* حد أقصى للارتفاع */
 }
 
 /* Dashboard widgets */

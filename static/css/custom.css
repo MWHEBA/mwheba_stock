@@ -149,3 +149,88 @@
 .fw-semibold {
     font-weight: 600 !important;
 }
+
+/* تنسيق أزرار الإجراءات */
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+}
+
+.btn-action {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.btn-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.btn-action:active {
+    transform: translateY(0);
+}
+
+.btn-view {
+    color: #0d6efd;
+}
+
+.btn-view:hover {
+    background-color: #0d6efd;
+    color: white;
+    border-color: #0d6efd;
+}
+
+.btn-edit {
+    color: #fd7e14;
+}
+
+.btn-edit:hover {
+    background-color: #fd7e14;
+    color: white;
+    border-color: #fd7e14;
+}
+
+.btn-delete {
+    color: #dc3545;
+}
+
+.btn-delete:hover {
+    background-color: #dc3545;
+    color: white;
+    border-color: #dc3545;
+}
+
+.btn-payment {
+    color: #198754;
+}
+
+.btn-payment:hover {
+    background-color: #198754;
+    color: white;
+    border-color: #198754;
+}
+
+/* تحسين مظهر tooltips */
+[title] {
+    position: relative;
+    cursor: pointer;
+}
+
+/* تحسين أداء الجدول عند حركة المؤشر */
+.table tr {
+    transition: background-color 0.15s ease-in-out;
+}
+
+.table tr:hover {
+    background-color: rgba(13, 110, 253, 0.05);
+}

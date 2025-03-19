@@ -344,6 +344,38 @@
     </div>
 </div>
 
+<!-- مودال التنبيه بالتشابه في أسماء العملاء -->
+<div class="modal fade" id="nameSimilarityModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i> تنبيه: أسماء متشابهة
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="alert alert-warning mb-3">
+                    <p>تم العثور على عميل موجود بالفعل باسم مشابه للاسم الذي أدخلته.</p>
+                    <p class="mb-0">يرجى التحقق لتجنب إضافة نفس العميل مرتين.</p>
+                </div>
+                
+                <div id="similarCustomersContainer">
+                    <!-- سيتم إضافة العملاء المشابهين هنا ديناميكياً -->
+                </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-between">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i> إلغاء
+                </button>
+                <button type="button" class="btn btn-primary" id="proceedWithAddBtn">
+                    <i class="fas fa-check me-1"></i> متابعة الإضافة
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
@@ -549,4 +581,124 @@
 
 <!-- استدعاء ملف JavaScript الرئيسي مع وسيط لتخطي معالجة إضافة التصنيف -->
 <script src="{% static 'js/customers.js' %}?v=1.3" data-skip-category-handler="true"></script>
+<script src="{% static 'js/name-similarity.js' %}"></script>
+<script>
+    // ... existing code ...
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // ... existing code ...
+        
+        // إضافة معالج لفحص تشابه الاسم قبل الإرسال
+        const customerForm = document.getElementById('customerForm');
+        const customerNameInput = document.getElementById('id_name');
+        
+        if (customerForm && customerNameInput) {
+            customerForm.addEventListener('submit', async function(e) {
+                // منع الإرسال المباشر لإجراء الفحص أولاً
+                e.preventDefault();
+                
+                // الحصول على قيمة اسم العميل
+                const customerName = customerNameInput.value.trim();
+                
+                if (customerName) {
+                    try {
+                        // فحص التشابه مع الأسماء الموجودة
+                        const result = await checkNameSimilarity(customerName);
+                        const similarCustomers = result.similar_customers || [];
+                        
+                        // إذا وجدت أسماء متشابهة، اعرض المودال
+                        if (similarCustomers.length > 0) {
+                            displaySimilarCustomers(similarCustomers, customerName);
+                            return;
+                        }
+                    } catch (error) {
+                        console.error('Error in similarity check:', error);
+                        // في حالة الخطأ، نواصل الإرسال
+                    }
+                }
+                
+                // إذا لم تكن هناك أسماء متشابهة أو حدث خطأ، أكمل الإرسال
+                proceedWithSubmit();
+            });
+            
+            // زر متابعة الإضافة في مودال التنبيه
+            const proceedBtn = document.getElementById('proceedWithAddBtn');
+            if (proceedBtn) {
+                proceedBtn.addEventListener('click', function() {
+                    // إغلاق المودال
+                    const modalElement = document.getElementById('nameSimilarityModal');
+                    const modal = bootstrap.Modal.getInstance(modalElement);
+                    if (modal) modal.hide();
+                    
+                    // متابعة الإرسال
+                    proceedWithSubmit();
+                });
+            }
+        }
+        
+        /**
+         * عرض العملاء المتشابهين في المودال
+         */
+        function displaySimilarCustomers(customers, enteredName) {
+            const container = document.getElementById('similarCustomersContainer');
+            if (!container) return;
+            
+            // إفراغ الحاوية
+            container.innerHTML = '';
+            
+            // إضافة العملاء المتشابهين
+            customers.forEach((customer) => {
+                const customerCard = document.createElement('div');
+                customerCard.className = 'card mb-2 border-warning';
+                
+                customerCard.innerHTML = `
+                    <div class="card-body py-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0 fw-bold">${customer.name}</h6>
+                                <small class="text-muted">${customer.phone || 'لا يوجد رقم هاتف'}</small>
+                            </div>
+                            <div>
+                                <span class="badge rounded-pill bg-warning text-dark">
+                                    نسبة التشابه: ${customer.similarity}%
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // إضافة العنصر للحاوية
+                container.appendChild(customerCard);
+            });
+            
+            // إضافة ما تم إدخاله
+            const enteredNameInfo = document.createElement('div');
+            enteredNameInfo.className = 'alert alert-info mt-3 mb-0';
+            enteredNameInfo.innerHTML = `
+                <strong>الاسم الذي أدخلته:</strong> ${enteredName}
+            `;
+            container.appendChild(enteredNameInfo);
+            
+            // عرض المودال
+            const modalElement = document.getElementById('nameSimilarityModal');
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        }
+        
+        /**
+         * متابعة إرسال النموذج (بعد فحص التشابه)
+         */
+        function proceedWithSubmit() {
+            // التأكد من تعيين قيمة is_ajax إلى 0 للنموذج الرئيسي
+            const isAjaxField = customerForm.querySelector('input[name="is_ajax"]');
+            if (isAjaxField) {
+                isAjaxField.value = '0';
+            }
+            
+            // إرسال النموذج
+            customerForm.removeEventListener('submit', arguments.callee);
+            customerForm.submit();
+        }
+    });
+</script>
 {% endblock %}

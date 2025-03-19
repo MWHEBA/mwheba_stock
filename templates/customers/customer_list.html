@@ -25,16 +25,9 @@
             <button class="btn btn-light me-2" type="button" data-bs-toggle="collapse" data-bs-target="#searchCollapse" aria-expanded="false">
                 <i class="fas fa-filter me-1"></i> تصفية
             </button>
-            <div class="dropdown me-2">
-                <button class="btn btn-light dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="fas fa-download me-1"></i> تصدير
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="exportDropdown">
-                    <li><a class="dropdown-item" href="?export=excel"><i class="fas fa-file-excel text-success me-2"></i> Excel</a></li>
-                    <li><a class="dropdown-item" href="?export=pdf"><i class="fas fa-file-pdf text-danger me-2"></i> PDF</a></li>
-                    <li><a class="dropdown-item" href="?export=print" target="_blank"><i class="fas fa-print text-primary me-2"></i> طباعة</a></li>
-                </ul>
-            </div>
+            <a href="?export=csv" class="btn btn-success me-2">
+                <i class="fas fa-file-csv me-1"></i> تصدير CSV
+            </a>
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
                 <i class="fas fa-plus me-1"></i> إضافة عميل جديد
             </button>

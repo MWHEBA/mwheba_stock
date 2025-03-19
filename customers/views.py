@@ -109,11 +109,11 @@ def export_customers(request, customers, export_format):
     
     filename = f"customers_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     
-    if export_format == 'excel':
+    if export_format == 'csv':  # تم تغيير الشرط من 'excel' إلى 'csv'
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = f'attachment; filename="{filename}.csv"'
         
-        # استخدام UTF-8-sig لدعم الأحرف العربية في Excel
+        # استخدام UTF-8-sig لدعم الأحرف العربية في CSV
         response.write('\ufeff'.encode('utf8'))
         
         writer = csv.writer(response)
@@ -678,3 +678,43 @@ from django.db.models import Q, F, Sum
 from django.core.paginator import Paginator
 from django.contrib import messages
 from django.utils.translation import gettext_lazy as _
+from django.db.models import F, Func
+
+# ... existing code ...
+
+@login_required
+def check_name_similarity(request):
+    """التحقق من تشابه اسم العميل مع العملاء الموجودين"""
+    customer_name = request.GET.get('name', '').strip()
+    threshold = float(request.GET.get('threshold', '0.8'))
+    
+    if not customer_name:
+        return JsonResponse({'similar_customers': []})
+    
+    # الحصول على جميع العملاء للمقارنة
+    customers = Customer.objects.exclude(name='').values('id', 'name', 'phone')
+    similar_customers = []
+    
+    import difflib
+    
+    # استخدام مكتبة difflib لحساب التشابه
+    for customer in customers:
+        # حساب نسبة التشابه
+        similarity = difflib.SequenceMatcher(None, customer_name.lower(), customer['name'].lower()).ratio()
+        
+        # إذا كانت نسبة التشابه أعلى من الحد المطلوب
+        if similarity >= threshold:
+            customer_data = {
+                'id': customer['id'],
+                'name': customer['name'],
+                'phone': customer['phone'] or '',
+                'similarity': round(similarity * 100, 1)  # تحويل إلى نسبة مئوية
+            }
+            similar_customers.append(customer_data)
+    
+    # ترتيب العملاء حسب نسبة التشابه (تنازلياً)
+    similar_customers.sort(key=lambda x: x['similarity'], reverse=True)
+    
+    return JsonResponse({'similar_customers': similar_customers})
+
+# ... existing code ...

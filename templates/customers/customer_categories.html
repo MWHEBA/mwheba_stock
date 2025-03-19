@@ -76,20 +76,22 @@
                                 <span class="text-success">0.00 ج.م</span>
                                 {% endif %}
                             </td>
-                            <td class="text-center">
-                                <div class="btn-group btn-group-sm">
-                                    <button type="button" class="btn btn-warning edit-category-btn" 
+                            <td>
+                                <div class="action-buttons">
+                                    <button type="button" class="btn btn-action btn-edit" 
+                                            data-bs-toggle="modal" data-bs-target="#editCategoryModal"
                                             data-id="{{ category.id }}" 
                                             data-name="{{ category.name }}"
-                                            data-description="{{ category.description|default:'' }}"
-                                            data-color="{{ category.color_code }}">
+                                            data-color="{{ category.color_code }}"
+                                            data-description="{{ category.description }}"
+                                            title="تعديل">
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    <button type="button" class="btn btn-danger delete-category-btn"
+                                    <button type="button" class="btn btn-action btn-delete" 
+                                            data-bs-toggle="modal" data-bs-target="#deleteCategoryModal"
                                             data-id="{{ category.id }}" 
                                             data-name="{{ category.name }}"
-                                            data-count="{{ category.customer_count }}"
-                                            {% if category.customer_count > 0 %}disabled{% endif %}>
+                                            title="حذف">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </div>

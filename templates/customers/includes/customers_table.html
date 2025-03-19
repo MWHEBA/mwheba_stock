@@ -67,20 +67,28 @@
                             {% endif %}
                         </td>
                         <td>
-                            <div class="btn-group btn-group-sm">
-                                <a href="{% url 'customer-detail' customer.id %}" class="btn btn-info" title="عرض التفاصيل">
+                            <div class="action-buttons">
+                                <a href="{% url 'customer-detail' customer.id %}" class="btn btn-action btn-view" title="عرض التفاصيل">
                                     <i class="fas fa-eye"></i>
                                 </a>
-                                <a href="{% url 'customer-edit' customer.id %}" class="btn btn-warning" title="تعديل">
+                                <a href="{% url 'customer-edit' customer.id %}" class="btn btn-action btn-edit" title="تعديل">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <button type="button" class="btn btn-danger delete-customer-btn"
+                                <button type="button" class="btn btn-action btn-delete"
                                         data-id="{{ customer.id }}" 
                                         data-name="{{ customer.name }}" title="حذف"
                                         data-bs-toggle="modal" 
                                         data-bs-target="#deleteCustomerModal">
                                     <i class="fas fa-trash"></i>
                                 </button>
+                                {% if customer.debt > 0 %}
+                                <button type="button" class="btn btn-action btn-payment" 
+                                        data-id="{{ customer.id }}" 
+                                        title="تسجيل دفعة" 
+                                        onclick="loadRecordPaymentModal({{ customer.id }})">
+                                    <i class="fas fa-hand-holding-usd"></i>
+                                </button>
+                                {% endif %}
                             </div>
                         </td>
                     </tr>

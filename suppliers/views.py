@@ -111,7 +111,7 @@ def export_suppliers(request, suppliers, export_format):
     
     filename = f"suppliers_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     
-    if export_format == 'excel':
+    if export_format == 'csv':  # تم تغيير الشرط من 'excel' إلى 'csv'
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = f'attachment; filename="{filename}.csv"'
         
@@ -265,35 +265,20 @@ def supplier_detail(request, pk):
 @login_required
 def supplier_edit(request, pk):
     supplier = get_object_or_404(Supplier, pk=pk)
-    
     if request.method == 'POST':
         form = SupplierForm(request.POST, instance=supplier)
         if form.is_valid():
             form.save()
-            
-            # إذا كان طلب AJAX، إرجاع استجابة JSON
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return JsonResponse({
-                    'success': True,
-                    'supplier_id': supplier.id,
-                    'supplier_name': supplier.name
-                })
-            
-            messages.success(request, _('تم تحديث بيانات المورد بنجاح.'))
+            messages.success(request, f'تم تحديث بيانات المورد {supplier.name} بنجاح.')
             return redirect('supplier-detail', pk=supplier.pk)
-        else:
-            # إذا كان طلب AJAX، إرجاع رسائل الخطأ
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                errors = {field: errors[0] for field, errors in form.errors.items()}
-                return JsonResponse({'success': False, 'errors': errors})
     else:
         form = SupplierForm(instance=supplier)
     
     context = {
-        'supplier': supplier,
         'form': form,
+        'supplier': supplier,
+        'is_edit': True,
     }
-    
     return render(request, 'suppliers/supplier_form.html', context)
 
 @login_required

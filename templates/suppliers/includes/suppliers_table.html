@@ -22,80 +22,74 @@
                     <tr>
                         <th class="ps-4">المورد</th>
                         <th>رقم الهاتف</th>
-                        <th>البريد الإلكتروني</th>
-                        <th>تصنيف</th>
+                        <th>التصنيف</th>
+                        <th>المشتريات</th>
                         <th>المستحقات</th>
-                        <th class="text-center">الحالة</th>
+                        <th>آخر معاملة</th>
                         <th class="text-center">الإجراءات</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for supplier in suppliers %}
-                    <tr class="{% if forloop.counter|divisibleby:2 %}bg-light{% endif %}">
+                    <tr>
                         <td class="ps-4">
                             <div class="d-flex align-items-center">
                                 <div class="me-3">
-                                    <div class="avatar bg-{{ supplier.get_status_display_class }} text-white" style="width: 40px; height: 40px; font-size: 16px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                    <div style="padding-top: 12%; display: flex; justify-content: center; border-radius: 8px; font-size: 16px; text-align: center; width: 40px; height: 40px;" class="avatar-circle bg-{{ supplier.get_status_display_class }} text-white">
                                         {{ supplier.name|slice:":1"|upper }}
                                     </div>
                                 </div>
                                 <div>
-                                    <a href="#" class="text-decoration-none fw-medium d-block view-supplier-btn" data-id="{{ supplier.id }}">
+                                    <a href="{% url 'supplier-detail' supplier.id %}" class="text-decoration-none fw-medium d-block">
                                         {{ supplier.name }}
                                     </a>
                                     <small class="text-muted">{{ supplier.code }}</small>
                                 </div>
-                                {% if supplier.is_preferred %}
-                                    <span class="ms-2 badge bg-warning text-dark"><i class="fas fa-star"></i></span>
-                                {% endif %}
                             </div>
                         </td>
                         <td dir="ltr" class="text-start">{{ supplier.phone|default:"--" }}</td>
                         <td>
-                            {% if supplier.email %}
-                                <a href="mailto:{{ supplier.email }}" class="text-decoration-none text-muted">{{ supplier.email }}</a>
-                            {% else %}
-                                <span class="text-muted">--</span>
-                            {% endif %}
-                        </td>
-                        <td>
                             {% if supplier.category %}
-                                <span class="badge bg-{{ supplier.category.color_code }} px-2 py-1">{{ supplier.category.name }}</span>
+                                <span class="badge bg-{{ supplier.category.color_code }}">{{ supplier.category.name }}</span>
+                            {% else %}
+                                <span class="text-muted">--</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ supplier.total_purchases|floatformat:2 }} ج.م</td>
+                        <td class="{% if supplier.balance > 0 %}text-danger{% else %}text-success{% endif %}">
+                            {{ supplier.balance|floatformat:2 }} ج.م
+                        </td>
+                        <td>
+                            {% if supplier.last_transaction_date %}
+                                {{ supplier.last_transaction_date|date:"Y-m-d" }}
                             {% else %}
                                 <span class="text-muted">--</span>
                             {% endif %}
                         </td>
                         <td>
-                            {% if supplier.balance > 0 %}
-                                <span class="fw-bold text-danger">{{ supplier.balance|floatformat:2 }} ج.م</span>
-                            {% else %}
-                                <span class="text-success">0.00 ج.م</span>
-                            {% endif %}
-                        </td>
-                        <td class="text-center">
-                            {% if supplier.status == 'active' %}
-                                <span class="badge bg-success rounded-pill px-3">نشط</span>
-                            {% elif supplier.status == 'inactive' %}
-                                <span class="badge bg-warning text-dark rounded-pill px-3">غير نشط</span>
-                            {% else %}
-                                <span class="badge bg-danger rounded-pill px-3">محظور</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <div class="btn-group btn-group-sm">
-                                <button type="button" class="btn btn-info view-supplier-btn" 
-                                    data-id="{{ supplier.id }}" title="عرض التفاصيل">
+                            <div class="action-buttons">
+                                <a href="{% url 'supplier-detail' supplier.id %}" class="btn btn-action btn-view" title="عرض التفاصيل">
                                     <i class="fas fa-eye"></i>
-                                </button>
-                                <button type="button" class="btn btn-warning edit-supplier-btn" 
-                                    data-id="{{ supplier.id }}" title="تعديل">
+                                </a>
+                                <!-- Temporarily comment out or replace the broken link -->
+                                <a href="{% url 'supplier-detail' supplier.id %}" class="btn btn-action btn-edit" title="تعديل">
                                     <i class="fas fa-edit"></i>
-                                </button>
-                                <button type="button" class="btn btn-danger" 
-                                    data-bs-toggle="modal" data-bs-target="#deleteSupplierModal"
-                                    data-id="{{ supplier.id }}" data-name="{{ supplier.name }}" title="حذف">
+                                </a>
+                                <button type="button" class="btn btn-action btn-delete"
+                                        data-id="{{ supplier.id }}" 
+                                        data-name="{{ supplier.name }}" title="حذف"
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#deleteSupplierModal">
                                     <i class="fas fa-trash"></i>
                                 </button>
+                                {% if supplier.balance > 0 %}
+                                <button type="button" class="btn btn-action btn-payment" 
+                                        data-id="{{ supplier.id }}" 
+                                        title="تسجيل دفعة" 
+                                        onclick="loadRecordPaymentModal({{ supplier.id }})">
+                                    <i class="fas fa-hand-holding-usd"></i>
+                                </button>
+                                {% endif %}
                             </div>
                         </td>
                     </tr>
@@ -103,10 +97,10 @@
                     <tr>
                         <td colspan="7" class="text-center py-5">
                             <div class="text-muted">
-                                <i class="fas fa-truck fa-3x mb-3 text-light"></i>
-                                <h5>لا يوجد موردين للعرض</h5>
-                                <p>قم بإضافة موردين جدد من خلال زر "إضافة مورد جديد"</p>
-                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSupplierModal">
+                                <i class="fas fa-truck-loading fa-3x mb-3"></i>
+                                <h5>لا يوجد موردين</h5>
+                                <p class="mb-1">لم يتم العثور على أي موردين مطابقين.</p>
+                                <button type="button" class="btn btn-sm btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#addSupplierModal">
                                     <i class="fas fa-plus me-1"></i> إضافة مورد جديد
                                 </button>
                             </div>
@@ -125,7 +119,7 @@
             <ul class="pagination justify-content-center mb-0">
                 {% if page_obj.has_previous %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.sort_by %}&sort_by={{ request.GET.sort_by }}{% endif %}">
                             <i class="fas fa-chevron-right me-1"></i> السابق
                         </a>
                     </li>
@@ -144,14 +138,14 @@
                         </li>
                     {% else %}
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ i }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ i }}</a>
+                            <a class="page-link" href="?page={{ i }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.sort_by %}&sort_by={{ request.GET.sort_by }}{% endif %}">{{ i }}</a>
                         </li>
                     {% endif %}
                 {% endfor %}
                 
                 {% if page_obj.has_next %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.sort_by %}&sort_by={{ request.GET.sort_by }}{% endif %}">
                             التالي <i class="fas fa-chevron-left ms-1"></i>
                         </a>
                     </li>

@@ -9,6 +9,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     // تهيئة جميع الوظائف عند تحميل الصفحة
     initializeCustomerModule();
+    initializeActionButtons();
 });
 
 /**
@@ -738,13 +739,115 @@ function initModalForms() {
 /**
  * إرسال نموذج بيانات العميل بواسطة AJAX
  */
-function submitCustomerFormAjax(form) {
+async function submitCustomerFormAjax(form) {
     if (!form) return;
     
     if (!form.checkValidity()) {
         form.reportValidity();
         return;
     }
+    
+    // الحصول على اسم العميل للتحقق من التشابه
+    const customerNameInput = form.querySelector('input[name="name"]');
+    if (customerNameInput && customerNameInput.value.trim()) {
+        try {
+            // فحص التشابه مع الأسماء الموجودة
+            const result = await checkNameSimilarity(customerNameInput.value.trim());
+            const similarCustomers = result.similar_customers || [];
+            
+            // إذا وجدت أسماء متشابهة، اعرض المودال
+            if (similarCustomers.length > 0) {
+                displayModalSimilarCustomers(similarCustomers, customerNameInput.value.trim(), () => {
+                    // استدعاء هذه الدالة عند النقر على زر المتابعة
+                    continueSubmitCustomerFormAjax(form);
+                });
+                return;
+            }
+        } catch (error) {
+            console.error('Error in similarity check:', error);
+            // في حالة الخطأ، نواصل الإرسال
+        }
+    }
+    
+    // إذا لم تكن هناك أسماء متشابهة أو حدث خطأ، أكمل الإرسال
+    continueSubmitCustomerFormAjax(form);
+}
+
+/**
+ * إظهار العملاء المتشابهين في مودال المودال
+ */
+function displayModalSimilarCustomers(customers, enteredName, onProceed) {
+    const container = document.getElementById('modalSimilarCustomersContainer');
+    if (!container) return;
+    
+    // إفراغ الحاوية
+    container.innerHTML = '';
+    
+    // إضافة العملاء المتشابهين
+    customers.forEach((customer) => {
+        const customerCard = document.createElement('div');
+        customerCard.className = 'card mb-2 border-warning';
+        
+        customerCard.innerHTML = `
+            <div class="card-body py-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0 fw-bold">${customer.name}</h6>
+                        <small class="text-muted">${customer.phone || 'لا يوجد رقم هاتف'}</small>
+                    </div>
+                    <div>
+                        <span class="badge rounded-pill bg-warning text-dark">
+                            نسبة التشابه: ${customer.similarity}%
+                        </span>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // إضافة العنصر للحاوية
+        container.appendChild(customerCard);
+    });
+    
+    // إضافة ما تم إدخاله
+    const enteredNameInfo = document.createElement('div');
+    enteredNameInfo.className = 'alert alert-info mt-3 mb-0';
+    enteredNameInfo.innerHTML = `
+        <strong>الاسم الذي أدخلته:</strong> ${enteredName}
+    `;
+    container.appendChild(enteredNameInfo);
+    
+    // تهيئة زر المتابعة
+    const proceedBtn = document.getElementById('modalProceedWithAddBtn');
+    if (proceedBtn) {
+        // إزالة معالجات الأحداث السابقة
+        const newProceedBtn = proceedBtn.cloneNode(true);
+        proceedBtn.parentNode.replaceChild(newProceedBtn, proceedBtn);
+        
+        // إضافة معالج حدث جديد
+        newProceedBtn.addEventListener('click', function() {
+            // إغلاق المودال
+            const modalElement = document.getElementById('nameSimilarityModal');
+            const modal = bootstrap.Modal.getInstance(modalElement);
+            if (modal) modal.hide();
+            
+            // استدعاء دالة المتابعة
+            if (typeof onProceed === 'function') {
+                onProceed();
+            }
+        });
+    }
+    
+    // عرض المودال
+    const modalElement = document.getElementById('nameSimilarityModal');
+    const modal = new bootstrap.Modal(modalElement);
+    modal.show();
+}
+
+/**
+ * متابعة إرسال نموذج العميل بعد فحص التشابه
+ */
+function continueSubmitCustomerFormAjax(form) {
+    if (!form) return;
     
     // تحديد زر الإرسال المستخدم
     const submitButton = document.activeElement;
@@ -963,4 +1066,49 @@ function showNotification(message, type = 'info') {
         // استخدام alert كبديل
         alert(message);
     }
+}
+
+/**
+ * تهيئة أزرار الإجراءات مع تأثيرات متقدمة
+ */
+function initializeActionButtons() {
+    // إضافة تأثير تفاعلي للأزرار
+    document.querySelectorAll('.btn-action').forEach(btn => {
+        // إضافة تأثير عند تمرير المؤشر
+        btn.addEventListener('mouseenter', function() {
+            const tooltip = this.getAttribute('title');
+            if (tooltip) {
+                this.setAttribute('data-original-title', tooltip);
+                this.setAttribute('aria-label', tooltip);
+            }
+        });
+        
+        // إضافة تأثير نقرة للأزرار
+        btn.addEventListener('click', function() {
+            this.classList.add('btn-pulse');
+            setTimeout(() => {
+                this.classList.remove('btn-pulse');
+            }, 300);
+        });
+    });
+    
+    // تحسين زر حذف العميل
+    document.querySelectorAll('.btn-delete').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const customerId = this.getAttribute('data-id');
+            const customerName = this.getAttribute('data-name');
+            
+            // تعيين اسم العميل في مودال التأكيد
+            const customerNameEl = document.getElementById('customer-name-to-delete');
+            if (customerNameEl) {
+                customerNameEl.textContent = customerName;
+            }
+            
+            // تعيين رابط الحذف
+            const deleteForm = document.getElementById('delete-customer-form');
+            if (deleteForm) {
+                deleteForm.action = `/customers/${customerId}/delete/`;
+            }
+        });
+    });
 }

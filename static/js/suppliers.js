@@ -386,3 +386,267 @@ function loadModalContent(url, modalId) {
             showToast('فشل في تحميل البيانات، يرجى المحاولة لاحقًا', 'error');
         });
 }
+
+/**
+ * MWHEBA Stock - وحدة إدارة الموردين
+ */
+
+// تنفيذ التهيئة عند تحميل الصفحة
+document.addEventListener('DOMContentLoaded', function() {
+    // تهيئة أزرار الإجراءات
+    initializeActionButtons();
+    
+    // تهيئة الوظائف الأخرى
+    initFormHandlers();
+});
+
+/**
+ * تهيئة أزرار الإجراءات مع تأثيرات متقدمة
+ */
+function initializeActionButtons() {
+    // إضافة تأثير تفاعلي للأزرار
+    document.querySelectorAll('.btn-action').forEach(btn => {
+        // إضافة تأثير عند تمرير المؤشر
+        btn.addEventListener('mouseenter', function() {
+            const tooltip = this.getAttribute('title');
+            if (tooltip) {
+                this.setAttribute('data-original-title', tooltip);
+                this.setAttribute('aria-label', tooltip);
+            }
+        });
+        
+        // إضافة تأثير نقرة للأزرار
+        btn.addEventListener('click', function() {
+            this.classList.add('btn-pulse');
+            setTimeout(() => {
+                this.classList.remove('btn-pulse');
+            }, 300);
+        });
+    });
+    
+    // تحسين زر حذف المورد
+    document.querySelectorAll('.btn-delete').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const supplierId = this.getAttribute('data-id');
+            const supplierName = this.getAttribute('data-name');
+            
+            // تعيين اسم المورد في مودال التأكيد
+            const supplierNameEl = document.getElementById('supplier-name-to-delete');
+            if (supplierNameEl) {
+                supplierNameEl.textContent = supplierName;
+            }
+            
+            // تعيين رابط الحذف
+            const deleteForm = document.getElementById('delete-supplier-form');
+            if (deleteForm) {
+                deleteForm.action = `/suppliers/${supplierId}/delete/`;
+            }
+        });
+    });
+}
+
+/**
+ * تهيئة معالجات النماذج
+ */
+function initFormHandlers() {
+    // تهيئة عنصر اختيار عدد العناصر في الصفحة
+    const showEntriesSelect = document.getElementById('show-entries');
+    if (showEntriesSelect) {
+        showEntriesSelect.addEventListener('change', function() {
+            const pageSize = this.value;
+            const url = new URL(window.location.href);
+            url.searchParams.set('page_size', pageSize);
+            window.location.href = url.toString();
+        });
+    }
+    
+    // تهيئة مودال تسجيل الدفعة
+    const paymentBtns = document.querySelectorAll('[data-action="record-payment"]');
+    paymentBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const supplierId = this.getAttribute('data-id');
+            loadRecordPaymentModal(supplierId);
+        });
+    });
+}
+
+/**
+ * تحميل مودال تسجيل دفعة
+ */
+function loadRecordPaymentModal(supplierId) {
+    const modal = new bootstrap.Modal(document.getElementById('recordPaymentModal'));
+    modal.show();
+    
+    const modalBody = document.querySelector('#recordPaymentModal .modal-body');
+    
+    // تحميل نموذج تسجيل الدفعة
+    fetch(`/suppliers/${supplierId}/record-payment-form/`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('حدث خطأ أثناء تحميل النموذج');
+            }
+            return response.text();
+        })
+        .then(html => {
+            modalBody.innerHTML = html;
+            
+            // تهيئة نموذج الدفع
+            const form = modalBody.querySelector('form');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    submitPaymentForm(form, supplierId);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            modalBody.innerHTML = `
+                <div class="text-center">
+                    <i class="fas fa-exclamation-triangle text-danger fa-3x mb-3"></i>
+                    <h5>تعذر تحميل نموذج تسجيل الدفعة</h5>
+                    <p>حدث خطأ أثناء محاولة الاتصال بالخادم. يرجى المحاولة مرة أخرى.</p>
+                </div>
+            `;
+        });
+}
+
+/**
+ * إرسال نموذج تسجيل دفعة
+ */
+function submitPaymentForm(form, supplierId) {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const formData = new FormData(form);
+    
+    // تعطيل زر الإرسال
+    const submitBtn = form.querySelector('[type="submit"]');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> جاري التسجيل...';
+    }
+    
+    fetch(`/suppliers/${supplierId}/record-payment/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        // إعادة تفعيل زر الإرسال
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-save me-1"></i> تسجيل الدفعة';
+        }
+        
+        if (data.success) {
+            // إغلاق المودال
+            const modal = bootstrap.Modal.getInstance(document.getElementById('recordPaymentModal'));
+            modal.hide();
+            
+            // عرض رسالة نجاح وإعادة تحميل الصفحة
+            showNotification(`تم تسجيل دفعة بقيمة ${data.amount} ج.م بنجاح`, 'success');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            // عرض رسائل الخطأ
+            showFormErrors(form, data.errors);
+            showNotification(data.message || 'فشل تسجيل الدفعة', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        
+        // إعادة تفعيل زر الإرسال
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-save me-1"></i> تسجيل الدفعة';
+        }
+        
+        showNotification('حدث خطأ أثناء الاتصال بالخادم', 'error');
+    });
+}
+
+/**
+ * عرض أخطاء النموذج
+ */
+function showFormErrors(form, errors) {
+    if (!errors) return;
+    
+    // إزالة رسائل الخطأ السابقة
+    form.querySelectorAll('.is-invalid').forEach(el => {
+        el.classList.remove('is-invalid');
+    });
+    
+    form.querySelectorAll('.invalid-feedback').forEach(el => {
+        el.remove();
+    });
+    
+    // إضافة رسائل الخطأ الجديدة
+    for (const field in errors) {
+        const inputEl = form.querySelector(`[name="${field}"]`);
+        if (inputEl) {
+            inputEl.classList.add('is-invalid');
+            
+            // إنشاء عنصر التغذية الراجعة
+            const feedbackEl = document.createElement('div');
+            feedbackEl.className = 'invalid-feedback d-block';
+            feedbackEl.textContent = Array.isArray(errors[field]) ? errors[field][0] : errors[field];
+            
+            // إضافة العنصر بعد حقل الإدخال مباشرة
+            const fieldContainer = inputEl.closest('.mb-3') || inputEl.parentNode;
+            fieldContainer.appendChild(feedbackEl);
+        }
+    }
+}
+
+/**
+ * عرض إشعار
+ */
+function showNotification(message, type = 'info') {
+    // استخدام Toast Bootstrap
+    if (typeof bootstrap !== 'undefined' && typeof bootstrap.Toast !== 'undefined') {
+        // وجود حاوية الإشعارات أو إنشاؤها
+        let toastContainer = document.getElementById('toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.id = 'toast-container';
+            toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+            toastContainer.style.zIndex = '9999';
+            document.body.appendChild(toastContainer);
+        }
+        
+        // إنشاء Toast جديد
+        const toastId = 'toast-' + Date.now();
+        const toastEl = document.createElement('div');
+        toastEl.id = toastId;
+        toastEl.className = `toast align-items-center text-white bg-${type === 'error' ? 'danger' : type} border-0`;
+        toastEl.setAttribute('role', 'alert');
+        toastEl.setAttribute('aria-live', 'assertive');
+        toastEl.setAttribute('aria-atomic', 'true');
+        
+        toastEl.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        `;
+        
+        toastContainer.appendChild(toastEl);
+        
+        // إظهار Toast
+        const toast = new bootstrap.Toast(toastEl, { delay: 5000 });
+        toast.show();
+        
+        // إزالة Toast بعد الإخفاء
+        toastEl.addEventListener('hidden.bs.toast', function() {
+            this.remove();
+        });
+    } else {
+        // استخدام alert كبديل
+        alert(message);
+    }
+}
