@@ -2,7 +2,7 @@
 <!-- مودال إضافة عميل جديد -->
 <div class="modal fade" id="addCustomerModal" tabindex="-1" aria-labelledby="addCustomerModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content border-0 shadow">
+        <div class="modal-content border-0">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="addCustomerModalLabel">
                     <i class="fas fa-user-plus me-2"></i> إضافة عميل جديد
@@ -10,7 +10,7 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
-                <form id="addCustomerForm" method="post" action="{% url 'customer-create' %}">
+                <form id="addCustomerForm" method="post" action="{% url 'customer-create' %}" novalidate data-ajax="true">
                     {% csrf_token %}
                     <input type="hidden" name="is_ajax" value="1">
                     
@@ -131,6 +131,18 @@
                         </div>
                     </div>
                 </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="submit" form="addCustomerForm" name="save_and_add_another" class="btn btn-outline-primary">
+                    <i class="fas fa-plus me-1"></i> حفظ وإضافة آخر
+                </button>
+                <button type="submit" form="addCustomerForm" name="save_and_add_sale" class="btn btn-outline-success">
+                    <i class="fas fa-receipt me-1"></i> حفظ وإضافة فاتورة
+                </button>
+                <button type="submit" form="addCustomerForm" class="btn btn-primary" id="saveCustomerBtn">
+                    <i class="fas fa-save me-1"></i> حفظ
+                </button>
             </div>
         </div>
     </div>

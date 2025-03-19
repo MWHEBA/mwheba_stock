@@ -1,16 +1,17 @@
-<!-- مودال تعديل العميل -->
-<div class="modal fade" id="editCustomerModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-warning">
-                <h5 class="modal-title d-flex align-items-center">
-                    <i class="fas fa-edit me-2"></i> تعديل بيانات العميل
+<!-- مودال تعديل بيانات العميل -->
+<div class="modal fade" id="editCustomerModal" tabindex="-1" aria-labelledby="editCustomerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0">
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title" id="editCustomerModalLabel">
+                    <i class="fas fa-user-edit me-2"></i> تعديل بيانات العميل
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
-                <form id="editCustomerForm" method="post" class="needs-validation" novalidate>
+                <form id="editCustomerForm" method="post" novalidate data-ajax="true">
                     {% csrf_token %}
+                    <input type="hidden" name="is_ajax" value="1">
                     
                     <div class="alert alert-warning mb-4">
                         <div class="d-flex">
@@ -117,12 +118,13 @@
                     </div>
                 </form>
             </div>
-            <div class="modal-footer bg-light">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-1"></i> إلغاء
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="submit" form="editCustomerForm" name="save_and_add_new" class="btn btn-outline-info">
+                    <i class="fas fa-plus-circle me-1"></i> حفظ وإضافة جديد
                 </button>
-                <button type="button" class="btn btn-warning" id="updateCustomerBtn">
-                    <i class="fas fa-save me-1"></i> حفظ التعديلات
+                <button type="submit" form="editCustomerForm" class="btn btn-warning" id="updateCustomerBtn">
+                    <i class="fas fa-save me-1"></i> حفظ التغييرات
                 </button>
             </div>
         </div>

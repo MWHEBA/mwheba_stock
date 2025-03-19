@@ -25,6 +25,9 @@ function initializeCustomerModule() {
     
     // تهيئة مودال إضافة تصنيف
     initCategoryFunctionality();
+    
+    // معالجة نماذج العملاء
+    initCustomerForms();
 }
 
 // ==========================================
@@ -106,6 +109,12 @@ function submitCustomerForm() {
         return;
     }
     
+    // حفظ زر الإرسال المستخدم، إذا كان موجوداً
+    let submitAction = '';
+    if (event && event.submitter && event.submitter.name) {
+        submitAction = event.submitter.name;
+    }
+    
     // تحديد ما إذا كان يجب استخدام AJAX
     const useAjax = form.hasAttribute('data-ajax') && form.getAttribute('data-ajax') === 'true';
     
@@ -123,6 +132,11 @@ function submitCustomerForm() {
     // إرسال النموذج بواسطة AJAX
     const formData = new FormData(form);
     formData.set('is_ajax', '1'); // تعيين القيمة إلى 1 لاستجابة Ajax
+    
+    // إضافة قيمة زر الإرسال المستخدم، إذا كان موجوداً
+    if (submitAction) {
+        formData.append(submitAction, 'true');
+    }
     
     const submitBtn = form.querySelector('[type="submit"]');
     if (submitBtn) {
@@ -151,10 +165,17 @@ function submitCustomerForm() {
         if (data.success) {
             showNotification(`تم حفظ بيانات العميل ${data.customer_name} بنجاح`, 'success');
             
-            // التحويل إلى صفحة أخرى بعد فترة قصيرة
+            // التحويل إلى صفحة أخرى بعد فترة قصيرة حسب الزر المضغوط
             setTimeout(() => {
-                const redirectUrl = form.getAttribute('data-redirect-url') || 
-                                    `/customers/${data.customer_id}/`;
+                let redirectUrl = form.getAttribute('data-redirect-url') || `/customers/${data.customer_id}/`;
+                
+                // معالجة التحويل بناءً على زر الإرسال
+                if (submitAction === 'save_and_add_another' || submitAction === 'save_and_add_new') {
+                    redirectUrl = '/customers/create/';
+                } else if (submitAction === 'save_and_add_sale') {
+                    redirectUrl = `/invoices/create/?customer=${data.customer_id}`;
+                }
+                
                 window.location.href = redirectUrl;
             }, 1000);
         } else {
@@ -665,17 +686,242 @@ function saveCategoryHandler(e) {
     });
 }
 
-// ==========================================
-// وظائف مساعدة
-// ==========================================
+/**
+ * تهيئة نماذج العملاء
+ */
+function initCustomerForms() {
+    // نموذج العميل الرئيسي (صفحة الإضافة/التعديل)
+    const customerForm = document.getElementById('customerForm');
+    if (customerForm) {
+        // التحقق مما إذا كان النموذج بالفعل في صفحة كاملة وليس في مودال
+        const isInPage = !customerForm.closest('.modal');
+        
+        if (isInPage) {
+            // مهم: لا تمنع السلوك الافتراضي للنموذج في الصفحة الكاملة
+            customerForm.addEventListener('submit', function() {
+                // تأكد من أن القيمة صفر للحصول على استجابة عادية (غير AJAX)
+                const isAjaxField = this.querySelector('input[name="is_ajax"]');
+                if (isAjaxField) {
+                    isAjaxField.value = '0';
+                }
+            });
+        }
+    }
+    
+    // تهيئة النماذج في المودالات فقط
+    initModalForms();
+}
 
 /**
- * عرض إشعار للمستخدم
+ * تهيئة نماذج المودالات
+ */
+function initModalForms() {
+    // نموذج إضافة العميل في المودال
+    const addCustomerForm = document.getElementById('addCustomerForm');
+    if (addCustomerForm && addCustomerForm.closest('.modal')) {
+        addCustomerForm.addEventListener('submit', function(e) {
+            e.preventDefault(); // منع السلوك الافتراضي للمودال فقط
+            submitCustomerFormAjax(this);
+        });
+    }
+    
+    // نموذج تعديل العميل في المودال
+    const editCustomerForm = document.getElementById('editCustomerForm');
+    if (editCustomerForm && editCustomerForm.closest('.modal')) {
+        editCustomerForm.addEventListener('submit', function(e) {
+            e.preventDefault(); // منع السلوك الافتراضي للمودال فقط
+            submitCustomerFormAjax(this);
+        });
+    }
+}
+
+/**
+ * إرسال نموذج بيانات العميل بواسطة AJAX
+ */
+function submitCustomerFormAjax(form) {
+    if (!form) return;
+    
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    
+    // تحديد زر الإرسال المستخدم
+    const submitButton = document.activeElement;
+    let submitAction = '';
+    if (submitButton && submitButton.name) {
+        submitAction = submitButton.name;
+    }
+    
+    // إعداد بيانات النموذج
+    const formData = new FormData(form);
+    formData.set('is_ajax', '1'); // تعيين القيمة إلى 1 لاستجابة AJAX
+    
+    // إضافة قيمة زر الإرسال المستخدم، إذا كان موجوداً
+    if (submitAction) {
+        formData.append(submitAction, 'true');
+    }
+    
+    // تعطيل زر الإرسال
+    const submitBtn = submitButton || form.querySelector('[type="submit"]');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> جاري الحفظ...';
+    }
+    
+    // الحصول على CSRF token
+    const csrfToken = form.querySelector('[name="csrfmiddlewaretoken"]').value;
+    
+    // إرسال البيانات بواسطة AJAX
+    fetch(form.action, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        // إعادة تفعيل زر الحفظ
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-save me-1"></i> حفظ';
+        }
+        
+        if (data.success) {
+            showNotification(`تم حفظ بيانات العميل ${data.customer_name} بنجاح`, 'success');
+            
+            // إغلاق المودال إذا كان موجوداً
+            const modal = form.closest('.modal');
+            if (modal) {
+                const modalInstance = bootstrap.Modal.getInstance(modal);
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
+                
+                // فتح المودال مرة أخرى بعد لحظة قصيرة
+                setTimeout(() => {
+                    modal.classList.add('show');
+                    modal.style.display = 'block';
+                    document.body.classList.add('modal-open');
+                }, 150);
+            }
+            
+            // التحويل إلى صفحة أخرى بعد فترة قصيرة حسب الزر المضغوط
+            setTimeout(() => {
+                let redirectUrl = `/customers/${data.customer_id}/`;
+                
+                // معالجة التحويل بناءً على زر الإرسال
+                if (submitAction === 'save_and_add_another' || submitAction === 'save_and_add_new') {
+                    redirectUrl = '/customers/create/';
+                } else if (submitAction === 'save_and_add_sale') {
+                    redirectUrl = `/invoices/create/?customer=${data.customer_id}`;
+                }
+                
+                window.location.href = redirectUrl;
+            }, 1000);
+        } else {
+            // إظهار أخطاء التحقق
+            showFormErrors(form, data.errors);
+            showNotification('يرجى تصحيح الأخطاء وإعادة المحاولة', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-save me-1"></i> حفظ';
+        }
+        
+        showNotification('حدث خطأ أثناء إرسال البيانات. يرجى المحاولة مرة أخرى.', 'error');
+    });
+}
+
+/**
+ * إعادة تعيين نموذج العميل وتهيئته للإضافة مرة أخرى
+ */
+function resetCustomerForm(form) {
+    if (!form) return;
+    
+    // إعادة تعيين قيم النموذج
+    form.reset();
+    
+    // إزالة رسائل الخطأ
+    form.querySelectorAll('.is-invalid').forEach(el => {
+        el.classList.remove('is-invalid');
+    });
+    
+    form.querySelectorAll('.invalid-feedback').forEach(el => {
+        el.remove();
+    });
+    
+    // إعادة تفعيل الزر الرئيسي
+    const submitBtn = form.querySelector('[type="submit"]');
+    if (submitBtn) {
+        submitBtn.disabled = false;
+    }
+    
+    // التركيز على الحقل الأول (الاسم عادة)
+    const firstInput = form.querySelector('input[type="text"]');
+    if (firstInput) {
+        setTimeout(() => {
+            firstInput.focus();
+        }, 300);
+    }
+}
+
+/**
+ * دالة معالجة نقر زر "حفظ وإضافة آخر" في مودال العميل
+ */
+function handleSaveAndAddAnother(e) {
+    e.preventDefault();
+    const form = e.target.closest('form');
+    const modalId = form.closest('.modal').id;
+    submitCustomerFormAjax(form, 'save_and_add_another', modalId);
+}
+
+/**
+ * عرض أخطاء النموذج
+ */
+function showFormErrors(form, errors) {
+    if (!errors) return;
+    
+    // إزالة رسائل الخطأ السابقة
+    form.querySelectorAll('.is-invalid').forEach(el => {
+        el.classList.remove('is-invalid');
+    });
+    
+    form.querySelectorAll('.invalid-feedback').forEach(el => {
+        el.remove();
+    });
+    
+    // إضافة رسائل الخطأ الجديدة
+    for (const field in errors) {
+        const inputEl = form.querySelector(`[name="${field}"]`);
+        if (inputEl) {
+            inputEl.classList.add('is-invalid');
+            
+            // إنشاء عنصر التغذية الراجعة
+            const feedbackEl = document.createElement('div');
+            feedbackEl.className = 'invalid-feedback d-block';
+            feedbackEl.textContent = Array.isArray(errors[field]) ? errors[field][0] : errors[field];
+            
+            // إضافة العنصر بعد حقل الإدخال مباشرة
+            const fieldContainer = inputEl.closest('.mb-3') || inputEl.parentNode;
+            fieldContainer.appendChild(feedbackEl);
+        }
+    }
+}
+
+/**
+ * عرض إشعار
  */
 function showNotification(message, type = 'info') {
     // استخدام Toast Bootstrap أو alert بسيط
     if (typeof bootstrap !== 'undefined' && typeof bootstrap.Toast !== 'undefined') {
-        // التحقق من وجود حاوية الإشعارات أو إنشاؤها
+        // وجود حاوية الإشعارات أو إنشاؤها
         let toastContainer = document.getElementById('toast-container');
         if (!toastContainer) {
             toastContainer = document.createElement('div');
@@ -716,35 +962,5 @@ function showNotification(message, type = 'info') {
     } else {
         // استخدام alert كبديل
         alert(message);
-    }
-}
-
-/**
- * عرض أخطاء النموذج
- */
-function showFormErrors(form, errors) {
-    if (!errors) return;
-    
-    // إزالة رسائل الخطأ السابقة
-    form.querySelectorAll('.is-invalid').forEach(el => {
-        el.classList.remove('is-invalid');
-    });
-    
-    form.querySelectorAll('.invalid-feedback').forEach(el => {
-        el.remove();
-    });
-    
-    // إضافة رسائل الخطأ الجديدة
-    for (const field in errors) {
-        const inputEl = form.querySelector(`[name="${field}"]`);
-        if (inputEl) {
-            inputEl.classList.add('is-invalid');
-            
-            const feedbackEl = document.createElement('div');
-            feedbackEl.className = 'invalid-feedback';
-            feedbackEl.textContent = Array.isArray(errors[field]) ? errors[field][0] : errors[field];
-            
-            inputEl.parentNode.appendChild(feedbackEl);
-        }
     }
 }

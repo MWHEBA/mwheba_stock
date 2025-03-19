@@ -4,72 +4,75 @@
 
 // Wait for DOM to be loaded
 document.addEventListener("DOMContentLoaded", function() {
-    // Initialize Bootstrap dropdowns
-    var dropdownElementList = [].slice.call(document.querySelectorAll('[data-bs-toggle="dropdown"]'))
-    var dropdownList = dropdownElementList.map(function (dropdownToggleEl) {
-        return new bootstrap.Dropdown(dropdownToggleEl)
-    });
+    // Check if bootstrap is defined before using it
+    if (typeof bootstrap !== 'undefined') {
+        // Initialize Bootstrap dropdowns
+        var dropdownElementList = [].slice.call(document.querySelectorAll('[data-bs-toggle="dropdown"]'))
+        var dropdownList = dropdownElementList.map(function (dropdownToggleEl) {
+            return new bootstrap.Dropdown(dropdownToggleEl)
+        });
 
-    // Initialize tooltips
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
-    
-    // Ensure all header dropdowns work properly
-    document.querySelectorAll('.header-right .dropdown-toggle').forEach(function(dropdown) {
-        dropdown.addEventListener('click', function(e) {
-            e.stopPropagation();
+        // Initialize tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
         });
-    });
-    
-    // Auto-hide alerts after 5 seconds
-    setTimeout(function() {
-        const alerts = document.querySelectorAll('.alert:not(.alert-permanent)');
-        alerts.forEach(function(alert) {
-            const bsAlert = new bootstrap.Alert(alert);
-            bsAlert.close();
+        
+        // Ensure all header dropdowns work properly
+        document.querySelectorAll('.header-right .dropdown-toggle').forEach(function(dropdown) {
+            dropdown.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
         });
-    }, 5000);
-    
-    // Handle live search inputs
-    const searchInputs = document.querySelectorAll('.live-search');
-    searchInputs.forEach(input => {
-        input.addEventListener('input', function() {
-            let searchTerm = this.value.toLowerCase();
-            let targetId = this.getAttribute('data-search-target');
-            let targetRows = document.querySelectorAll(`#${targetId} tbody tr`);
-            
-            targetRows.forEach(row => {
-                const textContent = row.textContent.toLowerCase();
-                if (textContent.includes(searchTerm)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
+        
+        // Auto-hide alerts after 5 seconds
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert:not(.alert-permanent)');
+            alerts.forEach(function(alert) {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+        
+        // Handle live search inputs
+        const searchInputs = document.querySelectorAll('.live-search');
+        searchInputs.forEach(input => {
+            input.addEventListener('input', function() {
+                let searchTerm = this.value.toLowerCase();
+                let targetId = this.getAttribute('data-search-target');
+                let targetRows = document.querySelectorAll(`#${targetId} tbody tr`);
+                
+                targetRows.forEach(row => {
+                    const textContent = row.textContent.toLowerCase();
+                    if (textContent.includes(searchTerm)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+        });
+
+        // Format number inputs with currency symbol
+        document.querySelectorAll('.currency-input').forEach(input => {
+            input.addEventListener('blur', function() {
+                let value = parseFloat(this.value);
+                if (!isNaN(value)) {
+                    this.value = value.toFixed(2);
                 }
             });
         });
-    });
-
-    // Format number inputs with currency symbol
-    document.querySelectorAll('.currency-input').forEach(input => {
-        input.addEventListener('blur', function() {
-            let value = parseFloat(this.value);
-            if (!isNaN(value)) {
-                this.value = value.toFixed(2);
-            }
-        });
-    });
-    
-    // Special handling for quick actions dropdown
-    const quickActionsDropdown = document.getElementById('quickActionsDropdown');
-    if (quickActionsDropdown) {
-        quickActionsDropdown.addEventListener('click', function(e) {
-            const dropdown = bootstrap.Dropdown.getInstance(quickActionsDropdown);
-            if (!dropdown) {
-                new bootstrap.Dropdown(quickActionsDropdown).toggle();
-            }
-        });
+        
+        // Special handling for quick actions dropdown
+        const quickActionsDropdown = document.getElementById('quickActionsDropdown');
+        if (quickActionsDropdown) {
+            quickActionsDropdown.addEventListener('click', function(e) {
+                const dropdown = bootstrap.Dropdown.getInstance(quickActionsDropdown);
+                if (!dropdown) {
+                    new bootstrap.Dropdown(quickActionsDropdown).toggle();
+                }
+            });
+        }
     }
 });
 

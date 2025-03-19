@@ -154,17 +154,25 @@ def customer_create(request):
         if form.is_valid():
             customer = form.save()
             
-            # إذا كان طلب AJAX، إرجاع استجابة JSON
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.POST.get('is_ajax') == '1':
+            # تحديد ما إذا كان طلب AJAX
+            is_ajax_request = (
+                request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 
+                request.POST.get('is_ajax') == '1'
+            )
+            
+            # إرجاع استجابة بناءً على نوع الطلب
+            if is_ajax_request:
                 return JsonResponse({
                     'success': True,
                     'customer_id': customer.id,
-                    'customer_name': customer.name
+                    'customer_name': customer.name,
+                    'action': 'save_and_add_another' if 'save_and_add_another' in request.POST else 
+                              'save_and_add_sale' if 'save_and_add_sale' in request.POST else 'save'
                 })
             
-            messages.success(request, _(f'تم إضافة العميل {customer.name} بنجاح'))
+            messages.success(request, f'تم إضافة العميل {customer.name} بنجاح')
             
-            # تحديد صفحة التحويل بناءً على زر الإرسال
+            # تحديد إعادة التوجيه بناءً على زر الإرسال
             if 'save_and_add_another' in request.POST:
                 return redirect('customer-create')
             elif 'save_and_add_sale' in request.POST:
@@ -172,12 +180,12 @@ def customer_create(request):
             else:
                 return redirect('customer-detail', pk=customer.pk)
         else:
-            # إذا كان طلب AJAX، إرجاع رسائل الخطأ
+            # التعامل مع حالة وجود أخطاء
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.POST.get('is_ajax') == '1':
-                errors = {field: errors[0] for field, errors in form.errors.items()}
+                errors = {field: [str(e) for e in errors] for field, errors in form.errors.items()}
                 return JsonResponse({'success': False, 'errors': errors})
             
-            messages.error(request, _('يرجى تصحيح الأخطاء في النموذج'))
+            messages.error(request, 'يرجى تصحيح الأخطاء في النموذج')
     else:
         # القيم المبدئية إذا تم تمريرها في الـ URL
         initial_data = {}
@@ -270,23 +278,35 @@ def customer_edit(request, pk):
         if form.is_valid():
             customer = form.save()
             
-            # إذا كان طلب AJAX، إرجاع استجابة JSON
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.POST.get('is_ajax') == '1':
+            # تحديد ما إذا كان طلب AJAX
+            is_ajax_request = (
+                request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 
+                request.POST.get('is_ajax') == '1'
+            )
+            
+            # إرجاع استجابة بناءً على نوع الطلب
+            if is_ajax_request:
                 return JsonResponse({
                     'success': True,
                     'customer_id': customer.id,
                     'customer_name': customer.name
                 })
             
-            messages.success(request, _(f'تم تحديث بيانات العميل {customer.name} بنجاح'))
-            return redirect('customer-detail', pk=customer.pk)
+            messages.success(request, f'تم تحديث بيانات العميل {customer.name} بنجاح')
+            
+            # تحديد إعادة التوجيه بناءً على زر الإرسال
+            if 'save_and_add_new' in request.POST:
+                return redirect('customer-create')
+            else:
+                return redirect('customer-detail', pk=customer.pk)
+                
         else:
-            # إذا كان طلب AJAX، إرجاع رسائل الخطأ
+            # التعامل مع حالة وجود أخطاء
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.POST.get('is_ajax') == '1':
-                errors = {field: errors[0] for field, errors in form.errors.items()}
+                errors = {field: [str(e) for e in errors] for field, errors in form.errors.items()}
                 return JsonResponse({'success': False, 'errors': errors})
             
-            messages.error(request, _('يرجى تصحيح الأخطاء في النموذج'))
+            messages.error(request, 'يرجى تصحيح الأخطاء في النموذج')
     else:
         form = CustomerForm(instance=customer)
     

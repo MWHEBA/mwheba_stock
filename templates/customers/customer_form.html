@@ -220,6 +220,10 @@
                                         <button type="submit" name="save_and_add_sale" class="btn btn-outline-success">
                                             <i class="fas fa-receipt me-1"></i> حفظ وإضافة فاتورة
                                         </button>
+                                        {% else %}
+                                        <button type="submit" name="save_and_add_new" class="btn btn-outline-info">
+                                            <i class="fas fa-plus-circle me-1"></i> حفظ وإضافة جديد
+                                        </button>
                                         {% endif %}
                                         <button type="submit" class="btn btn-primary">
                                             <i class="fas fa-save me-1"></i> حفظ
@@ -369,7 +373,7 @@
         
         // 2. تحسين معالجة المودالات المتداخلة
         const categoryModal = document.getElementById('newCategoryModal');
-        const customerModal = document.querySelector('[data-bs-target="#newCategoryModal"]').closest('.modal');
+        const customerModal = document.querySelector('[data-bs-target="#newCategoryModal"]')?.closest('.modal');
         let customerModalInstance = null;
         
         if (customerModal) {
@@ -460,22 +464,23 @@
             });
         }
         
-        // التعامل مع تقديم النموذج
-        const customerForm = document.getElementById('customerForm');
-        if (customerForm) {
-            customerForm.addEventListener('submit', function(e) {
-                // تعديل قيمة is_ajax لمنع عرض JSON في صفحة فارغة
-                const isAjaxField = this.querySelector('input[name="is_ajax"]');
-                if (isAjaxField) {
-                    isAjaxField.value = '0'; // تعيين القيمة إلى 0 للاستجابة العادية (غير Ajax)
-                }
-            });
-        }
-        
         // تلميحات الحقول
         const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
         if (tooltipTriggerList.length > 0) {
             [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+        }
+
+        // إضافة معالج التقديم للنموذج
+        const customerForm = document.getElementById('customerForm');
+        if (customerForm) {
+            // IMPORTANT - هذا لمنع طلبات AJAX وضمان عمل النموذج بشكل تقليدي
+            customerForm.querySelector('input[name="is_ajax"]').value = '0';
+            
+            // تأكيد قيمة عند التقديم
+            customerForm.addEventListener('submit', function() {
+                // جعلها صفر للتأكد من عملية تقديم عادية (غير AJAX)
+                this.querySelector('input[name="is_ajax"]').value = '0';
+            });
         }
     });
     
@@ -539,6 +544,9 @@
         });
     }
 </script>
+<!-- معالج polyfill للمكتبات المفقودة (احتياطي) -->
+<script src="{% static 'js/polyfill-handler.js' %}"></script>
+
 <!-- استدعاء ملف JavaScript الرئيسي مع وسيط لتخطي معالجة إضافة التصنيف -->
-<script src="{% static 'js/customers.js' %}?v=1.2" data-skip-category-handler="true"></script>
+<script src="{% static 'js/customers.js' %}?v=1.3" data-skip-category-handler="true"></script>
 {% endblock %}
