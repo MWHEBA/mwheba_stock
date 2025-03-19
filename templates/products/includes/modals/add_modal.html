@@ -1,0 +1,237 @@
+<!-- مودال إضافة منتج جديد -->
+<div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="addProductModalLabel">
+                    <i class="fas fa-plus-circle me-2"></i> إضافة منتج جديد
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="addProductForm" action="{% url 'product-create' %}" method="post" enctype="multipart/form-data" data-ajax="true" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    <input type="hidden" name="is_ajax" value="1">
+                    
+                    <!-- معلومات المنتج الأساسية -->
+                    <div class="card mb-3 border-primary-subtle">
+                        <div class="card-header bg-primary-subtle py-2">
+                            <h6 class="mb-0 fw-bold text-primary">
+                                <i class="fas fa-info-circle me-2"></i> معلومات المنتج
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="id_name" class="form-label">اسم المنتج <span class="text-danger">*</span></label>
+                                    <input type="text" name="name" id="id_name" class="form-control" autocomplete="off" required>
+                                    <div class="invalid-feedback">يرجى إدخال اسم المنتج</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="id_sku" class="form-label">الكود / SKU</label>
+                                    <input type="text" name="sku" id="id_sku" class="form-control" autocomplete="off" placeholder="رمز تعريفي فريد">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="id_category" class="form-label">التصنيف</label>
+                                    <div class="input-group">
+                                        <select name="category" id="id_category" class="form-select">
+                                            <option value="">-- اختر التصنيف --</option>
+                                            {% for category in categories %}
+                                                <option value="{{ category.id }}">{{ category.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#newCategoryModal">
+                                            <i class="fas fa-plus"></i> تصنيف جديد
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="id_barcode" class="form-label">الباركود</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light"><i class="fas fa-barcode"></i></span>
+                                        <input type="text" name="barcode" id="id_barcode" class="form-control" autocomplete="off" placeholder="رقم الباركود">
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <label for="id_description" class="form-label">وصف المنتج</label>
+                                    <textarea name="description" id="id_description" rows="2" class="form-control" placeholder="أدخل وصفًا مختصرًا للمنتج..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- معلومات التسعير والمخزون -->
+                    <div class="card mb-3 border-success-subtle">
+                        <div class="card-header bg-success-subtle py-2">
+                            <h6 class="mb-0 fw-bold text-success">
+                                <i class="fas fa-money-bill-wave me-2"></i> التسعير والمخزون
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label for="id_price" class="form-label">سعر البيع <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <input type="number" step="0.01" min="0.01" name="price" id="id_price" class="form-control text-end" required>
+                                        <span class="input-group-text">ج.م</span>
+                                    </div>
+                                    <div class="invalid-feedback">يرجى إدخال سعر البيع</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="id_cost" class="form-label">تكلفة الشراء</label>
+                                    <div class="input-group">
+                                        <input type="number" step="0.01" min="0" name="cost" id="id_cost" class="form-control text-end">
+                                        <span class="input-group-text">ج.م</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="id_profit_margin" class="form-label">هامش الربح</label>
+                                    <div class="input-group">
+                                        <input type="text" id="id_profit_margin" class="form-control bg-light text-end" readonly>
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="id_stock_quantity" class="form-label">الكمية الحالية <span class="text-danger">*</span></label>
+                                    <input type="number" name="stock_quantity" id="id_stock_quantity" class="form-control text-end" min="0" required>
+                                    <div class="invalid-feedback">يرجى إدخال الكمية</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="id_min_stock_level" class="form-label">الحد الأدنى للمخزون</label>
+                                    <input type="number" name="min_stock_level" id="id_min_stock_level" class="form-control text-end" min="0" value="5">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="id_unit_name" class="form-label">وحدة القياس</label>
+                                    <select name="unit_name" id="id_unit_name" class="form-select">
+                                        <option value="piece">قطعة</option>
+                                        <option value="kg">كيلوجرام</option>
+                                        <option value="liter">لتر</option>
+                                        <option value="meter">متر</option>
+                                        <option value="box">صندوق</option>
+                                        <option value="pack">عبوة</option>
+                                        <option value="set">طقم</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- معلومات إضافية -->
+                    <div class="card mb-3 border-info-subtle">
+                        <div class="card-header bg-info-subtle py-2">
+                            <h6 class="mb-0 fw-bold text-info">
+                                <i class="fas fa-cog me-2"></i> إعدادات إضافية
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="id_image" class="form-label">صورة المنتج</label>
+                                    <div class="input-group">
+                                        <input type="file" name="image" id="id_image" class="form-control" accept="image/*">
+                                        <label class="input-group-text" for="id_image"><i class="fas fa-image"></i></label>
+                                    </div>
+                                    <div id="image-preview" class="mt-2 text-center d-none">
+                                        <img src="" alt="معاينة الصورة" class="img-thumbnail" style="max-height: 150px;">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">حالة المنتج</label>
+                                    <div class="d-flex">
+                                        <div class="form-check form-check-inline me-4">
+                                            <input class="form-check-input" type="radio" name="status" id="status_active" value="active" checked>
+                                            <label class="form-check-label" for="status_active">
+                                                <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i> نشط</span>
+                                            </label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="status" id="status_inactive" value="inactive">
+                                            <label class="form-check-label" for="status_inactive">
+                                                <span class="badge bg-secondary"><i class="fas fa-times-circle me-1"></i> غير نشط</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="form-errors" class="alert alert-danger d-none">
+                        <ul class="mb-0"></ul>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer bg-light d-flex justify-content-between">
+                <div>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i> إلغاء
+                    </button>
+                </div>
+                <div>
+                    <button type="submit" form="addProductForm" class="btn btn-primary submit-btn">
+                        <i class="fas fa-save me-1"></i> حفظ المنتج
+                    </button>
+                    <button type="submit" form="addProductForm" name="save_and_add_another" value="1" class="btn btn-outline-primary ms-2">
+                        <i class="fas fa-plus-circle me-1"></i> حفظ وإضافة آخر
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- مودال إضافة تصنيف (متداخل) -->
+<div class="modal fade" id="newCategoryModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-folder-plus me-2"></i> إضافة تصنيف جديد
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="newCategoryForm">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="new-category-name" class="form-label">اسم التصنيف <span class="text-danger">*</span></label>
+                        <input type="text" id="new-category-name" class="form-control" required>
+                        <div class="invalid-feedback" id="category-name-error"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="new-category-description" class="form-label">وصف التصنيف</label>
+                        <textarea id="new-category-description" class="form-control" rows="3" placeholder="وصف اختياري للتصنيف..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label d-block">لون التصنيف</label>
+                        <div class="d-flex flex-wrap gap-2">
+                            <input type="radio" class="btn-check" name="new-category-color" id="color_primary" value="primary" checked>
+                            <label class="btn btn-outline-primary" for="color_primary">أزرق</label>
+                            
+                            <input type="radio" class="btn-check" name="new-category-color" id="color_success" value="success">
+                            <label class="btn btn-outline-success" for="color_success">أخضر</label>
+                            
+                            <input type="radio" class="btn-check" name="new-category-color" id="color_danger" value="danger">
+                            <label class="btn btn-outline-danger" for="color_danger">أحمر</label>
+                            
+                            <input type="radio" class="btn-check" name="new-category-color" id="color_warning" value="warning">
+                            <label class="btn btn-outline-warning" for="color_warning">برتقالي</label>
+                            
+                            <input type="radio" class="btn-check" name="new-category-color" id="color_info" value="info">
+                            <label class="btn btn-outline-info" for="color_info">سماوي</label>
+                            
+                            <input type="radio" class="btn-check" name="new-category-color" id="color_dark" value="dark">
+                            <label class="btn btn-outline-dark" for="color_dark">أسود</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" id="save-new-category" class="btn btn-primary">
+                    <i class="fas fa-save me-1"></i> حفظ التصنيف
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

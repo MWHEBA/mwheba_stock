@@ -11,11 +11,11 @@ class Product(models.Model):
     
     name = models.CharField(_('Name'), max_length=255)
     sku = models.CharField(_('SKU'), max_length=50, unique=True)
-    supplier_code = models.CharField(_('Supplier Code'), max_length=50, blank=True)
+    supplier_code = models.CharField(_('Supplier Code'), max_length=50, blank=True, null=True)  # Added null=True
     purchase_price = models.DecimalField(_('Purchase Price'), max_digits=10, decimal_places=2)
     sale_price = models.DecimalField(_('Sale Price'), max_digits=10, decimal_places=2)
     quantity = models.PositiveIntegerField(_('Quantity'), default=0)
-    supplier = models.ForeignKey('suppliers.Supplier', on_delete=models.SET_NULL, null=True, related_name='products', verbose_name=_('Supplier'))
+    supplier = models.ForeignKey('suppliers.Supplier', on_delete=models.SET_NULL, null=True, blank=True, related_name='products', verbose_name=_('Supplier'))
     status = models.CharField(_('Status'), max_length=20, choices=STATUS_CHOICES, default='available')
     image = models.ImageField(_('Image'), upload_to='products/', blank=True, null=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='created_products', verbose_name=_('Created By'))

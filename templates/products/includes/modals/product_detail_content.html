@@ -1,0 +1,131 @@
+<div class="product-detail-content p-0">
+    <div class="row g-0">
+        <!-- صورة المنتج -->
+        <div class="col-md-4 border-end">
+            <div class="p-3 h-100 d-flex align-items-center justify-content-center bg-light">
+                {% if product.image %}
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}" class="img-fluid rounded">
+                {% else %}
+                    <div class="text-center">
+                        <i class="fas fa-box fa-5x text-secondary mb-3"></i>
+                        <div class="text-muted">لا توجد صورة</div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- تفاصيل المنتج -->
+        <div class="col-md-8">
+            <div class="p-4">
+                <h4 class="mb-3">{{ product.name }}</h4>
+                
+                <div class="mb-4">
+                    <span class="badge bg-{{ product.get_status_display_class }}">{{ product.get_status_display }}</span>
+                    {% if product.is_low_stock %}
+                        <span class="badge bg-warning ms-1">المخزون منخفض</span>
+                    {% endif %}
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-sm-6 mb-3">
+                        <div class="text-muted">الكود</div>
+                        <div class="fw-bold">{{ product.sku|default:"--" }}</div>
+                    </div>
+                    <div class="col-sm-6 mb-3">
+                        <div class="text-muted">الباركود</div>
+                        <div class="fw-bold">{{ product.barcode|default:"--" }}</div>
+                    </div>
+                    <div class="col-sm-6 mb-3">
+                        <div class="text-muted">التصنيف</div>
+                        <div class="fw-bold">
+                            {% if product.category %}
+                                <span class="badge bg-{{ product.category.color_code }}">{{ product.category.name }}</span>
+                            {% else %}
+                                <span class="text-muted">--</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-sm-6 mb-3">
+                        <div class="text-muted">وحدة القياس</div>
+                        <div class="fw-bold">{{ product.get_unit_name_display }}</div>
+                    </div>
+                </div>
+                
+                <h5 class="border-bottom pb-2 mb-3">معلومات السعر والمخزون</h5>
+                
+                <div class="row mb-3">
+                    <div class="col-sm-4 mb-3">
+                        <div class="text-muted">سعر البيع</div>
+                        <div class="fw-bold">{{ product.price|floatformat:2 }} ج.م</div>
+                    </div>
+                    <div class="col-sm-4 mb-3">
+                        <div class="text-muted">تكلفة الشراء</div>
+                        <div class="fw-bold">{{ product.cost|default:0|floatformat:2 }} ج.م</div>
+                    </div>
+                    <div class="col-sm-4 mb-3">
+                        <div class="text-muted">هامش الربح</div>
+                        <div class="fw-bold">
+                            {% if product.profit_margin %}
+                                <span class="{% if product.profit_margin > 0 %}text-success{% else %}text-danger{% endif %}">
+                                    {{ product.profit_margin|floatformat:1 }}%
+                                </span>
+                            {% else %}
+                                <span class="text-muted">--</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-sm-4 mb-3">
+                        <div class="text-muted">المخزون الحالي</div>
+                        <div class="fw-bold {% if product.is_low_stock %}text-danger{% else %}text-success{% endif %}">
+                            {{ product.stock_quantity }} {{ product.get_unit_name_display }}
+                        </div>
+                    </div>
+                    <div class="col-sm-4 mb-3">
+                        <div class="text-muted">الحد الأدنى للمخزون</div>
+                        <div class="fw-bold">{{ product.min_stock_level }} {{ product.get_unit_name_display }}</div>
+                    </div>
+                    <div class="col-sm-4 mb-3">
+                        <div class="text-muted">قيمة المخزون</div>
+                        <div class="fw-bold">{{ product.stock_quantity|multiply:product.cost|default:0|floatformat:2 }} ج.م</div>
+                    </div>
+                </div>
+                
+                {% if product.description %}
+                <h5 class="border-bottom pb-2 mb-3">الوصف</h5>
+                <div class="mb-4">
+                    {{ product.description|linebreaks }}
+                </div>
+                {% endif %}
+                
+                <!-- آخر تعديلات المخزون -->
+                {% if recent_adjustments %}
+                <h5 class="border-bottom pb-2 mb-3">آخر تعديلات المخزون</h5>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>التاريخ</th>
+                                <th>نوع التعديل</th>
+                                <th>التغيير</th>
+                                <th>الكمية الجديدة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for adjustment in recent_adjustments %}
+                            <tr>
+                                <td>{{ adjustment.adjustment_date|date:"Y-m-d H:i" }}</td>
+                                <td>{{ adjustment.get_adjustment_type_display }}</td>
+                                <td class="{% if adjustment.change > 0 %}text-success{% elif adjustment.change < 0 %}text-danger{% endif %}">
+                                    {{ adjustment.change }}
+                                </td>
+                                <td>{{ adjustment.new_quantity }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>

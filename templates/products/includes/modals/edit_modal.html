@@ -1,0 +1,126 @@
+<!-- Edit Product Modal -->
+<div class="modal fade" id="editProductModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i> تعديل المنتج
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="editProductForm" action="" method="post" enctype="multipart/form-data" data-ajax="true">
+                    {% csrf_token %}
+                    <input type="hidden" name="is_ajax" value="1">
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="edit_id_name" class="form-label">اسم المنتج <span class="text-danger">*</span></label>
+                            <input type="text" name="name" id="edit_id_name" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="edit_id_sku" class="form-label">الكود / SKU</label>
+                            <input type="text" name="sku" id="edit_id_sku" class="form-control">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="edit_id_category" class="form-label">التصنيف</label>
+                            <div class="input-group">
+                                <select name="category" id="edit_id_category" class="form-select">
+                                    <option value="">-- اختر التصنيف --</option>
+                                    {% for category in categories %}
+                                        <option value="{{ category.id }}">{{ category.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#newCategoryModal">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="edit_id_barcode" class="form-label">الباركود</label>
+                            <input type="text" name="barcode" id="edit_id_barcode" class="form-control">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="edit_id_price" class="form-label">السعر <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="number" step="0.01" name="price" id="edit_id_price" class="form-control" required>
+                                <span class="input-group-text">ج.م</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="edit_id_cost" class="form-label">التكلفة</label>
+                            <div class="input-group">
+                                <input type="number" step="0.01" name="cost" id="edit_id_cost" class="form-control">
+                                <span class="input-group-text">ج.م</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="edit_id_stock_quantity" class="form-label">الكمية المتوفرة <span class="text-danger">*</span></label>
+                            <input type="number" name="stock_quantity" id="edit_id_stock_quantity" class="form-control" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="edit_id_unit_name" class="form-label">وحدة القياس</label>
+                            <select name="unit_name" id="edit_id_unit_name" class="form-select">
+                                <option value="piece">قطعة</option>
+                                <option value="kg">كيلوجرام</option>
+                                <option value="liter">لتر</option>
+                                <option value="meter">متر</option>
+                                <option value="box">صندوق</option>
+                                <option value="pack">عبوة</option>
+                                <option value="set">طقم</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="edit_id_min_stock_level" class="form-label">الحد الأدنى للمخزون</label>
+                            <input type="number" name="min_stock_level" id="edit_id_min_stock_level" class="form-control">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_id_description" class="form-label">الوصف</label>
+                        <textarea name="description" id="edit_id_description" rows="3" class="form-control"></textarea>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="edit_id_image" class="form-label">صورة المنتج</label>
+                            <input type="file" name="image" id="edit_id_image" class="form-control" accept="image/*">
+                            <div id="current-image-container" class="mt-2 d-none">
+                                <span class="text-muted small">الصورة الحالية:</span><br>
+                                <img id="current-product-image" src="" alt="صورة المنتج" class="img-thumbnail mt-1" style="max-height: 100px;">
+                                <div class="form-check mt-1">
+                                    <input class="form-check-input" type="checkbox" name="remove_image" id="remove_image">
+                                    <label class="form-check-label small text-danger" for="remove_image">
+                                        حذف الصورة الحالية
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="edit_id_status" class="form-label">الحالة</label>
+                            <select name="status" id="edit_id_status" class="form-select">
+                                <option value="active">نشط</option>
+                                <option value="inactive">غير نشط</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="submit" form="editProductForm" class="btn btn-warning">
+                    <i class="fas fa-save me-1"></i> حفظ التغييرات
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

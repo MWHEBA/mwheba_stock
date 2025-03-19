@@ -98,13 +98,29 @@
 
 /* تنسيق البطاقات */
 .card {
-    border-radius: 8px;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.card:hover {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
     border-color: #e6e9ec;
 }
 
 .card-header {
     background-color: #ffffff;
+    border-bottom: none;
     border-bottom: 1px solid #e6e9ec;
+}
+
+.card-body {
+    transition: all 0.3s ease;
+}
+
+.card-body:hover {
+    background-color: rgba(0, 0, 0, 0.01);
 }
 
 /* تحسين مظهر الجداول */
@@ -233,4 +249,653 @@
 
 .table tr:hover {
     background-color: rgba(13, 110, 253, 0.05);
+}
+
+/* تحسينات مودال إضافة المنتج */
+.modal-content {
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+}
+
+.modal-footer {
+    border-bottom-left-radius: 0.5rem;
+    border-bottom-right-radius: 0.5rem;
+}
+
+/* تنسيق معاينة الصورة */
+#image-preview {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+#image-preview img {
+    transition: transform 0.3s ease;
+    border-radius: 0.5rem;
+}
+
+#image-preview:hover img {
+    transform: scale(1.05);
+}
+
+/* تحسينات أزرار الإجراءات */
+.btn {
+    border-radius: 0.25rem;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background-color: #4361ee;
+    border-color: #4361ee;
+}
+
+.btn-primary:hover {
+    background-color: #3a56d4;
+    border-color: #3a56d4;
+}
+
+.btn-outline-primary {
+    border-color: #4361ee;
+    color: #4361ee;
+}
+
+.btn-outline-primary:hover {
+    background-color: #4361ee;
+    border-color: #4361ee;
+}
+
+/* تأثيرات الحقول */
+.form-control:focus, .form-select:focus {
+    box-shadow: 0 0 0 0.25rem rgba(67, 97, 238, 0.25);
+    border-color: #4361ee;
+}
+
+/* تحسين مظهر علامات النجمة الإلزامية */
+.text-danger {
+    font-weight: bold;
+}
+
+/* تحسين مظهر أزرار الإجراءات في الفوتر */
+.modal-footer {
+    border-bottom-left-radius: 0.5rem;
+    border-bottom-right-radius: 0.5rem;
+}
+
+/* MWHEBA App Custom Styles */
+
+/* Basic Styling Improvements */
+html, body {
+    height: 100%;
+}
+
+.bg-primary-subtle {
+    background-color: rgba(13, 110, 253, 0.1) !important;
+}
+
+.bg-success-subtle {
+    background-color: rgba(25, 135, 84, 0.1) !important;
+}
+
+.bg-info-subtle {
+    background-color: rgba(13, 202, 240, 0.1) !important;
+}
+
+.bg-warning-subtle {
+    background-color: rgba(255, 193, 7, 0.1) !important;
+}
+
+.bg-danger-subtle {
+    background-color: rgba(220, 53, 69, 0.1) !important;
+}
+
+.border-primary-subtle {
+    border-color: rgba(13, 110, 253, 0.3) !important;
+}
+
+.border-success-subtle {
+    border-color: rgba(25, 135, 84, 0.3) !important;
+}
+
+.border-info-subtle {
+    border-color: rgba(13, 202, 240, 0.3) !important;
+}
+
+.text-primary {
+    color: #01578a !important;
+}
+
+.text-end {
+    text-align: left !important;
+}
+
+/* Card Styling */
+.card {
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    background-color: #ffffff;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Modal Improvements */
+.modal-content {
+    border-radius: 0.5rem;
+    border: none;
+}
+
+.modal-header {
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+}
+
+.modal-footer {
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* تحسينات مودال إضافة المنتج */
+.modal-content {
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+}
+
+.modal-footer {
+    border-bottom-left-radius: 0.5rem;
+    border-bottom-right-radius: 0.5rem;
+}
+
+.card-body {
+    transition: all 0.3s ease;
+}
+
+.card-body:hover {
+    background-color: rgba(0, 0, 0, 0.01);
+}
+
+.card {
+    border-radius: 0.5rem;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.card:hover {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+.card-header {
+    border-bottom: none;
+}
+
+/* تنسيق معاينة الصورة */
+#image-preview {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+#image-preview img {
+    transition: transform 0.3s ease;
+    border-radius: 0.5rem;
+}
+
+#image-preview:hover img {
+    transform: scale(1.05);
+}
+
+/* تحسينات أزرار الإجراءات */
+.btn {
+    border-radius: 0.25rem;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background-color: #4361ee;
+    border-color: #4361ee;
+}
+
+.btn-primary:hover {
+    background-color: #3a56d4;
+    border-color: #3a56d4;
+}
+
+.btn-outline-primary {
+    border-color: #4361ee;
+    color: #4361ee;
+}
+
+.btn-outline-primary:hover {
+    background-color: #4361ee;
+    border-color: #4361ee;
+}
+
+/* تأثيرات الحقول */
+.form-control:focus, .form-select:focus {
+    box-shadow: 0 0 0 0.25rem rgba(67, 97, 238, 0.25);
+    border-color: #4361ee;
+}
+
+/* تحسين مظهر علامات النجمة الإلزامية */
+.text-danger {
+    font-weight: bold;
+}
+
+/* تحسين مظهر أزرار الإجراءات في الفوتر */
+.modal-footer {
+    border-bottom-left-radius: 0.5rem;
+    border-bottom-right-radius: 0.5rem;
+}
+
+/* Table Improvements */
+.table {
+    vertical-align: middle;
+}
+
+.table thead th {
+    background-color: #f8f9fa;
+    font-weight: 500;
+    color: #6c757d;
+    border-bottom-width: 1px;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(67, 97, 238, 0.03);
+}
+
+/* Custom badge styles */
+.badge.bg-status-active {
+    background-color: #10b981;
+}
+
+.badge.bg-status-inactive {
+    background-color: #6c757d;
+}
+
+.badge.bg-status-out-of-stock {
+    background-color: #ef4444;
+}
+
+/* Avatar/Image placeholder */
+.avatar-circle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background-color: #f0f2fa;
+    color: #4361ee;
+    font-weight: 600;
+}
+
+/* Forms */
+.invalid-feedback {
+    display: block;
+    font-size: 80%;
+}
+
+.was-validated .form-control:invalid, 
+.form-control.is-invalid {
+    border-color: #dc3545;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: left calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+
+/* RTL specific adjustments */
+[dir="rtl"] .me-2 {
+    margin-left: 0.5rem !important;
+    margin-right: 0 !important;
+}
+
+[dir="rtl"] .ms-2 {
+    margin-right: 0.5rem !important;
+    margin-left: 0 !important;
+}
+
+/* تخصيص الجداول عند الطباعة */
+@media print {
+    .table {
+        width: 100%;
+    }
+    
+    .table td, .table th {
+        padding: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .table .d-print-none,
+    .action-buttons {
+        display: none !important;
+    }
+}
+
+/* تحسينات الطباعة الإضافية */
+.print-only {
+    display: none;
+}
+
+@media print {
+    .print-only {
+        display: block !important;
+    }
+    
+    .no-print {
+        display: none !important;
+    }
+    
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    .page-break {
+        page-break-after: always;
+    }
+}
+
+/* تخصيصات عامة للموقع */
+body {
+    font-family: 'Cairo', sans-serif;
+    background-color: #f6f8fc;
+}
+
+/* تحسينات الألوان */
+.bg-primary-subtle {
+    background-color: #dbe3ff !important;
+}
+
+.bg-success-subtle {
+    background-color: #d1f5e0 !important;
+}
+
+.bg-info-subtle {
+    background-color: #cff4fc !important;
+}
+
+.border-primary-subtle {
+    border-color: #c5d3fe !important;
+}
+
+.border-success-subtle {
+    border-color: #a8ebc9 !important;
+}
+
+.border-info-subtle {
+    border-color: #9ee7f5 !important;
+}
+
+/* مودال إضافة منتج */
+.modal-content {
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+}
+
+.modal-footer {
+    border-bottom-left-radius: 0.5rem;
+    border-bottom-right-radius: 0.5rem;
+}
+
+.card-body {
+    transition: all 0.3s ease;
+}
+
+.card-body:hover {
+    background-color: rgba(0, 0, 0, 0.01);
+}
+
+.card {
+    border-radius: 0.5rem;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.card:hover {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+.card-header {
+    border-bottom: none;
+}
+
+/* تنسيق معاينة الصورة */
+#image-preview {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+#image-preview img {
+    transition: transform 0.3s ease;
+    border-radius: 0.5rem;
+}
+
+#image-preview:hover img {
+    transform: scale(1.05);
+}
+
+/* تحسينات أزرار الإجراءات */
+.btn {
+    border-radius: 0.25rem;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background-color: #4361ee;
+    border-color: #4361ee;
+}
+
+.btn-primary:hover {
+    background-color: #3a56d4;
+    border-color: #3a56d4;
+}
+
+.btn-outline-primary {
+    border-color: #4361ee;
+    color: #4361ee;
+}
+
+.btn-outline-primary:hover {
+    background-color: #4361ee;
+    border-color: #4361ee;
+}
+
+/* تأثيرات الحقول */
+.form-control:focus, .form-select:focus {
+    box-shadow: 0 0 0 0.25rem rgba(67, 97, 238, 0.25);
+    border-color: #4361ee;
+}
+
+/* تحسين مظهر علامات النجمة الإلزامية */
+.text-danger {
+    font-weight: bold;
+}
+
+/* تحسين مظهر أزرار الإجراءات في الفوتر */
+.modal-footer {
+    border-bottom-left-radius: 0.5rem;
+    border-bottom-right-radius: 0.5rem;
+}
+
+/* تنسيق جدول المنتجات */
+.table-hover tbody tr:hover {
+    background-color: rgba(67, 97, 238, 0.05);
+}
+
+.avatar-circle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background-color: #f0f2fa;
+    color: #4361ee;
+    font-weight: 600;
+}
+
+/* تخصيص زر الإجراء */
+.btn-action {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    color: #495057;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    transition: all 0.2s;
+}
+
+.btn-action:hover {
+    background-color: #e9ecef;
+}
+
+.btn-action.btn-edit:hover {
+    color: #ffc107;
+    background-color: #fff8e6;
+    border-color: #ffc107;
+}
+
+.btn-action.btn-delete:hover {
+    color: #dc3545;
+    background-color: #feecef;
+    border-color: #dc3545;
+}
+
+.btn-action.btn-view:hover {
+    color: #0d6efd;
+    background-color: #e6f2ff;
+    border-color: #0d6efd;
+}
+
+.btn-action.btn-inventory:hover {
+    color: #0dcaf0;
+    background-color: #e6fafd;
+    border-color: #0dcaf0;
+}
+
+/* تخصيص إشعارات النظام */
+.toast-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9999;
+}
+
+.toast {
+    width: 350px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* تحسينات نموذج تعديل المخزون */
+.inventory-adjustment-form {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+/* تصميم مخصص للمنتجات منخفضة المخزون */
+.low-stock-item {
+    background-color: #fff8e6 !important;
+}
+
+/* تحسين مظهر عرض المنتج */
+.product-detail-content {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.product-detail-content .table {
+    font-size: 0.9rem;
+}
+
+/* تخصيص الجداول */
+.data-table th {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #495057;
+    background-color: #f8f9fa;
+}
+
+/* تحسين عرض التصنيفات */
+.category-badge {
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    display: inline-block;
+}
+
+/* تخصيص مسارات التنقل */
+.breadcrumb-item a {
+    color: #4361ee;
+    text-decoration: none;
+}
+
+.breadcrumb-item a:hover {
+    text-decoration: underline;
+}
+
+/* تنسيق نموذج إضافة المنتج */
+.section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #3a56d4;
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 0.5rem;
+}
+
+/* التأثير البصري عند الضغط على الزر */
+.btn-pulse {
+    animation: pulse 0.3s ease-in-out;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* تحسين التباعد بين الأزرار */
+.btn-gap {
+    margin-right: 0.5rem;
+}
+
+/* تنسيق أيقونات فونت أوسم */
+.card-icon {
+    font-size: 24px;
+    margin-bottom: 15px;
+    color: #4361ee;
+}
+
+/* تغيير مؤشر الماوس على البطاقات القابلة للنقر */
+.clickable {
+    cursor: pointer;
 }

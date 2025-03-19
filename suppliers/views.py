@@ -93,6 +93,7 @@ def supplier_list(request):
         'page_obj': page_obj,
         'paginator': paginator,
         'page_size': page_size,
+        'sale_create_url': 'sales:create',  # Update any reference to 'sale-create' here
     }
     
     # إذا كان الطلب يخص التصدير
@@ -156,21 +157,31 @@ def supplier_create(request):
         if form.is_valid():
             supplier = form.save()
             
-            # إذا كان طلب AJAX، إرجاع استجابة JSON
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.POST.get('is_ajax') == '1':
+            # تحديد ما إذا كان طلب AJAX
+            is_ajax_request = (
+                request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 
+                request.POST.get('is_ajax') == '1'
+            )
+            
+            # إرجاع استجابة بناءً على نوع الطلب
+            if is_ajax_request:
                 return JsonResponse({
                     'success': True,
                     'supplier_id': supplier.id,
-                    'supplier_name': supplier.name
+                    'supplier_name': supplier.name,
+                    'action': 'save_and_add_another' if 'save_and_add_another' in request.POST else 
+                              'save_and_add_purchase' if 'save_and_add_purchase' in request.POST else 'save'
                 })
             
-            messages.success(request, _(f'تم إضافة المورد {supplier.name} بنجاح'))
+            messages.success(request, f'تم إضافة المورد {supplier.name} بنجاح')
             
-            # تحديد صفحة التحويل
+            # تحديد إعادة التوجيه بناءً على زر الإرسال
             if 'save_and_add_another' in request.POST:
                 return redirect('supplier-create')
             elif 'save_and_add_purchase' in request.POST:
-                return redirect('purchase-create')
+                # إعادة توجيه إلى صفحة إنشاء طلب شراء
+                messages.info(request, f'تم إضافة المورد {supplier.name} بنجاح. انتقال إلى إنشاء طلب شراء')
+                return redirect('purchases:purchase-create', supplier_id=supplier.id)
             else:
                 return redirect('supplier-detail', pk=supplier.pk)
         else:

@@ -46,12 +46,15 @@
 <!-- المودالات -->
 {% include 'suppliers/includes/modals/supplier_modals.html' %}
 
+<a href="{% url 'sales:create' %}">إنشاء مبيعات</a>
+
 {% endblock %}
 
 {% block extra_js %}
 <script>
     // تعريف متغيرات URL لاستخدامها في ملف JavaScript
     const categoryCreateAjaxUrl = "{% url 'supplier-category-create' %}";
+    const saleCreateUrl = "{% url 'sales:create' %}";
 </script>
 <script src="{% static 'js/suppliers.js' %}"></script>
 {% endblock %}

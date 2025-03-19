@@ -1,0 +1,33 @@
+<!-- مودال حذف المنتج -->
+<div class="modal fade" id="deleteProductModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-trash-alt me-2"></i> حذف منتج
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="text-center mb-4">
+                    <i class="fas fa-exclamation-triangle text-danger fa-4x mb-3"></i>
+                    <h4 class="text-danger">هل أنت متأكد من حذف هذا المنتج؟</h4>
+                    <p class="text-muted">أنت على وشك حذف "<span id="product-name-to-delete" class="fw-bold"></span>". لا يمكن التراجع عن هذا الإجراء.</p>
+                </div>
+                
+                <form id="delete-product-form" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" id="productIdToDelete" name="product_id">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i> إلغاء
+                </button>
+                <button type="button" id="confirmDeleteProduct" class="btn btn-danger">
+                    <i class="fas fa-trash-alt me-1"></i> حذف
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

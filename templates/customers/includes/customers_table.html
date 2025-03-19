@@ -21,11 +21,11 @@
                 <thead class="table-light text-secondary small">
                     <tr>
                         <th class="ps-4">العميل</th>
-                        <th>رقم الهاتف</th>
+                        <th>الهاتف</th>
                         <th>التصنيف</th>
-                        <th>المبيعات</th>
+                        <th>إجمالي المبيعات</th>
                         <th>المديونية</th>
-                        <th>آخر معاملة</th>
+                        <th>الحالة</th>
                         <th class="text-center">الإجراءات</th>
                     </tr>
                 </thead>
@@ -35,7 +35,7 @@
                         <td class="ps-4">
                             <div class="d-flex align-items-center">
                                 <div class="me-3">
-                                    <div  style="padding-top: 12%; display: flex; justify-content: center; border-radius: 8px; font-size: 16px; text-align: center; width: 40px; height: 40px;" class="avatar-circle bg-{{ customer.get_status_display_class }} text-white">
+                                    <div style="padding-top: 12%; display: flex; justify-content: center; border-radius: 8px; font-size: 16px; text-align: center; width: 40px; height: 40px;" class="avatar-circle bg-{{ customer.get_status_display_class }} text-white">
                                         {{ customer.name|slice:":1"|upper }}
                                     </div>
                                 </div>
@@ -43,7 +43,7 @@
                                     <a href="{% url 'customer-detail' customer.id %}" class="text-decoration-none fw-medium d-block">
                                         {{ customer.name }}
                                     </a>
-                                    <small class="text-muted">{{ customer.code }}</small>
+                                    <small class="text-muted">{{ customer.code|default:"" }}</small>
                                 </div>
                             </div>
                         </td>
@@ -56,15 +56,16 @@
                             {% endif %}
                         </td>
                         <td>{{ customer.total_sales|floatformat:2 }} ج.م</td>
-                        <td class="{% if customer.debt > 0 %}text-danger{% else %}text-success{% endif %}">
+                        <td class="{% if customer.debt > 0 %}text-danger{% endif %}">
                             {{ customer.debt|floatformat:2 }} ج.م
+                            {% if customer.credit_limit > 0 and customer.debt > customer.credit_limit %}
+                                <span class="badge bg-danger ms-1" data-bs-toggle="tooltip" title="تجاوز حد الائتمان">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </span>
+                            {% endif %}
                         </td>
                         <td>
-                            {% if customer.last_transaction_date %}
-                                {{ customer.last_transaction_date|date:"Y-m-d" }}
-                            {% else %}
-                                <span class="text-muted">--</span>
-                            {% endif %}
+                            <span class="badge bg-{{ customer.get_status_display_class }}">{{ customer.get_status_display }}</span>
                         </td>
                         <td>
                             <div class="action-buttons">
@@ -84,8 +85,11 @@
                                 {% if customer.debt > 0 %}
                                 <button type="button" class="btn btn-action btn-payment" 
                                         data-id="{{ customer.id }}" 
+                                        data-name="{{ customer.name }}"
+                                        data-debt="{{ customer.debt }}"
                                         title="تسجيل دفعة" 
-                                        onclick="loadRecordPaymentModal({{ customer.id }})">
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#recordPaymentModal">
                                     <i class="fas fa-hand-holding-usd"></i>
                                 </button>
                                 {% endif %}
@@ -96,7 +100,7 @@
                     <tr>
                         <td colspan="7" class="text-center py-5">
                             <div class="text-muted">
-                                <i class="fas fa-user-slash fa-3x mb-3"></i>
+                                <i class="fas fa-users fa-3x mb-3"></i>
                                 <h5>لا يوجد عملاء</h5>
                                 <p class="mb-1">لم يتم العثور على أي عملاء مطابقين.</p>
                                 <button type="button" class="btn btn-sm btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
@@ -118,7 +122,7 @@
             <ul class="pagination justify-content-center mb-0">
                 {% if page_obj.has_previous %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.sort_by %}&sort_by={{ request.GET.sort_by }}{% endif %}">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.sort_by %}&sort_by={{ request.GET.sort_by }}{% endif %}{% if request.GET.debt_status %}&debt_status={{ request.GET.debt_status }}{% endif %}">
                             <i class="fas fa-chevron-right me-1"></i> السابق
                         </a>
                     </li>
@@ -137,14 +141,14 @@
                         </li>
                     {% else %}
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ i }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.sort_by %}&sort_by={{ request.GET.sort_by }}{% endif %}">{{ i }}</a>
+                            <a class="page-link" href="?page={{ i }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.sort_by %}&sort_by={{ request.GET.sort_by }}{% endif %}{% if request.GET.debt_status %}&debt_status={{ request.GET.debt_status }}{% endif %}">{{ i }}</a>
                         </li>
                     {% endif %}
                 {% endfor %}
                 
                 {% if page_obj.has_next %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.sort_by %}&sort_by={{ request.GET.sort_by }}{% endif %}">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.sort_by %}&sort_by={{ request.GET.sort_by }}{% endif %}{% if request.GET.debt_status %}&debt_status={{ request.GET.debt_status }}{% endif %}">
                             التالي <i class="fas fa-chevron-left ms-1"></i>
                         </a>
                     </li>

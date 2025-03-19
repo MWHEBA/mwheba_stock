@@ -1,0 +1,72 @@
+<!-- قسم البحث والتصفية -->
+<div class="collapse mb-3" id="searchCollapse">
+    <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <h5 class="mb-0"><i class="fas fa-filter me-2"></i> بحث وتصفية المنتجات</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" action="{% url 'product-list' %}" class="row g-3">
+                <div class="col-md-4">
+                    <label for="search" class="form-label">بحث</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" class="form-control" id="search" name="search" placeholder="اسم المنتج، الكود، أو الباركود" value="{{ search_query|default:'' }}">
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <label for="category" class="form-label">التصنيف</label>
+                    <select class="form-select" id="category" name="category">
+                        <option value="">جميع التصنيفات</option>
+                        {% for category in categories %}
+                            <option value="{{ category.id }}" {% if category_id == category.id|stringformat:"i" %}selected{% endif %}>
+                                {{ category.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-md-3">
+                    <label for="status" class="form-label">الحالة</label>
+                    <select class="form-select" id="status" name="status">
+                        <option value="">جميع الحالات</option>
+                        <option value="active" {% if status == 'active' %}selected{% endif %}>نشط</option>
+                        <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>غير نشط</option>
+                        <option value="out_of_stock" {% if status == 'out_of_stock' %}selected{% endif %}>نفذت الكمية</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-2">
+                    <label for="sort_by" class="form-label">ترتيب حسب</label>
+                    <select class="form-select" id="sort_by" name="sort_by">
+                        <option value="name" {% if sort_by == 'name' %}selected{% endif %}>الاسم (أ-ي)</option>
+                        <option value="-name" {% if sort_by == '-name' %}selected{% endif %}>الاسم (ي-أ)</option>
+                        <option value="-created_at" {% if sort_by == '-created_at' %}selected{% endif %}>الأحدث أولاً</option>
+                        <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>الأقدم أولاً</option>
+                        <option value="-price" {% if sort_by == '-price' %}selected{% endif %}>السعر (الأعلى أولاً)</option>
+                        <option value="price" {% if sort_by == 'price' %}selected{% endif %}>السعر (الأقل أولاً)</option>
+                        <option value="-stock_quantity" {% if sort_by == '-stock_quantity' %}selected{% endif %}>المخزون (الأعلى أولاً)</option>
+                        <option value="stock_quantity" {% if sort_by == 'stock_quantity' %}selected{% endif %}>المخزون (الأقل أولاً)</option>
+                    </select>
+                </div>
+                
+                <div class="col-12 d-flex justify-content-between">
+                    <div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search me-1"></i> بحث
+                        </button>
+                        <button type="reset" class="btn btn-secondary ms-2" onclick="window.location='{% url 'product-list' %}'">
+                            <i class="fas fa-undo me-1"></i> إعادة ضبط
+                        </button>
+                    </div>
+                    
+                    <div>
+                        <button type="button" class="btn btn-link text-decoration-none" data-bs-toggle="collapse" data-bs-target="#searchCollapse">
+                            <i class="fas fa-times me-1"></i> إغلاق
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

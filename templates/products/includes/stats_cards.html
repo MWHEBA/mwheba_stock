@@ -1,0 +1,78 @@
+<!-- بطاقات الإحصائيات -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-3 col-md-6">
+        <div class="card stats-card-primary h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h6 class="text-muted mb-2">إجمالي المنتجات</h6>
+                        <h4 class="display-5 mb-0">{{ total_products|default:0 }}</h4>
+                    </div>
+                    <div class="fs-3 text-primary">
+                        <i class="fas fa-boxes"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <a href="{% url 'product-list' %}" class="text-decoration-none"><i class="fas fa-list-ul me-1"></i> عرض الكل</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="card stats-card-success h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h6 class="text-muted mb-2">المنتجات النشطة</h6>
+                        <h4 class="display-5 mb-0">{{ active_products|default:0 }}</h4>
+                    </div>
+                    <div class="fs-3 text-success">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <a href="{% url 'product-list' %}?status=active" class="text-decoration-none"><i class="fas fa-filter me-1"></i> عرض النشطة</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="card stats-card-danger h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h6 class="text-muted mb-2">مخزون منخفض</h6>
+                        <h4 class="display-5 mb-0">{{ low_stock_products|default:0 }}</h4>
+                    </div>
+                    <div class="fs-3 text-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <a href="{% url 'inventory-report' %}?stock=low" class="text-decoration-none"><i class="fas fa-search me-1"></i> عرض المخزون المنخفض</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="card stats-card-info h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h6 class="text-muted mb-2">قيمة المخزون</h6>
+                        <h4 class="display-5 mb-0">{{ inventory_value|floatformat:0|default:0 }}</h4>
+                    </div>
+                    <div class="fs-3 text-info">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <a href="{% url 'inventory-report' %}" class="text-decoration-none"><i class="fas fa-chart-bar me-1"></i> عرض التقرير</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

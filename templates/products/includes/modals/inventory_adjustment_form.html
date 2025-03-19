@@ -1,0 +1,134 @@
+<div class="p-4">
+    <div class="text-center mb-4">
+        <div class="d-inline-block p-3 rounded-circle bg-info-subtle">
+            <i class="fas fa-boxes fa-2x text-info"></i>
+        </div>
+        <h5 class="mt-3">تعديل مخزون المنتج</h5>
+        <p class="text-muted">{{ product.name }}</p>
+    </div>
+    
+    <div class="alert alert-info">
+        <div class="d-flex">
+            <div class="ms-2"><i class="fas fa-info-circle"></i></div>
+            <div>الكمية الحالية في المخزون: <strong>{{ current_stock }} {{ product.get_unit_name_display }}</strong></div>
+        </div>
+    </div>
+    
+    <form id="adjustInventoryForm" action="{% url 'adjust-inventory' product.id %}" method="post">
+        {% csrf_token %}
+        
+        <div class="mb-3">
+            <label for="adjustment_type" class="form-label">نوع التعديل</label>
+            <select name="adjustment_type" id="adjustment_type" class="form-select" required>
+                <option value="add">إضافة كمية للمخزون</option>
+                <option value="subtract">خصم كمية من المخزون</option>
+                <option value="set">تعيين كمية محددة</option>
+            </select>
+        </div>
+        
+        <div class="mb-3">
+            <label for="quantity" class="form-label">الكمية</label>
+            <input type="number" name="quantity" id="quantity" class="form-control" min="1" required>
+            <div class="form-text" id="quantityHelpText">أدخل الكمية التي تريد تعديلها</div>
+        </div>
+        
+        <div class="mb-3">
+            <label for="notes" class="form-label">ملاحظات</label>
+            <textarea name="notes" id="notes" class="form-control" rows="2" placeholder="سبب التعديل (اختياري)"></textarea>
+        </div>
+        
+        <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-info">
+                <i class="fas fa-save me-1"></i> حفظ التعديل
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('adjustInventoryForm');
+        const typeSelect = document.getElementById('adjustment_type');
+        const quantityInput = document.getElementById('quantity');
+        const helpText = document.getElementById('quantityHelpText');
+        
+        // تحديث نص المساعدة عند تغيير نوع التعديل
+        typeSelect.addEventListener('change', function() {
+            switch(this.value) {
+                case 'add':
+                    helpText.textContent = 'أدخل الكمية التي تريد إضافتها إلى المخزون';
+                    break;
+                case 'subtract':
+                    helpText.textContent = 'أدخل الكمية التي تريد خصمها من المخزون';
+                    break;
+                case 'set':
+                    helpText.textContent = 'أدخل الكمية الإجمالية التي تريد تعيينها كمخزون جديد';
+                    break;
+            }
+        });
+        
+        // إرسال النموذج عبر AJAX
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> جاري التنفيذ...';
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: new FormData(this),
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // عرض رسالة نجاح
+                    const modalElem = document.getElementById('adjustInventoryModal');
+                    const modal = bootstrap.Modal.getInstance(modalElem);
+                    modal.hide();
+                    
+                    // عرض إشعار نجاح
+                    if (typeof showNotification === 'function') {
+                        showNotification(data.message, 'success');
+                    } else {
+                        alert(data.message);
+                    }
+                    
+                    // إعادة تحميل الصفحة بعد فترة قصيرة
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    // عرض رسالة خطأ
+                    if (typeof showNotification === 'function') {
+                        showNotification(data.message, 'error');
+                    } else {
+                        alert(data.message);
+                    }
+                    
+                    // إعادة تفعيل الزر
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                
+                // إعادة تفعيل الزر
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+                
+                // عرض رسالة خطأ
+                if (typeof showNotification === 'function') {
+                    showNotification('حدث خطأ أثناء الاتصال بالخادم', 'error');
+                } else {
+                    alert('حدث خطأ أثناء الاتصال بالخادم');
+                }
+            });
+        });
+    });
+</script>

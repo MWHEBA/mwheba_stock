@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'purchases',
     'reports',
     'store_settings',
+    'dashboard.apps.DashboardConfig',  # Add this line
 ]
 
 MIDDLEWARE = [
