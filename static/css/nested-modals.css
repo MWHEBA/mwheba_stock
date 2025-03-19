@@ -1,0 +1,31 @@
+/**
+ * أنماط خاصة بالمودالات المتداخلة
+ */
+
+/* تحسين z-index للمودالات المتداخلة */
+.modal-backdrop.show:nth-of-type(2) {
+    z-index: 1060 !important;
+}
+
+.modal.show:nth-of-type(2) {
+    z-index: 1061 !important;
+}
+
+.modal-backdrop.show:nth-of-type(3) {
+    z-index: 1070 !important;
+}
+
+.modal.show:nth-of-type(3) {
+    z-index: 1071 !important;
+}
+
+/* منع إزالة الخلفية المظلمة عند إغلاق مودال فرعي */
+body.prevent-backdrop-removal .modal-backdrop.show {
+    opacity: 0.5 !important;
+}
+
+/* تخصيص خلفية المودالات المتداخلة للتمييز بينها */
+.modal.nested-modal .modal-content {
+    box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    border: 1px solid rgba(0,0,0,0.2);
+}

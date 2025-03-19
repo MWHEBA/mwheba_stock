@@ -164,30 +164,19 @@ def customer_create(request):
             
             messages.success(request, _(f'تم إضافة العميل {customer.name} بنجاح'))
             
-            # تحديد صفحة التحويل
+            # تحديد صفحة التحويل بناءً على زر الإرسال
             if 'save_and_add_another' in request.POST:
                 return redirect('customer-create')
             elif 'save_and_add_sale' in request.POST:
-                return redirect('sale-create')
+                return redirect('invoice-create', customer_id=customer.id)
             else:
                 return redirect('customer-detail', pk=customer.pk)
         else:
-            # إذا كان طلب AJAX، إرجاع رسائل الخطأ بشكل أكثر تفصيلاً
+            # إذا كان طلب AJAX، إرجاع رسائل الخطأ
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.POST.get('is_ajax') == '1':
-                # تحسين استرجاع الأخطاء
-                errors_dict = {}
-                for field, errors in form.errors.items():
-                    errors_dict[field] = [str(error) for error in errors]
-                
-                # إضافة معلومات تصحيح نصية للتشخيص
-                return JsonResponse({
-                    'success': False, 
-                    'errors': errors_dict,
-                    'status': 'form_invalid',
-                    'form_data': {k: v for k, v in request.POST.items() if k != 'csrfmiddlewaretoken'}
-                })
+                errors = {field: errors[0] for field, errors in form.errors.items()}
+                return JsonResponse({'success': False, 'errors': errors})
             
-            # في حالة طلب عادي غير AJAX
             messages.error(request, _('يرجى تصحيح الأخطاء في النموذج'))
     else:
         # القيم المبدئية إذا تم تمريرها في الـ URL
@@ -273,28 +262,31 @@ def customer_detail(request, pk):
 
 @login_required
 def customer_edit(request, pk):
+    """تعديل بيانات عميل موجود"""
     customer = get_object_or_404(Customer, pk=pk)
     
     if request.method == 'POST':
         form = CustomerForm(request.POST, instance=customer)
         if form.is_valid():
-            form.save()
+            customer = form.save()
             
             # إذا كان طلب AJAX، إرجاع استجابة JSON
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.POST.get('is_ajax') == '1':
                 return JsonResponse({
                     'success': True,
                     'customer_id': customer.id,
                     'customer_name': customer.name
                 })
             
-            messages.success(request, _('تم تحديث بيانات العميل بنجاح.'))
+            messages.success(request, _(f'تم تحديث بيانات العميل {customer.name} بنجاح'))
             return redirect('customer-detail', pk=customer.pk)
         else:
             # إذا كان طلب AJAX، إرجاع رسائل الخطأ
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.POST.get('is_ajax') == '1':
                 errors = {field: errors[0] for field, errors in form.errors.items()}
                 return JsonResponse({'success': False, 'errors': errors})
+            
+            messages.error(request, _('يرجى تصحيح الأخطاء في النموذج'))
     else:
         form = CustomerForm(instance=customer)
     

@@ -45,8 +45,9 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    <form method="post" novalidate id="customerForm">
+                    <form method="post" novalidate id="customerForm" action="{% if customer %}{% url 'customer-edit' customer.id %}{% else %}{% url 'customer-create' %}{% endif %}">
                         {% csrf_token %}
+                        <input type="hidden" name="is_ajax" value="0">
                         
                         {% if form.non_field_errors %}
                             <div class="alert alert-danger">
@@ -300,12 +301,12 @@
 </div>
 
 <!-- مودال إضافة تصنيف جديد -->
-<div class="modal fade" id="newCategoryModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
+<div class="modal fade" id="newCategoryModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title">إضافة تصنيف جديد</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="mb-3">
@@ -338,12 +339,14 @@
         </div>
     </div>
 </div>
+
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    // تعديل اسم المتغير ليتوافق مع المستخدم في الملفات الأخرى
+    // تعريف متغير URL التصنيف
     var categoryCreateAjaxUrl = "{% url 'customer-category-create' %}";
+    var currentOpenModal = null;
 
     document.addEventListener('DOMContentLoaded', function() {
         // تنسيق رقم الهاتف
@@ -355,73 +358,187 @@
             });
         });
         
-        // إضافة تصنيف جديد
-        document.getElementById('save-new-category').addEventListener('click', function() {
-            const categoryName = document.getElementById('new-category-name').value;
-            const categoryColor = document.getElementById('new-category-color').value;
-            const categoryDescription = document.getElementById('new-category-description').value;
-            
-            if (!categoryName) {
-                alert('يرجى إدخال اسم التصنيف');
-                return;
-            }
-            
-            // الحصول على قيمة CSRF token من الـ form
-            const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-            
-            // إرسال طلب AJAX لإنشاء تصنيف جديد
-            fetch(categoryCreateAjaxUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrftoken
-                },
-                body: JSON.stringify({
-                    name: categoryName,
-                    color_code: categoryColor,
-                    description: categoryDescription
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // إضافة التصنيف الجديد لقائمة التصنيفات
-                    const categorySelect = document.getElementById('id_category');
-                    const option = new Option(categoryName, data.id);
-                    categorySelect.add(option);
-                    option.selected = true;
-                    
-                    // إغلاق المودال
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('newCategoryModal'));
-                    modal.hide();
-                    
-                    // مسح قيم الحقول
-                    document.getElementById('new-category-name').value = '';
-                    document.getElementById('new-category-description').value = '';
-                    
-                    // رسالة نجاح
-                    showToast('تم إضافة التصنيف بنجاح', 'success');
-                } else {
-                    showToast('حدث خطأ: ' + data.error, 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showToast('حدث خطأ أثناء إنشاء التصنيف', 'error');
-            });
-        });
+        // 1. إنشاء حاوية التنبيهات إذا لم تكن موجودة
+        if (!document.getElementById('toast-container')) {
+            const toastContainer = document.createElement('div');
+            toastContainer.id = 'toast-container';
+            toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+            toastContainer.style.zIndex = '9999';
+            document.body.appendChild(toastContainer);
+        }
         
-        // دالة لعرض رسائل التأكيد/الخطأ
-        function showToast(message, type = 'info') {
-            // إذا كان لديك نظام توست مثبت، استخدمه هنا
-            // وإلا سنستخدم alert بسيط
-            alert(message);
+        // 2. تحسين معالجة المودالات المتداخلة
+        const categoryModal = document.getElementById('newCategoryModal');
+        const customerModal = document.querySelector('[data-bs-target="#newCategoryModal"]').closest('.modal');
+        let customerModalInstance = null;
+        
+        if (customerModal) {
+            categoryModal.addEventListener('show.bs.modal', function() {
+                // حفظ مرجع للمودال الأصلي
+                customerModalInstance = bootstrap.Modal.getInstance(customerModal);
+                // إخفاء مودال العميل مؤقتاً
+                if (customerModalInstance) {
+                    customerModal.classList.add('temp-hidden');
+                    // حفظ حالة المودال الأصلي
+                    currentOpenModal = customerModal;
+                }
+            });
+        }
+
+        // 3. تحسين معالج إضافة التصنيف الجديد
+        const saveNewCategoryButton = document.getElementById('save-new-category');
+        if (saveNewCategoryButton && !saveNewCategoryButton.hasAttribute('data-handler-attached')) {
+            saveNewCategoryButton.setAttribute('data-handler-attached', 'true');
+            saveNewCategoryButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const categoryName = document.getElementById('new-category-name').value.trim();
+                const categoryColor = document.getElementById('new-category-color').value;
+                const categoryDescription = document.getElementById('new-category-description').value.trim();
+                
+                if (!categoryName) {
+                    showToast('يرجى إدخال اسم التصنيف', 'warning');
+                    return;
+                }
+                
+                // تعطيل الزر لمنع النقر المتكرر
+                this.disabled = true;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> جاري الحفظ...';
+                
+                // الحصول على CSRF token
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                
+                // إرسال طلب AJAX لإنشاء تصنيف جديد
+                fetch(categoryCreateAjaxUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        name: categoryName,
+                        color_code: categoryColor,
+                        description: categoryDescription
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // إعادة تفعيل الزر
+                    this.disabled = false;
+                    this.innerHTML = '<i class="fas fa-save me-1"></i> حفظ التصنيف';
+                    
+                    if (data.success) {
+                        // إضافة التصنيف الجديد لقائمة التصنيفات
+                        const categorySelect = document.getElementById('id_category');
+                        const option = new Option(categoryName, data.id);
+                        categorySelect.add(option);
+                        option.selected = true;
+                        
+                        // مسح قيم الحقول
+                        document.getElementById('new-category-name').value = '';
+                        document.getElementById('new-category-description').value = '';
+                        
+                        // إغلاق مودال التصنيف
+                        const categoryModalInstance = bootstrap.Modal.getInstance(categoryModal);
+                        categoryModalInstance.hide();
+                        
+                        // رسالة نجاح
+                        showToast(`تم إضافة التصنيف "${categoryName}" بنجاح`, 'success');
+                    } else {
+                        showToast(data.error || 'لم يتم إضافة التصنيف', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    // إعادة تفعيل الزر
+                    this.disabled = false;
+                    this.innerHTML = '<i class="fas fa-save me-1"></i> حفظ التصنيف';
+                    showToast('حدث خطأ أثناء إنشاء التصنيف', 'error');
+                });
+            });
+        }
+        
+        // التعامل مع تقديم النموذج
+        const customerForm = document.getElementById('customerForm');
+        if (customerForm) {
+            customerForm.addEventListener('submit', function(e) {
+                // تعديل قيمة is_ajax لمنع عرض JSON في صفحة فارغة
+                const isAjaxField = this.querySelector('input[name="is_ajax"]');
+                if (isAjaxField) {
+                    isAjaxField.value = '0'; // تعيين القيمة إلى 0 للاستجابة العادية (غير Ajax)
+                }
+            });
         }
         
         // تلميحات الحقول
         const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+        if (tooltipTriggerList.length > 0) {
+            [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+        }
     });
+    
+    // 4. دالة عرض الإشعارات الجميلة
+    function showToast(message, type = 'info') {
+        const container = document.getElementById('toast-container');
+        const toastId = 'toast-' + Date.now();
+        
+        // تحديد لون الإشعار حسب النوع
+        let bgColor, icon, textColor = 'white';
+        switch(type) {
+            case 'success':
+                bgColor = 'bg-success';
+                icon = '<i class="fas fa-check-circle me-2"></i>';
+                break;
+            case 'error':
+                bgColor = 'bg-danger';
+                icon = '<i class="fas fa-times-circle me-2"></i>';
+                break;
+            case 'warning':
+                bgColor = 'bg-warning';
+                icon = '<i class="fas fa-exclamation-triangle me-2"></i>';
+                textColor = 'dark';
+                break;
+            default:
+                bgColor = 'bg-info';
+                icon = '<i class="fas fa-info-circle me-2"></i>';
+        }
+        
+        // إنشاء عنصر Toast
+        const toast = document.createElement('div');
+        toast.className = `toast align-items-center border-0 ${bgColor} text-${textColor}`;
+        toast.id = toastId;
+        toast.setAttribute('role', 'alert');
+        toast.setAttribute('aria-live', 'assertive');
+        toast.setAttribute('aria-atomic', 'true');
+        
+        // محتوى Toast
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">
+                    ${icon} ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        `;
+        
+        // إضافة Toast للحاوية
+        container.appendChild(toast);
+        
+        // إظهار Toast
+        const bsToast = new bootstrap.Toast(toast, {
+            delay: 4000,
+            animation: true
+        });
+        bsToast.show();
+        
+        // إزالة Toast بعد الإخفاء
+        toast.addEventListener('hidden.bs.toast', function() {
+            this.remove();
+        });
+    }
 </script>
-<script src="{% static 'js/customers.js' %}"></script>
+<!-- استدعاء ملف JavaScript الرئيسي مع وسيط لتخطي معالجة إضافة التصنيف -->
+<script src="{% static 'js/customers.js' %}?v=1.2" data-skip-category-handler="true"></script>
 {% endblock %}

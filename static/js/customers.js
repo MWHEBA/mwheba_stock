@@ -1,39 +1,256 @@
-// ملف جافاسكريبت خاص بصفحة العملاء
+/**
+ * MWHEBA Stock - وحدة إدارة العملاء
+ * تم إعادة هيكلته لتحسين الأداء ومنع التكرار
+ */
 
+// ==========================================
+// المتغيرات العالمية والتهيئة
+// ==========================================
 document.addEventListener('DOMContentLoaded', function() {
-    // تفعيل التلميحات
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
-    tooltipTriggerList.map(function(tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
+    // تهيئة جميع الوظائف عند تحميل الصفحة
+    initializeCustomerModule();
+});
+
+/**
+ * الدالة الرئيسية لتهيئة وحدة العملاء
+ */
+function initializeCustomerModule() {
+    // معالجة نظام التنقل بين التبويبات في النماذج
+    initTabNavigation();
+    
+    // تهيئة الأزرار والمودالات ونماذج الإدخال
+    initCustomerActionButtons();
+    initModals();
+    initFormInputs();
+    
+    // تهيئة مودال إضافة تصنيف
+    initCategoryFunctionality();
+}
+
+// ==========================================
+// وظائف المعالجة الرئيسية
+// ==========================================
+
+/**
+ * تهيئة وظائف التنقل بين التبويبات
+ */
+function initTabNavigation() {
+    // أزرار التنقل للأمام
+    document.querySelectorAll('.next-tab').forEach(button => {
+        button.addEventListener('click', function() {
+            const nextTabId = this.getAttribute('data-next');
+            activateTab(nextTabId);
+        });
     });
 
-    // تفعيل البحث إذا كان هناك قيم فلترة فعالة
-    if (document.querySelector('#searchCollapse')) {
-        const hasFilters = document.querySelector('.badge.rounded-pill.bg-primary.bg-opacity-10') || 
-                        document.querySelector('.badge.bg-opacity-10');
-        if (hasFilters) {
-            new bootstrap.Collapse(document.getElementById('searchCollapse')).show();
+    // أزرار التنقل للخلف
+    document.querySelectorAll('.prev-tab').forEach(button => {
+        button.addEventListener('click', function() {
+            const prevTabId = this.getAttribute('data-prev');
+            activateTab(prevTabId);
+        });
+    });
+}
+
+/**
+ * تفعيل تبويب معين
+ */
+function activateTab(tabId) {
+    const tabElement = document.getElementById(tabId);
+    if (tabElement) {
+        const tab = new bootstrap.Tab(tabElement);
+        tab.show();
+    }
+}
+
+/**
+ * تهيئة أزرار إجراءات العملاء
+ */
+function initCustomerActionButtons() {
+    // زر إضافة/تعديل عميل
+    initSaveCustomerButton();
+    
+    // أزرار عرض وحذف العميل
+    initViewCustomerButtons();
+    initDeleteCustomerButtons();
+    
+    // أزرار دفعات العملاء
+    initPaymentButtons();
+    
+    // زر معاينة بيانات العميل
+    initPreviewButton();
+}
+
+/**
+ * تهيئة زر حفظ العميل
+ */
+function initSaveCustomerButton() {
+    const saveBtn = document.getElementById('saveCustomerBtn');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            submitCustomerForm();
+        });
+    }
+}
+
+/**
+ * إرسال نموذج بيانات العميل
+ */
+function submitCustomerForm() {
+    const form = document.getElementById('addCustomerForm') || document.getElementById('editCustomerForm') || document.getElementById('customerForm');
+    if (!form) return;
+    
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    
+    // تحديد ما إذا كان يجب استخدام AJAX
+    const useAjax = form.hasAttribute('data-ajax') && form.getAttribute('data-ajax') === 'true';
+    
+    // إذا كنا لا نستخدم AJAX، فقط قم بتقديم النموذج بالطريقة التقليدية
+    if (!useAjax) {
+        // تغيير قيمة is_ajax إلى 0 للتأكد من الحصول على استجابة كاملة
+        const isAjaxField = form.querySelector('input[name="is_ajax"]');
+        if (isAjaxField) {
+            isAjaxField.value = '0';
         }
-    }
-
-    // تغيير عدد العناصر المعروضة
-    const showEntriesSelect = document.getElementById('show-entries');
-    if (showEntriesSelect) {
-        showEntriesSelect.addEventListener('change', function() {
-            const currentUrl = new URL(window.location.href);
-            currentUrl.searchParams.set('page_size', this.value);
-            window.location.href = currentUrl;
-        });
+        form.submit();
+        return;
     }
     
-    // تطبيق التصفية عند تغيير أي من الحقول
-    document.querySelectorAll('#filter-form select').forEach(function(select) {
-        select.addEventListener('change', function() {
-            document.getElementById('filter-form').submit();
+    // إرسال النموذج بواسطة AJAX
+    const formData = new FormData(form);
+    formData.set('is_ajax', '1'); // تعيين القيمة إلى 1 لاستجابة Ajax
+    
+    const submitBtn = form.querySelector('[type="submit"]');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> جاري الحفظ...';
+    }
+    
+    const csrfToken = form.querySelector('[name="csrfmiddlewaretoken"]').value;
+    
+    fetch(form.action, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        // إعادة تفعيل زر الحفظ
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-save me-1"></i> حفظ';
+        }
+        
+        if (data.success) {
+            showNotification(`تم حفظ بيانات العميل ${data.customer_name} بنجاح`, 'success');
+            
+            // التحويل إلى صفحة أخرى بعد فترة قصيرة
+            setTimeout(() => {
+                const redirectUrl = form.getAttribute('data-redirect-url') || 
+                                    `/customers/${data.customer_id}/`;
+                window.location.href = redirectUrl;
+            }, 1000);
+        } else {
+            // إظهار أخطاء التحقق
+            showFormErrors(form, data.errors);
+            showNotification('يرجى تصحيح الأخطاء وإعادة المحاولة', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-save me-1"></i> حفظ';
+        }
+        
+        showNotification('حدث خطأ أثناء إرسال البيانات. يرجى المحاولة مرة أخرى.', 'error');
+    });
+}
+
+/**
+ * تهيئة أزرار عرض تفاصيل العميل
+ */
+function initViewCustomerButtons() {
+    document.querySelectorAll('.view-customer-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const customerId = this.getAttribute('data-id');
+            loadCustomerDetails(customerId);
         });
     });
+}
+
+/**
+ * تحميل تفاصيل العميل
+ */
+function loadCustomerDetails(customerId) {
+    // إظهار المودال الرئيسي
+    const modal = new bootstrap.Modal(document.getElementById('viewCustomerModal'));
+    modal.show();
     
-    // إعداد مودال حذف العميل
+    const modalContent = document.querySelector('#viewCustomerModal .modal-content');
+    
+    // إظهار مؤشر التحميل
+    modalContent.innerHTML = `
+        <div class="d-flex justify-content-center p-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">جاري التحميل...</span>
+            </div>
+        </div>
+    `;
+    
+    // تحميل محتوى المودال من الخادم
+    fetch(`/customers/${customerId}/get-data/`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('حدث خطأ أثناء تحميل البيانات');
+            }
+            return response.text();
+        })
+        .then(html => {
+            modalContent.innerHTML = html;
+            
+            // إعادة تهيئة وظائف أزرار تسجيل الدفعات
+            const paymentBtn = modalContent.querySelector('#recordPaymentBtn');
+            if (paymentBtn) {
+                paymentBtn.addEventListener('click', function() {
+                    modal.hide();
+                    loadPaymentModal(this.getAttribute('data-id'));
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            modalContent.innerHTML = `
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">خطأ</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 text-center">
+                    <i class="fas fa-exclamation-triangle text-danger fa-3x mb-3"></i>
+                    <h5>تعذر تحميل بيانات العميل</h5>
+                    <p>حدث خطأ أثناء محاولة الاتصال بالخادم. يرجى المحاولة مرة أخرى.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                </div>
+            `;
+        });
+}
+
+/**
+ * تهيئة أزرار حذف العميل
+ */
+function initDeleteCustomerButtons() {
+    // تهيئة مودال الحذف
     const deleteModal = document.getElementById('deleteCustomerModal');
     if (deleteModal) {
         deleteModal.addEventListener('show.bs.modal', function(event) {
@@ -41,656 +258,493 @@ document.addEventListener('DOMContentLoaded', function() {
             const customerId = button.getAttribute('data-id');
             const customerName = button.getAttribute('data-name');
             
-            document.getElementById('customer-name-to-delete').textContent = customerName;
-            document.getElementById('delete-customer-form').action = `/customers/${customerId}/delete/`;
+            // تحديث بيانات المودال
+            document.getElementById('customerIdToDelete').value = customerId;
+            document.getElementById('customerNameToDelete').textContent = customerName;
         });
+        
+        // تنفيذ الحذف عند التأكيد
+        const confirmDeleteBtn = document.getElementById('confirmDeleteCustomer');
+        if (confirmDeleteBtn) {
+            confirmDeleteBtn.addEventListener('click', deleteCustomer);
+        }
     }
+}
 
-    // تعديل الأزرار لفتح المودال بدلاً من الانتقال للصفحة
-    document.querySelectorAll('.view-customer-btn').forEach(function(btn) {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            loadCustomerDetails(this.getAttribute('data-id'));
-        });
+/**
+ * حذف العميل
+ */
+function deleteCustomer() {
+    const form = document.getElementById('deleteCustomerForm');
+    const customerId = document.getElementById('customerIdToDelete').value;
+    
+    if (!customerId || !form) return;
+    
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const formData = new FormData(form);
+    
+    // تعطيل زر الحذف
+    this.disabled = true;
+    this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> جاري الحذف...';
+    
+    fetch(`/customers/${customerId}/delete/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        // إعادة تفعيل زر الحذف
+        this.disabled = false;
+        this.innerHTML = '<i class="fas fa-trash-alt me-1"></i> حذف';
+        
+        if (data.success) {
+            // إغلاق المودال
+            const modal = bootstrap.Modal.getInstance(document.getElementById('deleteCustomerModal'));
+            modal.hide();
+            
+            showNotification('تم حذف العميل بنجاح', 'success');
+            
+            // إعادة تحميل الصفحة بعد فترة قصيرة
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showNotification(data.message || 'فشلت عملية الحذف', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        
+        // إعادة تفعيل زر الحذف
+        this.disabled = false;
+        this.innerHTML = '<i class="fas fa-trash-alt me-1"></i> حذف';
+        
+        showNotification('حدث خطأ أثناء الاتصال بالخادم', 'error');
     });
-    
-    document.querySelectorAll('.edit-customer-btn').forEach(function(btn) {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            loadCustomerForEdit(this.getAttribute('data-id'));
-        });
-    });
-    
-    // حفظ العميل الجديد
-    const saveCustomerBtn = document.getElementById('saveCustomerBtn');
-    if (saveCustomerBtn) {
-        saveCustomerBtn.addEventListener('click', function() {
-            const form = document.getElementById('addCustomerForm');
-            
-            // التحقق من صحة النموذج
-            if (!form.checkValidity()) {
-                form.classList.add('was-validated');
-                return;
-            }
-            
-            // إظهار مؤشر التحميل
-            document.getElementById('loading-overlay').classList.remove('d-none');
-            
-            // إرسال النموذج
-            const formData = new FormData(form);
-            
-            fetch(form.getAttribute('action'), {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                credentials: 'same-origin'  // إضافة هذا الخيار للتأكد من إرسال الكوكيز
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                // إخفاء مؤشر التحميل
-                document.getElementById('loading-overlay').classList.add('d-none');
-                
-                if (data.success) {
-                    // إغلاق المودال
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('addCustomerModal'));
-                    modal.hide();
-                    
-                    // عرض رسالة نجاح
-                    showToast('تم إضافة العميل ' + data.customer_name + ' بنجاح', 'success');
-                    
-                    // إعادة تحميل الصفحة بعد فترة قصيرة
-                    setTimeout(() => window.location.reload(), 1000);
-                } else {
-                    // تحسين معالجة رسائل الخطأ
-                    console.log('Error response details:', data);
-                    
-                    let errorMessage = 'حدث خطأ أثناء إضافة العميل';
-                    
-                    // إذا كان هناك أخطاء محددة
-                    if (data.errors) {
-                        if (typeof data.errors === 'object') {
-                            // تحويل كائن الأخطاء إلى نص مقروء
-                            errorMessage = Object.entries(data.errors)
-                                .map(([field, error]) => `${getFieldName(field)}: ${error}`)
-                                .join('<br>');
-                        } else if (typeof data.errors === 'string') {
-                            errorMessage = data.errors;
-                        }
-                    } else if (data.error) {
-                        errorMessage = data.error;
-                    }
-                    
-                    // عرض رسائل الخطأ
-                    showToast(errorMessage, 'error');
-                }
-            })
-            .catch(error => {
-                // إخفاء مؤشر التحميل
-                document.getElementById('loading-overlay').classList.add('d-none');
-                
-                console.error('Error details:', error);
-                showToast('حدث خطأ في الاتصال بالخادم. يرجى المحاولة مرة أخرى.', 'error');
-            });
-        });
-    }
-    
-    // حدث نقر زر التعديل من مودال العرض
-    const openEditModalBtn = document.getElementById('openEditModalBtn');
-    if (openEditModalBtn) {
-        openEditModalBtn.addEventListener('click', function() {
+}
+
+/**
+ * تهيئة أزرار تسجيل الدفعات
+ */
+function initPaymentButtons() {
+    document.querySelectorAll('[data-action="record-payment"]').forEach(btn => {
+        btn.addEventListener('click', function() {
             const customerId = this.getAttribute('data-id');
-            loadCustomerForEdit(customerId);
+            loadPaymentModal(customerId);
         });
-    }
+    });
+}
+
+/**
+ * تحميل مودال تسجيل دفعة
+ */
+function loadPaymentModal(customerId) {
+    const modal = new bootstrap.Modal(document.getElementById('recordPaymentModal'));
+    modal.show();
     
-    // حفظ تعديلات العميل
-    const updateCustomerBtn = document.getElementById('updateCustomerBtn');
-    if (updateCustomerBtn) {
-        updateCustomerBtn.addEventListener('click', function() {
-            const form = document.getElementById('editCustomerForm');
-            
-            // التحقق من صحة النموذج
-            if (!form.checkValidity()) {
-                form.classList.add('was-validated');
-                return;
+    const modalBody = document.querySelector('#recordPaymentModal .modal-body');
+    
+    // تحميل نموذج تسجيل الدفعة
+    fetch(`/customers/${customerId}/record-payment-form/`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('حدث خطأ أثناء تحميل النموذج');
             }
+            return response.text();
+        })
+        .then(html => {
+            modalBody.innerHTML = html;
             
-            // إرسال النموذج
-            const formData = new FormData(form);
+            // تهيئة نموذج الدفع
+            const form = modalBody.querySelector('form');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    submitPaymentForm(form, customerId);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            modalBody.innerHTML = `
+                <div class="text-center">
+                    <i class="fas fa-exclamation-triangle text-danger fa-3x mb-3"></i>
+                    <h5>تعذر تحميل نموذج تسجيل الدفعة</h5>
+                    <p>حدث خطأ أثناء محاولة الاتصال بالخادم. يرجى المحاولة مرة أخرى.</p>
+                </div>
+            `;
+        });
+}
+
+/**
+ * إرسال نموذج تسجيل دفعة
+ */
+function submitPaymentForm(form, customerId) {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const formData = new FormData(form);
+    
+    // تعطيل زر الإرسال
+    const submitBtn = form.querySelector('[type="submit"]');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> جاري التسجيل...';
+    }
+    
+    fetch(`/customers/${customerId}/record-payment/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        // إعادة تفعيل زر الإرسال
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-save me-1"></i> تسجيل الدفعة';
+        }
+        
+        if (data.success) {
+            // إغلاق المودال
+            const modal = bootstrap.Modal.getInstance(document.getElementById('recordPaymentModal'));
+            modal.hide();
             
-            fetch(form.getAttribute('action'), {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // إغلاق المودال
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('editCustomerModal'));
-                    modal.hide();
-                    
-                    // عرض رسالة نجاح
-                    showToast('تم تحديث بيانات العميل بنجاح', 'success');
-                    
-                    // إعادة تحميل الصفحة
-                    setTimeout(() => window.location.reload(), 1000);
-                } else {
-                    // عرض رسائل الخطأ
-                    showToast('حدث خطأ: ' + (data.errors || 'خطأ غير معروف'), 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showToast('حدث خطأ أثناء معالجة الطلب', 'error');
-            });
+            showNotification(`تم تسجيل دفعة بقيمة ${data.amount} ج.م بنجاح`, 'success');
+            
+            // إعادة تحميل الصفحة بعد فترة قصيرة
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showFormErrors(form, data.errors);
+            showNotification(data.message || 'فشل تسجيل الدفعة', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        
+        // إعادة تفعيل زر الإرسال
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-save me-1"></i> تسجيل الدفعة';
+        }
+        
+        showNotification('حدث خطأ أثناء الاتصال بالخادم', 'error');
+    });
+}
+
+/**
+ * تهيئة زر معاينة بيانات العميل
+ */
+function initPreviewButton() {
+    const previewBtn = document.getElementById('previewCustomerBtn');
+    if (previewBtn) {
+        previewBtn.addEventListener('click', function() {
+            updatePreviewData();
+        });
+    }
+}
+
+/**
+ * تحديث بيانات المعاينة
+ */
+function updatePreviewData() {
+    const name = document.getElementById('id_name').value || '--';
+    const phone = document.getElementById('id_phone').value || '--';
+    const email = document.getElementById('id_email').value || '--';
+    const address = document.getElementById('id_address').value || '--';
+    
+    // تحديث عناصر المعاينة
+    document.getElementById('preview_name').textContent = name;
+    document.getElementById('preview_phone').textContent = phone;
+    document.getElementById('preview_email').textContent = email;
+    document.getElementById('preview_address').textContent = address;
+    
+    // عرض قسم المعاينة
+    document.getElementById('customerPreview').style.display = 'block';
+}
+
+/**
+ * تهيئة عرض المودالات
+ */
+function initModals() {
+    // تهيئة مودال العرض عند الإغلاق
+    const viewModal = document.getElementById('viewCustomerModal');
+    if (viewModal) {
+        viewModal.addEventListener('hidden.bs.modal', function() {
+            const modalContent = this.querySelector('.modal-content');
+            modalContent.innerHTML = `
+                <div class="d-flex justify-content-center p-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">جاري التحميل...</span>
+                    </div>
+                </div>
+            `;
         });
     }
     
-    // تنسيق أرقام الهواتف
+    // تهيئة باقي المودالات...
+}
+
+/**
+ * تهيئة حقول الإدخال
+ */
+function initFormInputs() {
+    // تهيئة حقول إدخال الهاتف
     document.querySelectorAll('.phone-input').forEach(input => {
         input.addEventListener('input', function() {
             let value = this.value.replace(/[^\d+]/g, '');
             this.value = value;
         });
     });
-
-    // إضافة تأثير التلميح للبطاقات
-    document.querySelectorAll('.card-hover').forEach(card => {
-        card.addEventListener('mouseenter', function() {
-            this.classList.add('shadow');
-        });
-
-        card.addEventListener('mouseleave', function() {
-            this.classList.remove('shadow');
-        });
-    });
-
-    // تفعيل زر الشريط الجانبي في الصفحة التفصيلية للعميل
-    const sidebarToggleBtn = document.getElementById('sidebar-toggle-customer');
-    if (sidebarToggleBtn) {
-        const customerSidebar = document.getElementById('customer-sidebar');
-        sidebarToggleBtn.addEventListener('click', function() {
-            customerSidebar.classList.toggle('collapsed');
-            document.getElementById('customer-main-content').classList.toggle('expanded');
-        });
-    }
-
-    // تحديث حالة الدفع عند تغيير المبلغ المدفوع
-    const paymentAmountInput = document.getElementById('payment-amount');
-    if (paymentAmountInput) {
-        paymentAmountInput.addEventListener('input', updatePaymentSummary);
-    }
-
-    // حدث حفظ التصنيف الجديد
-    const saveNewCategoryBtn = document.getElementById('save-new-category');
-    const newCategoryForm = document.getElementById('addCategoryForm'); // Ensure the form is selected correctly
-
-    if (saveNewCategoryBtn && newCategoryForm) {
-        saveNewCategoryBtn.addEventListener('click', function () {
-            // Validate the form before proceeding
-            if (!newCategoryForm.checkValidity()) {
-                newCategoryForm.reportValidity();
-                return;
-            }
-
-            const categoryName = document.getElementById('new-category-name').value;
-            const categoryColor = document.getElementById('new-category-color').value;
-            const categoryDescription = document.getElementById('new-category-description').value;
-
-            // Get CSRF token
-            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-
-            // Send AJAX request to create a new category
-            fetch('/customers/categories/create-ajax/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
-                },
-                body: JSON.stringify({
-                    name: categoryName,
-                    color_code: categoryColor,
-                    description: categoryDescription
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Add the new category to the dropdown
-                    const categorySelect = document.getElementById('id_category');
-                    const newOption = new Option(categoryName, data.id);
-                    categorySelect.add(newOption);
-                    newOption.selected = true;
-
-                    // Close the modal
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('newCategoryModal'));
-                    modal.hide();
-
-                    // Clear the form fields
-                    newCategoryForm.reset();
-
-                    alert('تم إضافة التصنيف بنجاح');
-                } else {
-                    alert('حدث خطأ: ' + data.error);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('حدث خطأ أثناء الاتصال بالخادم.');
-            });
-        });
-    }
-
-    // أزرار التنقل بين التبويبات
-    document.querySelectorAll('.next-tab').forEach(button => {
-        button.addEventListener('click', function () {
-            const nextTabId = this.getAttribute('data-next');
-            const nextTab = document.getElementById(nextTabId);
-            if (nextTab) {
-                const tab = new bootstrap.Tab(nextTab);
-                tab.show();
-            }
-        });
-    });
-
-    document.querySelectorAll('.prev-tab').forEach(button => {
-        button.addEventListener('click', function () {
-            const prevTabId = this.getAttribute('data-prev');
-            const prevTab = document.getElementById(prevTabId);
-            if (prevTab) {
-                const tab = new bootstrap.Tab(prevTab);
-                tab.show();
-            }
-        });
-    });
-
-    // زر حفظ
-    document.getElementById('saveCustomerBtn').addEventListener('click', function (e) {
-        e.preventDefault();
-        const form = document.getElementById('addCustomerForm');
-        const formData = new FormData(form);
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-
-        fetch(form.action, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': csrfToken,
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert(`تم حفظ العميل: ${data.customer_name}`);
-                location.reload();
-            } else {
-                alert('حدث خطأ أثناء الحفظ.');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('حدث خطأ أثناء الاتصال بالخادم.');
-        });
-    });
-
-    // زر معاينة
-    document.getElementById('previewCustomerBtn').addEventListener('click', function () {
-        const name = document.getElementById('id_name').value || '--';
-        const phone = document.getElementById('id_phone').value || '--';
-        const email = document.getElementById('id_email').value || '--';
-        const address = document.getElementById('id_address').value || '--';
-
-        document.getElementById('preview_name').textContent = name;
-        document.getElementById('preview_phone').textContent = phone;
-        document.getElementById('preview_email').textContent = email;
-        document.getElementById('preview_address').textContent = address;
-
-        document.getElementById('customerPreview').style.display = 'block';
-    });
-
-    // حدث زر حفظ التصنيف الجديد
-    const saveNewCategoryButtonEl = document.getElementById('save-new-category');
-    if (saveNewCategoryButtonEl && !saveNewCategoryButtonEl.hasAttribute('data-initialized')) {
-        saveNewCategoryButtonEl.setAttribute('data-initialized', 'true');
-        saveNewCategoryButtonEl.addEventListener('click', function() {
-            const categoryName = document.getElementById('new-category-name').value.trim();
-            if (!categoryName) {
-                alert('يرجى إدخال اسم التصنيف');
-                return;
-            }
-            
-            const categoryColor = document.getElementById('new-category-color').value;
-            const categoryDescription = document.getElementById('new-category-description').value.trim();
-            
-            // استخدام المتغير العالمي المعرف في القالب
-            const url = typeof categoryCreateAjaxUrl !== 'undefined' ? 
-                categoryCreateAjaxUrl : '/customers/categories/create-ajax/';
-            
-            // الحصول على CSRF token
-            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-            
-            fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken,
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify({
-                    name: categoryName,
-                    color_code: categoryColor,
-                    description: categoryDescription
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // إضافة التصنيف للقائمة
-                    const categorySelect = document.getElementById('id_category');
-                    const option = new Option(categoryName, data.id);
-                    categorySelect.add(option);
-                    option.selected = true;
-                    
-                    // إغلاق المودال
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('newCategoryModal'));
-                    modal.hide();
-                    
-                    // مسح الحقول
-                    document.getElementById('new-category-name').value = '';
-                    document.getElementById('new-category-description').value = '';
-                    
-                    alert('تم إضافة التصنيف بنجاح');
-                } else {
-                    alert('حدث خطأ: ' + (data.error || 'فشلت عملية الإضافة'));
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('حدث خطأ أثناء إنشاء التصنيف');
-            });
-        });
-    }
-});
-
-document.addEventListener('DOMContentLoaded', function () {
-    const saveNewCategoryBtn = document.getElementById('save-new-category');
-
-    if (saveNewCategoryBtn) {
-        saveNewCategoryBtn.addEventListener('click', function () {
-            const categoryName = document.getElementById('new-category-name').value.trim();
-            const categoryColor = document.getElementById('new-category-color').value;
-            const categoryDescription = document.getElementById('new-category-description').value.trim();
-
-            if (!categoryName) {
-                alert('يرجى إدخال اسم التصنيف');
-                return;
-            }
-
-            // Get CSRF token
-            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-
-            // Use the dynamically passed URL
-            fetch(categoryCreateAjaxUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
-                },
-                body: JSON.stringify({
-                    name: categoryName,
-                    color_code: categoryColor,
-                    description: categoryDescription
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Add the new category to the dropdown
-                    const categorySelect = document.getElementById('id_category');
-                    const newOption = new Option(categoryName, data.id);
-                    categorySelect.add(newOption);
-                    newOption.selected = true;
-
-                    // Close the modal
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('newCategoryModal'));
-                    modal.hide();
-
-                    // Clear the form fields
-                    document.getElementById('new-category-name').value = '';
-                    document.getElementById('new-category-description').value = '';
-
-                    alert('تم إضافة التصنيف بنجاح');
-                } else {
-                    alert('حدث خطأ: ' + (data.error || 'تعذر إنشاء التصنيف'));
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('حدث خطأ أثناء الاتصال بالخادم.');
-            });
-        });
-    }
-});
-
-// وظائف مساعدة
-function loadCustomerDetails(customerId) {
-    const detailContent = document.getElementById('customerDetailContent');
-    detailContent.innerHTML = `
-        <div class="text-center py-5">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">جاري التحميل...</span>
-            </div>
-        </div>
-    `;
     
-    // فتح المودال
-    const modal = new bootstrap.Modal(document.getElementById('viewCustomerModal'));
-    modal.show();
-    
-    // تحميل البيانات عبر AJAX
-    fetch(`/customers/${customerId}/detail/?format=modal`)
-        .then(response => response.text())
-        .then(html => {
-            detailContent.innerHTML = html;
-            const editBtn = document.getElementById('openEditModalBtn');
-            if (editBtn) {
-                editBtn.setAttribute('data-id', customerId);
-            }
-            const viewFullPageBtn = document.getElementById('viewFullPageBtn');
-            if (viewFullPageBtn) {
-                viewFullPageBtn.href = `/customers/${customerId}/`;
-            }
-            const createInvoiceBtn = document.getElementById('createInvoiceBtn');
-            if (createInvoiceBtn) {
-                createInvoiceBtn.href = `/sales/create/?customer_id=${customerId}`;
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            detailContent.innerHTML = `<div class="alert alert-danger">حدث خطأ أثناء تحميل البيانات</div>`;
+    // تهيئة عنصر اختيار عدد العناصر في الصفحة
+    const showEntriesSelect = document.getElementById('show-entries');
+    if (showEntriesSelect) {
+        showEntriesSelect.addEventListener('change', function() {
+            const pageSize = this.value;
+            const url = new URL(window.location.href);
+            url.searchParams.set('page_size', pageSize);
+            window.location.href = url.toString();
         });
+    }
 }
 
-function loadCustomerForEdit(customerId) {
-    // إغلاق مودال العرض إذا كان مفتوحاً
-    const viewModal = bootstrap.Modal.getInstance(document.getElementById('viewCustomerModal'));
-    if (viewModal) {
-        viewModal.hide();
-    }
-
-    // إعداد رابط الإرسال
-    document.getElementById('editCustomerForm').setAttribute('action', `/customers/${customerId}/edit/`);
+/**
+ * تهيئة وظائف إضافة/تعديل التصنيفات
+ */
+function initCategoryFunctionality() {
+    // التحقق مما إذا كان يجب تخطي معالج التصنيف (في حالة وجود معالج مخصص في الصفحة)
+    const skipCategoryHandler = document.currentScript && 
+                             document.currentScript.getAttribute('data-skip-category-handler') === "true";
     
-    // تحميل بيانات العميل
-    fetch(`/customers/${customerId}/get-data/`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                const customer = data.customer;
-                // ملء النموذج
-                document.getElementById('edit-name').value = customer.name;
-                document.getElementById('edit-code').value = customer.code || ''; // إضافة كود العميل
-                document.getElementById('edit-phone').value = customer.phone || '';
-                document.getElementById('edit-email').value = customer.email || '';
-                document.getElementById('edit-address').value = customer.address || '';
-                document.getElementById('edit-credit_limit').value = customer.credit_limit;
-                document.getElementById('edit-category').value = customer.category_id || '';
-                document.getElementById('edit-status').value = customer.status;
+    if (!skipCategoryHandler) {
+        const saveNewCategoryBtn = document.getElementById('save-new-category');
+        if (saveNewCategoryBtn && !saveNewCategoryBtn.hasAttribute('data-handler-attached')) {
+            saveNewCategoryBtn.setAttribute('data-handler-attached', 'true');
+            
+            // تهيئة معالج مودال التصنيف
+            const categoryModal = document.getElementById('newCategoryModal');
+            if (categoryModal) {
+                initNestedModal(categoryModal);
+            }
+            
+            // ربط حدث النقر على زر الحفظ
+            saveNewCategoryBtn.addEventListener('click', saveCategoryHandler);
+        }
+    }
+}
+
+/**
+ * مساعد لتهيئة المودال المتداخل
+ */
+function initNestedModal(modal) {
+    if (!modal) return;
+    
+    // تأكد من وجود نافذة مدير المودالات المتداخلة
+    if (typeof window.nestedModalManager === 'undefined') {
+        // إذا لم يكن موجوداً، أنشئ تهيئة محلية بسيطة
+        modal.addEventListener('show.bs.modal', function() {
+            // حفظ مرجع للمودال المفتوح
+            const parentModals = document.querySelectorAll('.modal.show');
+            if (parentModals.length > 0) {
+                const parentModal = parentModals[parentModals.length - 1];
+                modal.setAttribute('data-parent-modal', parentModal.id);
                 
-                // فتح المودال
-                const modal = new bootstrap.Modal(document.getElementById('editCustomerModal'));
-                modal.show();
-            } else {
-                showToast('خطأ: ' + data.error, 'error');
+                // زيادة z-index للمودال الجديد والخلفية
+                setTimeout(() => {
+                    const backdrops = document.querySelectorAll('.modal-backdrop');
+                    if (backdrops.length > 0) {
+                        const lastBackdrop = backdrops[backdrops.length - 1];
+                        const zIndex = parseInt(getComputedStyle(parentModal).zIndex || 1050);
+                        modal.style.zIndex = (zIndex + 10).toString();
+                        lastBackdrop.style.zIndex = (zIndex + 9).toString();
+                    }
+                }, 10);
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showToast('حدث خطأ أثناء تحميل البيانات', 'error');
         });
+        
+        modal.addEventListener('hidden.bs.modal', function() {
+            // إعادة فتح المودال الأصلي إذا كان موجوداً
+            const parentModalId = modal.getAttribute('data-parent-modal');
+            if (parentModalId) {
+                const parentModal = document.getElementById(parentModalId);
+                if (parentModal) {
+                    setTimeout(() => {
+                        parentModal.classList.add('show');
+                        parentModal.style.display = 'block';
+                        document.body.classList.add('modal-open');
+                    }, 150);
+                }
+            }
+        });
+    }
 }
 
-function showToast(message, type = 'info') {
-    // التحقق من وجود عنصر الإشعارات، وإنشاءه إذا كان غير موجود
-    let toastContainer = document.getElementById('toast-container');
-    if (!toastContainer) {
-        toastContainer = document.createElement('div');
-        toastContainer.id = 'toast-container';
-        toastContainer.className = 'position-fixed bottom-0 end-0 p-3';
-        toastContainer.style.zIndex = '5000';
-        document.body.appendChild(toastContainer);
+/**
+ * معالج حدث حفظ التصنيف
+ */
+function saveCategoryHandler(e) {
+    e.preventDefault();
+    
+    const categoryName = document.getElementById('new-category-name').value.trim();
+    const categoryColor = document.getElementById('new-category-color').value;
+    const categoryDescription = document.getElementById('new-category-description').value.trim();
+    
+    if (!categoryName) {
+        showNotification('يرجى إدخال اسم التصنيف', 'warning');
+        return;
     }
     
-    // إنشاء الإشعار
-    const toastId = 'toast-' + Date.now();
-    const toastEl = document.createElement('div');
-    toastEl.className = `toast align-items-center text-white bg-${type === 'error' ? 'danger' : type}`;
-    toastEl.id = toastId;
-    toastEl.setAttribute('role', 'alert');
-    toastEl.setAttribute('aria-live', 'assertive');
-    toastEl.setAttribute('aria-atomic', 'true');
-    toastEl.innerHTML = `
-        <div class="d-flex">
-            <div class="toast-body">
-                ${message}
-            </div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-    `;
+    // تعطيل الزر لمنع النقر المتكرر
+    this.disabled = true;
+    this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> جاري الحفظ...';
     
-    toastContainer.appendChild(toastEl);
+    // الحصول على URL المناسب (من متغير عالمي أو مسار افتراضي)
+    const url = typeof categoryCreateAjaxUrl !== 'undefined' ? 
+        categoryCreateAjaxUrl : '/customers/categories/create/';
     
-    // إظهار الإشعار
-    const toast = new bootstrap.Toast(toastEl, { autohide: true, delay: 5000 });
-    toast.show();
+    // الحصول على CSRF token
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
     
-    // إزالة الإشعار بعد إخفائه
-    toastEl.addEventListener('hidden.bs.toast', function () {
-        toastEl.remove();
+    // إرسال البيانات
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken,
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({
+            name: categoryName,
+            color_code: categoryColor,
+            description: categoryDescription
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        // إعادة تفعيل الزر
+        this.disabled = false;
+        this.innerHTML = '<i class="fas fa-save me-1"></i> حفظ التصنيف';
+        
+        if (data.success) {
+            // إضافة التصنيف الجديد لقائمة التصنيفات
+            const categorySelect = document.getElementById('id_category');
+            if (categorySelect) {
+                const option = new Option(categoryName, data.id);
+                categorySelect.add(option);
+                option.selected = true;
+            }
+            
+            // إغلاق المودال
+            const modal = bootstrap.Modal.getInstance(document.getElementById('newCategoryModal'));
+            if (modal) {
+                modal.hide();
+            }
+            
+            // مسح قيم الحقول
+            document.getElementById('new-category-name').value = '';
+            document.getElementById('new-category-description').value = '';
+            
+            // رسالة نجاح
+            showNotification('تم إضافة التصنيف بنجاح', 'success');
+        } else {
+            showNotification(data.error || 'فشل إنشاء التصنيف', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        
+        // إعادة تفعيل الزر
+        this.disabled = false;
+        this.innerHTML = '<i class="fas fa-save me-1"></i> حفظ التصنيف';
+        
+        showNotification('حدث خطأ أثناء الاتصال بالخادم', 'error');
     });
 }
 
-function getFieldName(field) {
-    // تحويل اسم الحقل التقني إلى اسم عربي مقروء
-    const fieldNames = {
-        'name': 'الاسم',
-        'phone': 'رقم الهاتف',
-        'email': 'البريد الإلكتروني',
-        'address': 'العنوان',
-        'credit_limit': 'حد الائتمان',
-        'category': 'التصنيف',
-        'status': 'الحالة'
-    };
-    
-    return fieldNames[field] || field;
-}
+// ==========================================
+// وظائف مساعدة
+// ==========================================
 
-// وظيفة لتحديث ملخص الدفع
-function updatePaymentSummary() {
-    const amount = parseFloat(document.getElementById('payment-amount').value) || 0;
-    const totalDebt = parseFloat(document.getElementById('total-debt').dataset.value) || 0;
-    const remainingAmount = Math.max(0, totalDebt - amount);
-    
-    document.getElementById('payment-summary-amount').textContent = amount.toFixed(2);
-    document.getElementById('payment-summary-remaining').textContent = remainingAmount.toFixed(2);
-    
-    // تحديث لون المبلغ المتبقي
-    const remainingElement = document.getElementById('payment-summary-remaining-container');
-    if (remainingAmount > 0) {
-        remainingElement.className = 'text-danger';
-    } else {
-        remainingElement.className = 'text-success';
-    }
-}
-
-// ابحث عن أي استخدام لـ URL category-create-ajax واستبدله بـ customer-category-create
-// على سبيل المثال:
-// من:
-// const url = '/customers/categories/create-ajax/';
-// إلى:
-const url = '/customers/categories/create/';
-
-// استبدال مسار category-create-ajax بالمسار customer-category-create
-// تأكد من تحويل هذا الجزء من الكود 
-
-fetch(categoryCreateAjaxUrl, {
-    // ...existing code...
-});
-
-// حدث إضافة تصنيف جديد (من زر إضافة التصنيف في مودال add_modal)
-document.addEventListener('DOMContentLoaded', function() {
-    const saveNewCategoryButtonEl = document.getElementById('save-new-category');
-    
-    if (saveNewCategoryButtonEl && !saveNewCategoryButtonEl.hasAttribute('data-initialized')) {
-        saveNewCategoryButtonEl.setAttribute('data-initialized', 'true');
-        saveNewCategoryButtonEl.addEventListener('click', function() {
-            const categoryName = document.getElementById('new-category-name').value.trim();
-            if (!categoryName) {
-                alert('يرجى إدخال اسم التصنيف');
-                return;
-            }
-            
-            const categoryColor = document.getElementById('new-category-color').value;
-            const categoryDescription = document.getElementById('new-category-description').value.trim();
-            
-            // استخدام متغير URL الذي تم تعريفه في القالب، أو استخدام مسار صريح كبديل
-            const url = typeof categoryCreateAjaxUrl !== 'undefined' ? 
-                categoryCreateAjaxUrl : '/customers/categories/create-ajax/';
-            
-            // الحصول على CSRF token
-            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-            
-            fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken,
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify({
-                    name: categoryName,
-                    color_code: categoryColor,
-                    description: categoryDescription
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                // ...existing code...
-            })
-            .catch(error => {
-                // ...existing code...
-            });
+/**
+ * عرض إشعار للمستخدم
+ */
+function showNotification(message, type = 'info') {
+    // استخدام Toast Bootstrap أو alert بسيط
+    if (typeof bootstrap !== 'undefined' && typeof bootstrap.Toast !== 'undefined') {
+        // التحقق من وجود حاوية الإشعارات أو إنشاؤها
+        let toastContainer = document.getElementById('toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.id = 'toast-container';
+            toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+            toastContainer.style.zIndex = '9999';
+            document.body.appendChild(toastContainer);
+        }
+        
+        // إنشاء Toast جديد
+        const toastId = 'toast-' + Date.now();
+        const toastEl = document.createElement('div');
+        toastEl.id = toastId;
+        toastEl.className = `toast align-items-center text-white bg-${type === 'error' ? 'danger' : type} border-0`;
+        toastEl.setAttribute('role', 'alert');
+        toastEl.setAttribute('aria-live', 'assertive');
+        toastEl.setAttribute('aria-atomic', 'true');
+        
+        toastEl.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        `;
+        
+        toastContainer.appendChild(toastEl);
+        
+        // إظهار Toast
+        const toast = new bootstrap.Toast(toastEl, { delay: 5000 });
+        toast.show();
+        
+        // إزالة Toast بعد الإخفاء
+        toastEl.addEventListener('hidden.bs.toast', function() {
+            this.remove();
         });
+    } else {
+        // استخدام alert كبديل
+        alert(message);
     }
-});
+}
+
+/**
+ * عرض أخطاء النموذج
+ */
+function showFormErrors(form, errors) {
+    if (!errors) return;
+    
+    // إزالة رسائل الخطأ السابقة
+    form.querySelectorAll('.is-invalid').forEach(el => {
+        el.classList.remove('is-invalid');
+    });
+    
+    form.querySelectorAll('.invalid-feedback').forEach(el => {
+        el.remove();
+    });
+    
+    // إضافة رسائل الخطأ الجديدة
+    for (const field in errors) {
+        const inputEl = form.querySelector(`[name="${field}"]`);
+        if (inputEl) {
+            inputEl.classList.add('is-invalid');
+            
+            const feedbackEl = document.createElement('div');
+            feedbackEl.className = 'invalid-feedback';
+            feedbackEl.textContent = Array.isArray(errors[field]) ? errors[field][0] : errors[field];
+            
+            inputEl.parentNode.appendChild(feedbackEl);
+        }
+    }
+}
